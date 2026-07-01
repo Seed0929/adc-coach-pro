@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Home,
   MessageSquareText,
@@ -6,9 +6,13 @@ import {
   Sparkles,
   TrendingUp,
   Settings,
+  LogOut,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Home", icon: Home },
@@ -31,6 +35,33 @@ function Ambient() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const { loading, isAuthenticated, profile, user, signOut } = useAuth();
+
+  // Protect every route that renders inside the shell.
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate({ to: "/auth", search: { redirect: pathname }, replace: true });
+    }
+  }, [loading, isAuthenticated, navigate, pathname]);
+
+  async function handleSignOut() {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/auth", replace: true });
+  }
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background text-foreground">
+        <Ambient />
+        <Loader2 className="size-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const displayName = profile?.username ?? user?.email?.split("@")[0] ?? "Player";
+  const displayEmail = profile?.email ?? user?.email ?? "";
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
@@ -71,11 +102,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
-            <div className="size-9 rounded-full bg-gradient-to-br from-primary to-primary-dim" />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">Ranked Player</div>
-              <div className="truncate text-xs text-muted-foreground">Diamond I · 47 LP</div>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="size-9 rounded-full object-cover" />
+            ) : (
+              <div className="size-9 rounded-full bg-gradient-to-br from-primary to-primary-dim" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">{displayName}</div>
+              <div className="truncate text-xs text-muted-foreground">{displayEmail}</div>
             </div>
+            <button
+              onClick={handleSignOut}
+              aria-label="Sign out"
+              className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+            >
+              <LogOut className="size-[18px]" />
+            </button>
           </div>
         </div>
       </aside>
