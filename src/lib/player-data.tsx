@@ -257,6 +257,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "241",
       lp: "+24",
       when: "2h ago",
+      gameLength: "32:14",
       biggestMistake: "Overextended in the river without vision at 14:00 and got caught.",
       biggestStrength: "Excellent early trades — you won lane by 900 gold at 10 minutes.",
       recommendation:
@@ -274,6 +275,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "198",
       lp: "-19",
       when: "3h ago",
+      gameLength: "28:47",
       biggestMistake: "Missed 4 recalls on wave crashes and fell 1.2k gold behind by 20 minutes.",
       biggestStrength: "Kept a positive vision score even while behind.",
       recommendation:
@@ -291,6 +293,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "268",
       lp: "+21",
       when: "Yesterday",
+      gameLength: "34:52",
       biggestMistake: "Took a risky flash forward at 28:00 that could have thrown the lead.",
       biggestStrength: "Flawless kiting in the 26-minute teamfight — 4 kills, zero deaths.",
       recommendation:
@@ -308,6 +311,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "212",
       lp: "-17",
       when: "Yesterday",
+      gameLength: "36:20",
       biggestMistake: "Grouped too late for the 30-minute Baron and lost the objective.",
       biggestStrength: "Strong mid-game farm — you hit your two-item spike on time.",
       recommendation:
