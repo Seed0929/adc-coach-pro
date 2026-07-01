@@ -38,6 +38,41 @@ export interface Snapshot {
 export interface TodaysFocus {
   headline: string;
   detail: string;
+  confidence: number; // 0-100
+  impact: "Low" | "Medium" | "High";
+  difficulty: "Easy" | "Medium" | "Hard";
+  practiceTime: string; // e.g. "10 minutes"
+}
+
+export interface CoachingOverview {
+  primaryStrength: string;
+  primaryWeakness: string;
+  consistencyScore: number; // 0-100
+  improvementTrendPct: number; // e.g. +14
+}
+
+export interface PerformanceOverview {
+  grade: string;
+  rank: string;
+  role: string;
+  championPool: number;
+  avgCs: string;
+  avgVision: string;
+  avgKda: string;
+}
+
+export interface AiInsight {
+  biggestOpportunity: string;
+  recommendedPractice: string;
+  commonMistake: string;
+  positiveHabit: string;
+  estimatedLpGain: string;
+}
+
+export interface DailyGoal {
+  label: string;
+  progress: number; // 0-100
+  done: boolean;
 }
 
 export interface MatchTimelinePoint {
@@ -66,6 +101,7 @@ export interface Match {
   cs: string;
   lp: string;
   when: string;
+  gameLength: string;
   biggestMistake: string;
   biggestStrength: string;
   recommendation: string;
@@ -81,12 +117,15 @@ export interface Champion {
   games: number;
   note: string;
   tone: Tone;
+  avgGrade: string;
+  trend: number; // e.g. +6 or -3 (win-rate/grade momentum)
 }
 
 export interface SkillTrend {
   label: string;
   value: number;
   tone: Tone;
+  delta: number; // week-over-week change, e.g. +8 or -3
 }
 
 export interface TrendPoint {
@@ -107,6 +146,10 @@ export interface PlayerData {
   coachingSummary: string;
   snapshot: Snapshot;
   todaysFocus: TodaysFocus;
+  coachingOverview: CoachingOverview;
+  performanceOverview: PerformanceOverview;
+  aiInsight: AiInsight;
+  dailyGoals: DailyGoal[];
   matches: Match[];
   champions: Champion[];
   skills: SkillTrend[];
