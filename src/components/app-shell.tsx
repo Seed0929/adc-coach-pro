@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile top bar */}
       <header className="glass sticky top-0 z-40 mx-4 mt-4 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-display font-bold">
             B
           </span>

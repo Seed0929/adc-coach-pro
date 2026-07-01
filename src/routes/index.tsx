@@ -28,10 +28,10 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
     ],
   }),
-  component: Index,
+  component: DashboardPage,
 });
 
-function Index() {
+export function DashboardPage() {
   const { isDemo, data, identity } = useBotDiffData();
   const greetingName = identity?.riotId ?? data.playerName;
   return (

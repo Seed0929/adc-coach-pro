@@ -64,14 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const userIdRef = useRef<string | null>(null);
+  const profileRef = useRef<Profile | null>(null);
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
     if (!nextUser) {
       setProfile(null);
+      profileRef.current = null;
       return null;
     }
     const p = await ensureProfile(nextUser);
     setProfile(p);
+    profileRef.current = p;
     return p;
   }, []);
 
@@ -92,7 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       userIdRef.current = nextUser.id;
-      await loadProfile(nextUser);
+      try {
+        await loadProfile(nextUser);
+      } catch (error) {
+        console.error("Failed to load profile", error);
+        if (active) setProfile(null);
+        profileRef.current = null;
+      }
       if (active) setLoading(false);
     }
 
@@ -111,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (userIdRef.current === nextUser.id && profile) {
+      if (userIdRef.current === nextUser.id && profileRef.current) {
         setLoading(false);
         return;
       }
@@ -134,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [loadProfile, profile]);
+  }, [loadProfile]);
 
   const signUp = useCallback<AuthContextValue["signUp"]>(async ({ email, password, username }) => {
     const { error } = await supabase.auth.signUp({
@@ -166,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUser(null);
     setProfile(null);
+    profileRef.current = null;
     setLoading(false);
   }, []);
 
