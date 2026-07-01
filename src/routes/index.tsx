@@ -31,6 +31,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
 import { useRiotSummary } from "@/hooks/use-riot-summary";
 import type { RiotAccountSummary } from "@/lib/riot.functions";
+import { useCoaching } from "@/hooks/use-coaching";
+import type { CoachingSummary, Grade } from "@/lib/coaching-engine";
 
 export const Route = createFileRoute("/")({
   head: () => ({
