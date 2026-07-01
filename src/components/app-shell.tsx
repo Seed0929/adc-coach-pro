@@ -123,13 +123,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="truncate text-sm font-medium">{displayName}</div>
               <div className="truncate text-xs text-muted-foreground">{secondaryLine}</div>
             </div>
-            <button
-              onClick={handleSignOut}
-              aria-label="Sign out"
-              className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
-            >
-              <LogOut className="size-[18px]" />
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={handleSignOut}
+                aria-label="Sign out"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+              >
+                <LogOut className="size-[18px]" />
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                aria-label="Sign in"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-primary transition-colors hover:bg-white/[0.06]"
+              >
+                <LogIn className="size-[18px]" />
+              </Link>
+            )}
           </div>
         </div>
       </aside>
