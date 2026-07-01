@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowUpRight, ArrowDownRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp } from "lucide-react";
 import { AppShell, Pill, PageHeader } from "@/components/app-shell";
 import champKaisa from "@/assets/champ-1.jpg";
 import champEzreal from "@/assets/champ-2.jpg";
