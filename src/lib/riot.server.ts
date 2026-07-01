@@ -65,8 +65,35 @@ function resolveRegion(region: string): RegionRouting {
   return routing;
 }
 
+// --- Lightweight in-memory response cache -----------------------------------
+// Worker instances are short-lived, but within a burst of requests this avoids
+// hammering Riot for the same URL and helps stay under rate limits.
+interface CacheEntry {
+  expires: number;
+  value: unknown;
+}
+const responseCache = new Map<string, CacheEntry>();
+
+function cacheGet<T>(key: string): T | undefined {
+  const hit = responseCache.get(key);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expires) {
+    responseCache.delete(key);
+    return undefined;
+  }
+  return hit.value as T;
+}
+
+function cacheSet(key: string, value: unknown, ttlMs: number) {
+  responseCache.set(key, { value, expires: Date.now() + ttlMs });
+}
+
 /** Core fetch wrapper: attaches the key, maps status codes to friendly errors. */
-async function riotFetch<T>(url: string): Promise<T> {
+async function riotFetch<T>(url: string, cacheTtlMs = 0): Promise<T> {
+  if (cacheTtlMs > 0) {
+    const cached = cacheGet<T>(url);
+    if (cached !== undefined) return cached;
+  }
   let res: Response;
   try {
     res = await fetch(url, { headers: { "X-Riot-Token": apiKey() } });
@@ -77,7 +104,11 @@ async function riotFetch<T>(url: string): Promise<T> {
     );
   }
 
-  if (res.ok) return (await res.json()) as T;
+  if (res.ok) {
+    const data = (await res.json()) as T;
+    if (cacheTtlMs > 0) cacheSet(url, data, cacheTtlMs);
+    return data;
+  }
 
   switch (res.status) {
     case 400:
@@ -172,7 +203,7 @@ export async function getAccountByRiotId(
   const url = `https://${regional}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
     gameName,
   )}/${encodeURIComponent(tagLine)}`;
-  return riotFetch<RiotAccount>(url);
+  return riotFetch<RiotAccount>(url, 60 * 60 * 1000);
 }
 
 /** summoner-v4: level + profile icon by PUUID. */
@@ -184,7 +215,7 @@ export async function getSummonerByPuuid(
   const url = `https://${platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(
     puuid,
   )}`;
-  return riotFetch<RiotSummoner>(url);
+  return riotFetch<RiotSummoner>(url, 5 * 60 * 1000);
 }
 
 /** league-v4: ranked entries by PUUID. Returns [] if unranked or unavailable. */
@@ -197,7 +228,7 @@ export async function getRankByPuuid(
     puuid,
   )}`;
   try {
-    return await riotFetch<RiotRankEntry[]>(url);
+    return await riotFetch<RiotRankEntry[]>(url, 2 * 60 * 1000);
   } catch (err) {
     // Ranked data is best-effort — never fail the whole flow over it.
     if (err instanceof RiotError && (err.code === "not_found" || err.code === "downtime")) {
@@ -255,7 +286,7 @@ export async function getMatchById(matchId: string, region: string): Promise<Rio
   const url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(
     matchId,
   )}`;
-  return riotFetch<RiotMatch>(url);
+  return riotFetch<RiotMatch>(url, 24 * 60 * 60 * 1000);
 }
 
 /** Human-readable label for common Summoner's Rift queue IDs. */
@@ -272,4 +303,8 @@ export function queueLabel(queueId: number): string {
     1700: "Arena",
   };
   return map[queueId] ?? "Other";
+}
+/** Data Dragon champion square icon URL. */
+export function championSquareUrl(version: string, championName: string): string {
+  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${championName}.png`;
 }
