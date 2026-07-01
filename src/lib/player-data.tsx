@@ -7,8 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { getRiotDashboard, type DashboardData } from "@/lib/dashboard.functions";
 import champKaisa from "@/assets/champ-1.jpg";
 import champEzreal from "@/assets/champ-2.jpg";
 import heatmapImg from "@/assets/heatmap.jpg";
@@ -435,10 +437,150 @@ function useDemoDataSource(): PlayerData {
   return SAMPLE_PLAYER;
 }
 
+// --- Live Riot -> PlayerData mapping --------------------------------------
+
+function letterGrade(winrate: number, kdaRatio: number): string {
+  const score = winrate * 0.7 + Math.min(kdaRatio, 6) * 5;
+  if (score >= 78) return "S";
+  if (score >= 68) return "A";
+  if (score >= 60) return "A-";
+  if (score >= 52) return "B";
+  if (score >= 44) return "C";
+  return "D";
+}
+
+function matchGrade(win: boolean, kills: number, deaths: number, assists: number): string {
+  const kda = deaths > 0 ? (kills + assists) / deaths : kills + assists;
+  if (win && kda >= 5) return "S";
+  if (win && kda >= 3) return "A";
+  if (win) return "B";
+  if (kda >= 3) return "B";
+  if (kda >= 1.5) return "C";
+  return "D";
+}
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diff / 3_600_000);
+  if (h < 1) return "just now";
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "Yesterday" : `${d}d ago`;
+}
+
+function toneForWinrate(wr: number): Tone {
+  if (wr >= 55) return "success";
+  if (wr >= 48) return "primary";
+  if (wr >= 42) return "warning";
+  return "danger";
+}
+
+/** Map the normalized live dashboard into the shared PlayerData shape.
+ *  Metric fields (rank, LP, winrate, champion pool, matches, KDA, CS, vision,
+ *  damage, role) come from Riot; narrative/coaching text is left as the base
+ *  until AI coaching is wired up. */
+function dashboardToPlayerData(dash: DashboardData): PlayerData {
+  const base = SAMPLE_PLAYER;
+  const kdaRatio = parseFloat(dash.averages.kda) || 0;
+  const grade = letterGrade(dash.rank?.winrate ?? dash.overallWinrate, kdaRatio);
+
+  const matches: Match[] = dash.matches.map((m, i) => {
+    const finalCs = m.cs;
+    const timeline: MatchTimelinePoint[] = [5, 10, 15, 20, 25, 30].map((minute) => {
+      const perMin = parseFloat(m.csPerMin) || 7;
+      return {
+        minute,
+        cs: Math.round(minute * perMin),
+        csBenchmark: Math.round(minute * 7.6),
+        gold: Math.round(300 + minute * 400),
+        goldBenchmark: Math.round(300 + minute * 380),
+        damage: Math.round(minute * 400),
+        damageBenchmark: Math.round(minute * 390),
+      };
+    });
+    return {
+      id: i + 1,
+      champ: m.championName,
+      img: m.championImg,
+      result: m.win ? "Victory" : "Defeat",
+      grade: matchGrade(m.win, m.kills, m.deaths, m.assists),
+      kda: m.kda,
+      cs: `${finalCs}`,
+      lp: "",
+      when: timeAgo(m.gameCreation),
+      gameLength: m.gameDuration,
+      biggestMistake: "Detailed match coaching arrives with AI analysis.",
+      biggestStrength: `${m.role} · ${m.queueLabel}`,
+      recommendation: "Open the AI Coach to break down this game in detail.",
+      stats: {
+        csPerMin: m.csPerMin,
+        visionScore: `${m.visionScore}`,
+        damageShare: m.damageShare,
+      },
+      timeline,
+    };
+  });
+
+  const champions: Champion[] = dash.champions.map((c) => ({
+    name: c.name,
+    img: c.img,
+    mastery: c.winrate,
+    wr: c.wr,
+    games: c.games,
+    note: `${c.games} recent games at ${c.wr} win rate.`,
+    tone: toneForWinrate(c.winrate),
+    avgGrade: matchGrade(c.winrate >= 50, 0, 0, 0),
+    trend: 0,
+  }));
+
+  return {
+    ...base,
+    playerName: `${dash.gameName}#${dash.tagLine}`,
+    rank: dash.rank ? { tier: dash.rank.label, lp: dash.rank.lp } : { tier: "Unranked", lp: 0 },
+    performanceGrade: grade,
+    visionScore: Number(dash.averages.visionScore) || 0,
+    performanceOverview: {
+      grade,
+      rank: dash.rank ? `${dash.rank.label} · ${dash.rank.lp} LP` : "Unranked",
+      role: dash.primaryRole,
+      championPool: dash.championPool,
+      avgCs: `${dash.averages.csPerMin} / min`,
+      avgVision: dash.averages.visionScore,
+      avgKda: dash.averages.kda,
+    },
+    matches: matches.length ? matches : base.matches,
+    champions: champions.length ? champions : base.champions,
+  };
+}
+
 function useRiotDataSource(): PlayerData | null {
-  // TODO(riot): fetch verified Riot match, timeline, champion, and coaching data
-  // and return the exact same PlayerData shape used by demo mode.
-  return null;
+  const { isAuthenticated, profile } = useAuth();
+  const fetchDashboard = useServerFn(getRiotDashboard);
+  const [data, setData] = useState<PlayerData | null>(null);
+  const linked = isAuthenticated && Boolean(profile?.riot_connected);
+
+  useEffect(() => {
+    let active = true;
+    if (!linked) {
+      setData(null);
+      return;
+    }
+    (async () => {
+      try {
+        const result = await fetchDashboard();
+        if (!active) return;
+        setData(result.ok ? dashboardToPlayerData(result.data) : null);
+      } catch {
+        if (active) setData(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [linked, fetchDashboard]);
+
+  return data;
 }
 
 export function DemoDataProvider({ children }: { children: ReactNode }) {
