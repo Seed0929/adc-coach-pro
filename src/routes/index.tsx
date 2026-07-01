@@ -21,11 +21,16 @@ import {
   Rocket,
   CheckCircle2,
   Circle,
+  Globe,
+  RefreshCw,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
+import { useRiotSummary } from "@/hooks/use-riot-summary";
+import type { RiotAccountSummary } from "@/lib/riot.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
