@@ -16,7 +16,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export type Profile = Tables<"profiles">;
 
 export function hasCompletedOnboarding(profile: Profile | null | undefined): boolean {
-  return Boolean(profile?.onboarding_complete || profile?.onboarding_completed);
+  return Boolean(profile?.onboarding_complete);
 }
 
 interface AuthContextValue {
