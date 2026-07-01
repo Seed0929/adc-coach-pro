@@ -14,6 +14,7 @@ import { useEffect, type ReactNode } from "react";
 import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useBotDiffData } from "@/lib/player-data";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/", label: "Home", icon: Home },
@@ -38,6 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { loading, isAuthenticated, profile, user, signOut } = useAuth();
+  const { identity } = useBotDiffData();
 
   // Protect every route that renders inside the shell, and gate on onboarding.
   useEffect(() => {
@@ -65,7 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const displayName = profile?.username ?? user?.email?.split("@")[0] ?? "Player";
-  const displayEmail = profile?.email ?? user?.email ?? "";
+  const secondaryLine = identity?.riotId ?? profile?.email ?? user?.email ?? "";
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
@@ -113,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{displayName}</div>
-              <div className="truncate text-xs text-muted-foreground">{displayEmail}</div>
+              <div className="truncate text-xs text-muted-foreground">{secondaryLine}</div>
             </div>
             <button
               onClick={handleSignOut}
