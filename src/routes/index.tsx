@@ -514,6 +514,168 @@ function DashboardInner() {
   );
 }
 
+const GRADE_TONE: Record<Grade, Tone> = {
+  S: "success",
+  A: "success",
+  B: "primary",
+  C: "warning",
+  D: "danger",
+};
+
+function GradeTile({ label, value, letter }: { label: string; value: number; letter: Grade }) {
+  const tone = GRADE_TONE[letter];
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
+      <div className={`font-display text-2xl font-semibold ${toneText[tone]}`}>{letter}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className={`h-full rounded-full ${toneBar[tone]}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ScoreMeter({ label, value, tone, sub }: { label: string; value: number; tone: Tone; sub: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className={`font-display text-lg font-semibold ${toneText[tone]}`}>{value}</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className={`h-full rounded-full ${toneBar[tone]}`} style={{ width: `${value}%` }} />
+      </div>
+      <div className="mt-1.5 text-[11px] text-muted-foreground">{sub}</div>
+    </div>
+  );
+}
+
+function CoachingAnalysisSection() {
+  const { summary, loading } = useCoaching();
+  const grades: { key: keyof CoachingSummary["grades"]; label: string }[] = [
+    { key: "laning", label: "Laning" },
+    { key: "farming", label: "Farming" },
+    { key: "vision", label: "Vision" },
+    { key: "objective", label: "Objective" },
+    { key: "teamfight", label: "Teamfight" },
+    { key: "consistency", label: "Consistency" },
+  ];
+
+  return (
+    <section className="mt-8 rise">
+      <SectionTitle
+        icon={Gauge}
+        title="Coaching Analysis"
+        action={
+          summary.isDemo ? (
+            <Pill tone="warning">
+              <Sparkles className="size-3.5" /> Demo Analysis
+            </Pill>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {loading ? "Updating…" : `${summary.matchesAnalyzed} games analyzed`}
+            </span>
+          )
+        }
+      />
+
+      <div className="glass rounded-3xl p-6">
+        {/* Overall score + headline */}
+        <div className="flex flex-wrap items-center gap-5">
+          <div className="grid size-20 shrink-0 place-items-center rounded-2xl bg-primary/12">
+            <div className="text-center">
+              <div className={`font-display text-3xl font-semibold ${toneText[GRADE_TONE[summary.overallGrade]]}`}>
+                {summary.overallGrade}
+              </div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {summary.overallScore}/100
+              </div>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Overall performance
+            </div>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/90">
+              {summary.focusTip}
+            </p>
+          </div>
+        </div>
+
+        {/* Grades */}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {grades.map((g) => (
+            <GradeTile
+              key={g.key}
+              label={g.label}
+              value={summary.grades[g.key]}
+              letter={summary.gradeLetters[g.key]}
+            />
+          ))}
+        </div>
+
+        {/* Aggression / Risk / Carry */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <ScoreMeter label="Aggression" value={summary.aggressionScore} tone="primary" sub="how proactively you fight" />
+          <ScoreMeter label="Risk" value={summary.riskScore} tone="warning" sub="deaths & overextension" />
+          <ScoreMeter label="Carry Potential" value={summary.carryPotential} tone="success" sub="damage, KDA & impact" />
+        </div>
+
+        {/* Strengths / weaknesses */}
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-success">
+              <ShieldCheck className="size-4" /> Strengths
+            </div>
+            <ul className="space-y-1.5 text-sm text-foreground/90">
+              {(summary.topStrengths.length ? summary.topStrengths : ["Play more games to surface strengths."]).map((s) => (
+                <li key={s} className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-success" /> {s}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-warning">
+              <ShieldAlert className="size-4" /> Weaknesses
+            </div>
+            <ul className="space-y-1.5 text-sm text-foreground/90">
+              {(summary.topWeaknesses.length ? summary.topWeaknesses : ["No major weaknesses detected — keep it up."]).map((w) => (
+                <li key={w} className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" /> {w}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Per-match tips from the most recent games */}
+      {summary.perMatch.length > 0 && (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {summary.perMatch.slice(0, 4).map((mm) => (
+            <div key={mm.matchId} className="glass rounded-2xl p-5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="font-medium">{mm.champion}</span>
+                <span className={`text-xs font-medium ${mm.win ? "text-success" : "text-destructive"}`}>
+                  {mm.win ? "Victory" : "Defeat"} · Grade {mm.overallGrade}
+                </span>
+              </div>
+              <ul className="space-y-1.5 text-sm text-muted-foreground">
+                {mm.tips.slice(0, 3).map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-primary" /> {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function FocusMetric({
   icon: Icon,
   label,
