@@ -1,5 +1,14 @@
-import { useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import champKaisa from "@/assets/champ-1.jpg";
 import champEzreal from "@/assets/champ-2.jpg";
 import heatmapImg from "@/assets/heatmap.jpg";
