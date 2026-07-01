@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Send, Sparkles } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
+import { AppShell, SampleBadge } from "@/components/app-shell";
+import { usePlayerData, type CoachMessage } from "@/lib/player-data";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
@@ -22,24 +23,9 @@ export const Route = createFileRoute("/coach")({
   component: Coach,
 });
 
-type Msg = { role: "coach" | "you"; text: string };
-
-const seed: Msg[] = [
-  {
-    role: "coach",
-    text: "Welcome back. I reviewed your last session — your laning is sharp, but you're stepping too far forward in mid-game fights. Want to dig into that, or ask me anything?",
-  },
-];
-
-const suggestions = [
-  "Why am I losing lane?",
-  "What should I practice today?",
-  "Review my last game.",
-  "What matchup am I weakest at?",
-];
-
 function Coach() {
-  const [messages, setMessages] = useState<Msg[]>(seed);
+  const { isSample, data } = usePlayerData();
+  const [messages, setMessages] = useState<CoachMessage[]>(data.coachSeed);
   const [input, setInput] = useState("");
 
   const send = (text: string) => {
@@ -50,7 +36,9 @@ function Coach() {
       { role: "you", text: t },
       {
         role: "coach",
-        text: "Once your matches are connected, I'll answer this using your own game data. For now, here's the plan: focus on positioning one screen back and recall on wave crashes.",
+        text: isSample
+          ? "This is a sample conversation. Once you connect your Riot account, I'll answer using your own game data. For now: focus on positioning one screen back and recall on wave crashes."
+          : "Here's the plan based on your recent games: focus on positioning one screen back and recall on wave crashes.",
       },
     ]);
     setInput("");
@@ -62,10 +50,11 @@ function Coach() {
         <span className="grid size-10 place-items-center rounded-2xl bg-primary/15 text-primary">
           <Sparkles className="size-5" />
         </span>
-        <div>
+        <div className="flex-1">
           <h1 className="font-display text-2xl font-semibold tracking-tight">AI Coach</h1>
           <p className="text-sm text-muted-foreground">Personal, honest, and always about your games.</p>
         </div>
+        {isSample && <SampleBadge />}
       </div>
 
       <div className="glass rise flex h-[62vh] flex-col rounded-3xl">
@@ -88,7 +77,7 @@ function Coach() {
 
         {/* Suggestions */}
         <div className="flex flex-wrap gap-2 px-6 pb-3">
-          {suggestions.map((s) => (
+          {data.coachSuggestions.map((s) => (
             <button
               key={s}
               onClick={() => send(s)}
