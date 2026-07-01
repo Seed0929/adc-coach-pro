@@ -88,29 +88,50 @@ function cacheSet(key: string, value: unknown, ttlMs: number) {
   responseCache.set(key, { value, expires: Date.now() + ttlMs });
 }
 
-/** Core fetch wrapper: attaches the key, maps status codes to friendly errors. */
-async function riotFetch<T>(url: string, cacheTtlMs = 0): Promise<T> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Core fetch wrapper: attaches the key, maps status codes to friendly errors.
+ *  On HTTP 429 (rate limit) it retries with exponential backoff, honouring the
+ *  Retry-After header when Riot supplies one, before finally surfacing the error. */
+async function riotFetch<T>(url: string, cacheTtlMs = 0, maxRetries = 3): Promise<T> {
   if (cacheTtlMs > 0) {
     const cached = cacheGet<T>(url);
     if (cached !== undefined) return cached;
   }
-  let res: Response;
-  try {
-    res = await fetch(url, { headers: { "X-Riot-Token": apiKey() } });
-  } catch {
-    throw new RiotError(
-      "downtime",
-      "Could not reach Riot's servers. Please try again in a moment.",
-    );
-  }
 
-  if (res.ok) {
-    const data = (await res.json()) as T;
-    if (cacheTtlMs > 0) cacheSet(url, data, cacheTtlMs);
-    return data;
-  }
+  for (let attempt = 0; ; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(url, { headers: { "X-Riot-Token": apiKey() } });
+    } catch {
+      throw new RiotError(
+        "downtime",
+        "Could not reach Riot's servers. Please try again in a moment.",
+      );
+    }
 
-  switch (res.status) {
+    if (res.ok) {
+      const data = (await res.json()) as T;
+      if (cacheTtlMs > 0) cacheSet(url, data, cacheTtlMs);
+      return data;
+    }
+
+    // Rate limited: back off exponentially and retry a bounded number of times.
+    if (res.status === 429 && attempt < maxRetries) {
+      const retryAfter = Number(res.headers.get("Retry-After"));
+      const backoff = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(2 ** attempt * 1000, 8000);
+      await sleep(backoff);
+      continue;
+    }
+
+    return mapErrorStatus(res.status);
+  }
+}
+
+function mapErrorStatus(status: number): never {
+  switch (status) {
     case 400:
       throw new RiotError("not_found", "That Riot ID doesn't look valid. Check the spelling.");
     case 401:
