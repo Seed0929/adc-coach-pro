@@ -206,42 +206,38 @@ export function PageHeader({
   );
 }
 
+const DEMO_TOOLTIP =
+  "BotDiff is currently displaying sample analysis until your Riot account is connected.";
+
 /**
- * Subtle badge signalling that the surface is showing sample data. It doubles
- * as a call-to-action: connecting a Riot account swaps every example for the
- * player's own match history and personalized AI analysis.
+ * Subtle "Demo Mode" badge. It signals the app is showing sample analysis and
+ * disappears automatically once a live Riot connection exists.
  */
-export function SampleBadge({ className = "" }: { className?: string }) {
+export function DemoModeBadge({ className = "" }: { className?: string }) {
   return (
-    <Link
-      to="/welcome"
-      className={`group inline-flex items-center gap-2 rounded-full border border-warning/25 bg-warning/[0.08] px-3 py-1.5 text-xs font-medium text-warning transition-colors hover:bg-warning/[0.14] ${className}`}
-      title="Connect your Riot account to replace this with your own data"
+    <span
+      title={DEMO_TOOLTIP}
+      className={`inline-flex cursor-help items-center gap-1.5 rounded-full border border-warning/25 bg-warning/[0.08] px-3 py-1.5 text-xs font-medium text-warning ${className}`}
     >
       <FlaskConical className="size-3.5" />
-      Sample data
-      <span className="hidden text-warning/70 group-hover:inline sm:inline">
-        · connect Riot to see yours
-      </span>
-    </Link>
+      Demo Mode
+    </span>
   );
 }
 
-/** Full-width banner variant for the top of data-heavy pages. */
-export function SampleBanner() {
+/** Full-width demo banner for the top of data-heavy pages. */
+export function DemoModeBanner() {
   return (
-    <Link
-      to="/welcome"
-      className="rise mb-6 flex items-center gap-3 rounded-2xl border border-warning/20 bg-warning/[0.06] px-4 py-3 text-sm transition-colors hover:bg-warning/[0.1]"
+    <div
+      title={DEMO_TOOLTIP}
+      className="rise mb-6 flex items-center gap-3 rounded-2xl border border-warning/20 bg-warning/[0.06] px-4 py-3 text-sm"
     >
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-warning/15 text-warning">
         <FlaskConical className="size-4" />
       </span>
       <span className="text-muted-foreground">
-        <span className="font-medium text-foreground">You're exploring with sample data.</span>{" "}
-        Connect your Riot account to automatically replace every example with your own match
-        history and personalized AI analysis.
+        <span className="font-medium text-foreground">Demo Mode.</span> {DEMO_TOOLTIP}
       </span>
-    </Link>
+    </div>
   );
 }
