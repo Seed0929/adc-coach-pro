@@ -93,6 +93,13 @@ function CurveChart({
 
 function Matches() {
   const { isDemo, data } = useBotDiffData();
+  const history = useMatchHistory();
+
+  // Real Riot match history takes over once the account is linked.
+  if (history.linked) {
+    return <RealMatches history={history} />;
+  }
+
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
 
