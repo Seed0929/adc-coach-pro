@@ -109,12 +109,18 @@ function SectionTitle({
 export function DashboardPage() {
   const { isDemo, data, identity } = useBotDiffData();
   const { profile, user } = useAuth();
+  const { summary, loading: riotLoading, error: riotError, refresh: refreshRiot } = useRiotSummary();
   const greetingName =
-    profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
+    summary?.gameName ?? profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
   const focus = data.todaysFocus;
   const co = data.coachingOverview;
   const po = data.performanceOverview;
+  const rankPill = summary
+    ? summary.rank
+      ? `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`
+      : "Unranked"
+    : `${data.rank.tier} · ${data.rank.lp} LP`;
 
   return (
     <AppShell>
@@ -124,6 +130,12 @@ export function DashboardPage() {
           {avatarUrl ? (
             <img
               src={avatarUrl}
+              alt=""
+              className="size-12 rounded-2xl object-cover ring-1 ring-white/10"
+            />
+          ) : summary?.profileIconUrl ? (
+            <img
+              src={summary.profileIconUrl}
               alt=""
               className="size-12 rounded-2xl object-cover ring-1 ring-white/10"
             />
@@ -143,9 +155,19 @@ export function DashboardPage() {
           </div>
         </div>
         <Pill tone="primary">
-          <Trophy className="size-3.5" /> {data.rank.tier} · {data.rank.lp} LP
+          <Trophy className="size-3.5" /> {rankPill}
         </Pill>
       </div>
+
+      {/* Linked Riot account — real data replaces the demo profile once connected */}
+      {(summary || riotLoading || riotError) && (
+        <RiotAccountCard
+          summary={summary}
+          loading={riotLoading}
+          error={riotError}
+          onRefresh={refreshRiot}
+        />
+      )}
 
       {/* Today's Focus — the single most important coaching card */}
       <section
