@@ -86,7 +86,7 @@ function SectionTitle({
 }: {
   icon: LucideIcon;
   title: string;
-  action?: ReactAction;
+  action?: ReactNode;
 }) {
   return (
     <div className="mb-4 flex items-center justify-between">
@@ -100,8 +100,6 @@ function SectionTitle({
     </div>
   );
 }
-
-type ReactAction = React.ReactNode;
 
 export function DashboardPage() {
   const { isDemo, data, identity } = useBotDiffData();
