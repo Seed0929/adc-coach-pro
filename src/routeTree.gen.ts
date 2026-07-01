@@ -23,6 +23,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
+import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -94,13 +95,18 @@ const SettingsProfileRoute = SettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => SettingsRoute,
 } as any)
+const CoachingHistoryRoute = CoachingHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => CoachingRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/coaching/history': typeof CoachingHistoryRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/': typeof SettingsIndexRoute
 }
@@ -116,13 +123,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/coaching/history': typeof CoachingHistoryRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings': typeof SettingsIndexRoute
 }
@@ -132,7 +140,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/coaching/history': typeof CoachingHistoryRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/': typeof SettingsIndexRoute
 }
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/coaching/history'
     | '/settings/profile'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/welcome'
+    | '/coaching/history'
     | '/settings/profile'
     | '/settings'
   id:
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/coaching/history'
     | '/settings/profile'
     | '/settings/'
   fileRoutesById: FileRoutesById
@@ -198,7 +210,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChampionsRoute: typeof ChampionsRoute
   CoachRoute: typeof CoachRoute
-  CoachingRoute: typeof CoachingRoute
+  CoachingRoute: typeof CoachingRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   MatchesRoute: typeof MatchesRoute
   ProgressRoute: typeof ProgressRoute
@@ -308,8 +320,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/coaching/history': {
+      id: '/coaching/history'
+      path: '/history'
+      fullPath: '/coaching/history'
+      preLoaderRoute: typeof CoachingHistoryRouteImport
+      parentRoute: typeof CoachingRoute
+    }
   }
 }
+
+interface CoachingRouteChildren {
+  CoachingHistoryRoute: typeof CoachingHistoryRoute
+}
+
+const CoachingRouteChildren: CoachingRouteChildren = {
+  CoachingHistoryRoute: CoachingHistoryRoute,
+}
+
+const CoachingRouteWithChildren = CoachingRoute._addFileChildren(
+  CoachingRouteChildren,
+)
 
 interface SettingsRouteChildren {
   SettingsProfileRoute: typeof SettingsProfileRoute
@@ -330,7 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChampionsRoute: ChampionsRoute,
   CoachRoute: CoachRoute,
-  CoachingRoute: CoachingRoute,
+  CoachingRoute: CoachingRouteWithChildren,
   DashboardRoute: DashboardRoute,
   MatchesRoute: MatchesRoute,
   ProgressRoute: ProgressRoute,
