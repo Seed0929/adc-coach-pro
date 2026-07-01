@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      coaching_analyses: {
+        Row: {
+          analysis: Json
+          created_at: string
+          engine_version: number
+          id: string
+          match_id: string
+          overall_score: number
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          analysis: Json
+          created_at?: string
+          engine_version?: number
+          id?: string
+          match_id: string
+          overall_score?: number
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          analysis?: Json
+          created_at?: string
+          engine_version?: number
+          id?: string
+          match_id?: string
+          overall_score?: number
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           assists: number
