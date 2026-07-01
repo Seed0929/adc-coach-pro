@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type Profile = Tables<"profiles">;
@@ -25,6 +26,7 @@ interface AuthContextValue {
     username: string;
   }) => Promise<{ error: string | null }>;
   signIn: (params: { email: string; password: string }) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
@@ -106,6 +108,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }, []);
 
+  const signInWithGoogle = useCallback<AuthContextValue["signInWithGoogle"]>(async () => {
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) return { error: result.error.message ?? "Google sign-in failed" };
+    return { error: null };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setProfile(null);
@@ -131,11 +141,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!session,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       resetPassword,
       refreshProfile,
     }),
-    [session, user, profile, loading, signUp, signIn, signOut, resetPassword, refreshProfile],
+    [session, user, profile, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
