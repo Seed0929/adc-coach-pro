@@ -134,6 +134,32 @@ export interface RiotRankEntry {
   losses: number;
 }
 
+/** match-v5: only the fields we consume. The Riot payload is much larger. */
+export interface RiotMatchParticipant {
+  puuid: string;
+  championName: string;
+  championId: number;
+  win: boolean;
+  kills: number;
+  deaths: number;
+  assists: number;
+  totalMinionsKilled: number;
+  neutralMinionsKilled: number;
+  goldEarned: number;
+  visionScore: number;
+  teamPosition: string;
+}
+
+export interface RiotMatch {
+  metadata: { matchId: string };
+  info: {
+    gameCreation: number;
+    gameDuration: number;
+    queueId: number;
+    participants: RiotMatchParticipant[];
+  };
+}
+
 // --- Endpoints -------------------------------------------------------------
 
 /** account-v1: resolve a Riot ID (gameName#tagLine) to a PUUID. */
@@ -207,4 +233,43 @@ export function pickPrimaryRank(entries: RiotRankEntry[]): RiotRankEntry | null 
     entries.find((e) => e.queueType === "RANKED_FLEX_SR") ??
     entries[0]
   );
+}
+
+/** match-v5: list of recent match IDs for a PUUID (most recent first). */
+export async function getMatchIdsByPuuid(
+  puuid: string,
+  region: string,
+  count = 20,
+  start = 0,
+): Promise<string[]> {
+  const { regional } = resolveRegion(region);
+  const url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(
+    puuid,
+  )}/ids?start=${start}&count=${Math.min(count, 100)}`;
+  return riotFetch<string[]>(url);
+}
+
+/** match-v5: full match detail by match ID. */
+export async function getMatchById(matchId: string, region: string): Promise<RiotMatch> {
+  const { regional } = resolveRegion(region);
+  const url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(
+    matchId,
+  )}`;
+  return riotFetch<RiotMatch>(url);
+}
+
+/** Human-readable label for common Summoner's Rift queue IDs. */
+export function queueLabel(queueId: number): string {
+  const map: Record<number, string> = {
+    400: "Normal Draft",
+    420: "Ranked Solo/Duo",
+    430: "Normal Blind",
+    440: "Ranked Flex",
+    450: "ARAM",
+    490: "Quickplay",
+    700: "Clash",
+    900: "URF",
+    1700: "Arena",
+  };
+  return map[queueId] ?? "Other";
 }
