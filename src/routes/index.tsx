@@ -359,6 +359,9 @@ function DashboardInner() {
         </div>
       </section>
 
+      {/* ---------------- COACHING ANALYSIS ---------------- */}
+      <CoachingAnalysisSection />
+
       {/* ---------------- RECENT MATCHES ---------------- */}
       <section className="mt-8 rise">
         <SectionTitle
