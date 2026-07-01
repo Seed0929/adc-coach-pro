@@ -18,30 +18,48 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          current_rank: string | null
+          display_name: string | null
           email: string | null
           id: string
           onboarding_complete: boolean
+          onboarding_completed: boolean
+          preferred_role: string | null
+          profile_picture: string | null
           riot_connected: boolean
+          subscription_tier: string
           updated_at: string
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          current_rank?: string | null
+          display_name?: string | null
           email?: string | null
           id: string
           onboarding_complete?: boolean
+          onboarding_completed?: boolean
+          preferred_role?: string | null
+          profile_picture?: string | null
           riot_connected?: boolean
+          subscription_tier?: string
           updated_at?: string
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          current_rank?: string | null
+          display_name?: string | null
           email?: string | null
           id?: string
           onboarding_complete?: boolean
+          onboarding_completed?: boolean
+          preferred_role?: string | null
+          profile_picture?: string | null
           riot_connected?: boolean
+          subscription_tier?: string
           updated_at?: string
           username?: string | null
         }
