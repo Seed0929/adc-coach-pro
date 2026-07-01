@@ -280,19 +280,91 @@ export const SAMPLE_PLAYER: PlayerData = {
   ],
 };
 
-/**
- * Returns the player's dashboard data plus whether it's sample data.
- *
- * When Riot integration lands, fetch the real `PlayerData` here (keyed on the
- * linked riot account) and return it with `isSample: false`. The UI stays
- * identical because both paths return the same `PlayerData` shape.
- */
-export function usePlayerData(): { isSample: boolean; data: PlayerData } {
-  const { profile } = useAuth();
-  const isSample = !profile?.riot_connected;
+// ---------------------------------------------------------------------------
+// Provider layer
+//
+// The UI consumes ONE interface (`useBotDiffData`). Today it is backed by the
+// demo dataset (`DemoDataProvider` behaviour). When the Riot API is wired up,
+// swap the `data` source for a `RiotDataProvider` that returns the same
+// `PlayerData` shape — no component changes required.
+// ---------------------------------------------------------------------------
 
-  return useMemo(() => {
-    // TODO(riot): when `profile.riot_connected`, return live data here.
-    return { isSample, data: SAMPLE_PLAYER };
-  }, [isSample]);
+/** The player's Riot identity, stored during onboarding. */
+export interface PlayerIdentity {
+  gameName: string;
+  tagLine: string;
+  region: string;
+  /** Convenience "GameName#TAG" string for display. */
+  riotId: string;
+}
+
+export interface BotDiffDataValue {
+  /** True while showing sample analysis (i.e. no live Riot connection yet). */
+  isDemo: boolean;
+  /** The Riot identity captured at onboarding, or null if none linked. */
+  identity: PlayerIdentity | null;
+  /** The dashboard dataset every surface renders from. */
+  data: PlayerData;
+  /** Re-reads the linked Riot identity from the backend. */
+  refreshIdentity: () => Promise<void>;
+}
+
+const DataContext = createContext<BotDiffDataValue | undefined>(undefined);
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const { user, profile } = useAuth();
+  const [identity, setIdentity] = useState<PlayerIdentity | null>(null);
+
+  const refreshIdentity = useCallback(async () => {
+    if (!user) {
+      setIdentity(null);
+      return;
+    }
+    const { data } = await supabase
+      .from("riot_accounts")
+      .select("game_name, tag_line, region")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    setIdentity(
+      data
+        ? {
+            gameName: data.game_name,
+            tagLine: data.tag_line,
+            region: data.region,
+            riotId: `${data.game_name}#${data.tag_line}`,
+          }
+        : null,
+    );
+  }, [user]);
+
+  // Re-read identity whenever the signed-in user or their profile changes
+  // (e.g. right after onboarding saves the Riot account).
+  useEffect(() => {
+    void refreshIdentity();
+  }, [refreshIdentity, profile]);
+
+  // Demo mode is on until a real Riot API connection exists. This flag flips
+  // off automatically once `riot_connected` becomes true.
+  const isDemo = !profile?.riot_connected;
+
+  const value = useMemo<BotDiffDataValue>(
+    () => ({
+      isDemo,
+      identity,
+      // TODO(riot): replace SAMPLE_PLAYER with live Riot-derived PlayerData
+      // when `!isDemo`. The shape is identical, so the UI stays unchanged.
+      data: SAMPLE_PLAYER,
+      refreshIdentity,
+    }),
+    [isDemo, identity, refreshIdentity],
+  );
+
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+}
+
+/** Single interface every dashboard surface consumes. */
+export function useBotDiffData(): BotDiffDataValue {
+  const ctx = useContext(DataContext);
+  if (!ctx) throw new Error("useBotDiffData must be used within a DataProvider");
+  return ctx;
 }
