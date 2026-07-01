@@ -1,15 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
   MessageSquareText,
-  TrendingUp,
-  Sparkles,
   Target,
   Trophy,
-  Eye,
+  Gauge,
+  Clock,
+  Zap,
+  ShieldCheck,
+  ShieldAlert,
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  ChevronDown,
+  Lightbulb,
+  Dumbbell,
+  AlertTriangle,
+  Sparkles,
+  Rocket,
+  CheckCircle2,
+  Circle,
+  type LucideIcon,
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
-import { useBotDiffData } from "@/lib/player-data";
+import { useAuth } from "@/hooks/use-auth";
+import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,30 +48,103 @@ export const Route = createFileRoute("/")({
   component: DashboardPage,
 });
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function todayLabel(): string {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+const toneText: Record<Tone, string> = {
+  neutral: "text-muted-foreground",
+  primary: "text-primary",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-destructive",
+};
+const toneBar: Record<Tone, string> = {
+  neutral: "bg-muted-foreground/50",
+  primary: "bg-primary",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-destructive",
+};
+
+/** Section heading used across the dashboard. */
+function SectionTitle({
+  icon: Icon,
+  title,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="grid size-8 place-items-center rounded-lg bg-primary/12 text-primary">
+          <Icon className="size-4" />
+        </span>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { isDemo, data, identity } = useBotDiffData();
-  const greetingName = identity?.riotId ?? data.playerName;
+  const { profile, user } = useAuth();
+  const greetingName =
+    profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
+  const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
+  const focus = data.todaysFocus;
+  const co = data.coachingOverview;
+  const po = data.performanceOverview;
+
   return (
     <AppShell>
-      {/* Greeting */}
-      <div className="rise mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="mb-1 flex items-center gap-3 text-sm text-muted-foreground">
-            Welcome back, <span className="font-medium text-foreground">{greetingName}</span>
-            {isDemo && <DemoModeBadge />}
+      {/* ---------------- HERO ---------------- */}
+      <div className="rise mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="size-12 rounded-2xl object-cover ring-1 ring-white/10"
+            />
+          ) : (
+            <div className="size-12 rounded-2xl bg-gradient-to-br from-primary to-primary-dim ring-1 ring-white/10" />
+          )}
+          <div>
+            <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              {greeting()} · {todayLabel()}
+            </div>
+            <div className="mt-0.5 flex items-center gap-3">
+              <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                Welcome back, {greetingName}
+              </h1>
+              {isDemo && <DemoModeBadge />}
+            </div>
           </div>
-          <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
-            How am I doing?
-          </h1>
         </div>
         <Pill tone="primary">
           <Trophy className="size-3.5" /> {data.rank.tier} · {data.rank.lp} LP
         </Pill>
       </div>
 
-      {/* Today's focus — the single most important thing */}
+      {/* Today's Focus — the single most important coaching card */}
       <section
-        className="glass glass-hover rise relative overflow-hidden rounded-3xl p-8 md:p-10"
+        className="glass glass-hover rise relative overflow-hidden rounded-3xl p-7 md:p-9"
         style={{ animationDelay: "60ms" }}
       >
         <div className="absolute -right-16 -top-16 size-64 rounded-full bg-primary/20 blur-3xl" />
@@ -64,91 +153,393 @@ export function DashboardPage() {
             <Target className="size-4" /> Today's Focus
           </div>
           <h2 className="max-w-2xl font-display text-2xl font-semibold leading-snug tracking-tight md:text-3xl">
-            {data.todaysFocus.headline}
+            {focus.headline}
           </h2>
-          <p className="mt-3 max-w-xl text-muted-foreground">
-            {data.todaysFocus.detail}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <p className="mt-3 max-w-2xl text-muted-foreground">{focus.detail}</p>
+
+          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <FocusMetric icon={Gauge} label="Confidence" value={`${focus.confidence}%`} tone="primary" />
+            <FocusMetric icon={Zap} label="Est. Impact" value={focus.impact} tone="success" />
+            <FocusMetric icon={Activity} label="Difficulty" value={focus.difficulty} tone="warning" />
+            <FocusMetric icon={Clock} label="Practice Time" value={focus.practiceTime} tone="neutral" />
+          </div>
+
+          <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              to="/matches"
+              to="/coach"
               className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5"
             >
-              Analyze Latest Matches
+              <MessageSquareText className="size-4" /> Coach me on this
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
-              to="/coach"
+              to="/matches"
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-medium transition-colors hover:bg-white/[0.06]"
             >
-              <MessageSquareText className="size-4" /> Open AI Coach
+              Review latest matches
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Snapshot */}
-      <div className="mt-6 grid gap-6 md:grid-cols-3">
-        {[
-          {
-            label: "Overall Grade",
-            value: data.performanceGrade,
-            sub: "current coaching assessment",
-          },
-          {
-            label: "Improvement Score",
-            value: `${data.snapshot.improvementScore}`,
-            sub: `up ${data.snapshot.improvementDelta} this week`,
-          },
-          {
-            label: "Vision Score",
-            value: `${data.visionScore}`,
-            sub: "recent match average",
-          },
-        ].map((s, i) => (
-          <div
-            key={s.label}
-            className="glass glass-hover rise rounded-3xl p-6"
-            style={{ animationDelay: `${120 + i * 60}ms` }}
-          >
-            <div className="text-sm text-muted-foreground">{s.label}</div>
-            <div className="mt-2 font-display text-3xl font-semibold tracking-tight">{s.value}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
+      {/* ---------------- COACHING OVERVIEW ---------------- */}
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <OverviewCard
+          icon={ShieldCheck}
+          tone="success"
+          label="Primary Strength"
+          value={co.primaryStrength}
+          delay={120}
+        />
+        <OverviewCard
+          icon={ShieldAlert}
+          tone="warning"
+          label="Primary Weakness"
+          value={co.primaryWeakness}
+          delay={180}
+        />
+        <StatCard
+          icon={Gauge}
+          tone="primary"
+          label="Consistency Score"
+          value={`${co.consistencyScore}%`}
+          sub="how repeatable your play is"
+          delay={240}
+        />
+        <StatCard
+          icon={TrendingUp}
+          tone="success"
+          label="Improvement Trend"
+          value={`+${co.improvementTrendPct}%`}
+          sub="over the last week"
+          delay={300}
+        />
+      </div>
+
+      {/* ---------------- PERFORMANCE OVERVIEW ---------------- */}
+      <section className="mt-8 rise">
+        <SectionTitle icon={Trophy} title="Performance Overview" />
+        <div className="glass rounded-3xl p-6">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-7">
+            <MiniStat label="Grade" value={po.grade} highlight />
+            <MiniStat label="Rank" value={po.rank} />
+            <MiniStat label="Role" value={po.role} />
+            <MiniStat label="Champion Pool" value={`${po.championPool}`} />
+            <MiniStat label="Avg CS" value={po.avgCs} />
+            <MiniStat label="Avg Vision" value={po.avgVision} />
+            <MiniStat label="Avg KDA" value={po.avgKda} />
           </div>
-        ))}
-      </div>
-
-      <div className="mt-6 glass rise rounded-3xl p-6">
-        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
-          <Eye className="size-4" /> AI Coaching Summary
         </div>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{data.coachingSummary}</p>
-      </div>
+      </section>
 
-      {/* Secondary actions */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {[
-          { to: "/progress", label: "View Progress", desc: "Trends & skill growth", icon: TrendingUp },
-          { to: "/champions", label: "Champion Pool", desc: "Mastery & matchups", icon: Sparkles },
-          { to: "/coach", label: "Ask the Coach", desc: "Get instant guidance", icon: MessageSquareText },
-        ].map((a, i) => (
-          <Link
-            key={a.to}
-            to={a.to}
-            className="glass glass-hover rise group flex items-center gap-4 rounded-2xl p-5"
-            style={{ animationDelay: `${300 + i * 60}ms` }}
-          >
-            <span className="grid size-11 place-items-center rounded-xl bg-primary/12 text-primary">
-              <a.icon className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <div className="font-medium">{a.label}</div>
-              <div className="truncate text-xs text-muted-foreground">{a.desc}</div>
+      {/* ---------------- RECENT MATCHES ---------------- */}
+      <section className="mt-8 rise">
+        <SectionTitle
+          icon={Activity}
+          title="Recent Matches"
+          action={
+            <Link to="/matches" className="text-sm font-medium text-primary hover:underline">
+              View all
+            </Link>
+          }
+        />
+        <div className="space-y-3">
+          {data.matches.map((m) => (
+            <MatchCard key={m.id} match={m} />
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------- CHAMPION PERFORMANCE ---------------- */}
+      <section className="mt-8 rise">
+        <SectionTitle
+          icon={Sparkles}
+          title="Champion Performance"
+          action={
+            <Link to="/champions" className="text-sm font-medium text-primary hover:underline">
+              View pool
+            </Link>
+          }
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          {data.champions.map((c) => (
+            <div key={c.name} className="glass glass-hover flex items-center gap-4 rounded-2xl p-5">
+              <img src={c.img} alt="" className="size-14 rounded-xl object-cover" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{c.name}</span>
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${c.trend >= 0 ? "text-success" : "text-destructive"}`}>
+                    {c.trend >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
+                    {c.trend >= 0 ? "+" : ""}{c.trend}%
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{c.games} games</span>
+                  <span>·</span>
+                  <span>{c.wr} WR</span>
+                  <span>·</span>
+                  <span>Grade {c.avgGrade}</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className={`h-full rounded-full ${toneBar[c.tone]}`}
+                    style={{ width: `${c.mastery}%` }}
+                  />
+                </div>
+              </div>
             </div>
-            <ArrowRight className="ml-auto size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          ))}
+        </div>
+      </section>
+
+      {/* ---------------- AI COACHING ---------------- */}
+      <section className="mt-8 rise">
+        <SectionTitle icon={Rocket} title="AI Coaching" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <InsightCard icon={Lightbulb} tone="primary" title="Biggest Improvement Opportunity" body={data.aiInsight.biggestOpportunity} />
+          <InsightCard icon={Dumbbell} tone="success" title="Recommended Practice" body={data.aiInsight.recommendedPractice} />
+          <InsightCard icon={AlertTriangle} tone="warning" title="Common Mistake" body={data.aiInsight.commonMistake} />
+          <InsightCard icon={CheckCircle2} tone="success" title="Positive Habit" body={data.aiInsight.positiveHabit} />
+        </div>
+        <div className="glass mt-4 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-3xl p-6">
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 place-items-center rounded-xl bg-success/15 text-success">
+              <TrendingUp className="size-5" />
+            </span>
+            <div>
+              <div className="text-sm text-muted-foreground">Estimated LP Gain</div>
+              <div className="font-display text-xl font-semibold">{data.aiInsight.estimatedLpGain}</div>
+            </div>
+          </div>
+          <Link
+            to="/coach"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+          >
+            Build my practice plan <ArrowRight className="size-4" />
           </Link>
-        ))}
+        </div>
+      </section>
+
+      {/* ---------------- GOALS + PROGRESS ---------------- */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className="rise">
+          <SectionTitle icon={Target} title="Daily Goals" />
+          <div className="glass space-y-4 rounded-3xl p-6">
+            {data.dailyGoals.map((g) => (
+              <div key={g.label}>
+                <div className="mb-1.5 flex items-center gap-2 text-sm">
+                  {g.done ? (
+                    <CheckCircle2 className="size-4 text-success" />
+                  ) : (
+                    <Circle className="size-4 text-muted-foreground" />
+                  )}
+                  <span className={g.done ? "text-muted-foreground line-through" : ""}>{g.label}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{g.progress}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className={`h-full rounded-full ${g.done ? "bg-success" : "bg-primary"}`}
+                    style={{ width: `${g.progress}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rise">
+          <SectionTitle
+            icon={TrendingUp}
+            title="Weekly Progress"
+            action={
+              <Link to="/progress" className="text-sm font-medium text-primary hover:underline">
+                Analytics
+              </Link>
+            }
+          />
+          <div className="glass space-y-4 rounded-3xl p-6">
+            {data.skills.map((s) => (
+              <div key={s.label}>
+                <div className="mb-1.5 flex items-center gap-2 text-sm">
+                  <span>{s.label}</span>
+                  <span
+                    className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${s.delta >= 0 ? "text-success" : "text-destructive"}`}
+                  >
+                    {s.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                    {s.delta >= 0 ? "+" : ""}{s.delta}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className={`h-full rounded-full ${toneBar[s.tone]}`}
+                    style={{ width: `${s.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </AppShell>
+  );
+}
+
+function FocusMetric({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  tone: Tone;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Icon className={`size-3.5 ${toneText[tone]}`} /> {label}
+      </div>
+      <div className="mt-1.5 font-display text-lg font-semibold tracking-tight">{value}</div>
+    </div>
+  );
+}
+
+function OverviewCard({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  delay,
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  label: string;
+  value: string;
+  delay: number;
+}) {
+  return (
+    <div className="glass glass-hover rise rounded-3xl p-5" style={{ animationDelay: `${delay}ms` }}>
+      <div className={`flex items-center gap-2 text-xs font-medium ${toneText[tone]}`}>
+        <Icon className="size-4" /> {label}
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/90">{value}</p>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  sub,
+  delay,
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  label: string;
+  value: string;
+  sub: string;
+  delay: number;
+}) {
+  return (
+    <div className="glass glass-hover rise rounded-3xl p-5" style={{ animationDelay: `${delay}ms` }}>
+      <div className={`flex items-center gap-2 text-xs font-medium ${toneText[tone]}`}>
+        <Icon className="size-4" /> {label}
+      </div>
+      <div className="mt-2 font-display text-3xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div
+        className={`mt-1 font-display font-semibold tracking-tight ${highlight ? "text-2xl text-primary" : "text-lg"}`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function MatchCard({ match }: { match: Match }) {
+  const [open, setOpen] = useState(false);
+  const win = match.result === "Victory";
+  return (
+    <div className="glass overflow-hidden rounded-2xl">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-white/[0.03]"
+      >
+        <span className={`h-12 w-1 rounded-full ${win ? "bg-success" : "bg-destructive"}`} />
+        <img src={match.img} alt="" className="size-12 rounded-xl object-cover" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{match.champ}</span>
+            <span className={`text-xs font-medium ${win ? "text-success" : "text-destructive"}`}>
+              {match.result}
+            </span>
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            <span>{match.kda} KDA</span>
+            <span>· {match.cs} CS</span>
+            <span>· {match.gameLength}</span>
+            <span>· {match.when}</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-display text-xl font-semibold tracking-tight">{match.grade}</div>
+          <div className="text-xs text-muted-foreground">grade</div>
+        </div>
+        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="animate-fade-in space-y-3 border-t border-white/[0.06] px-5 py-4 text-sm">
+          <div className="grid grid-cols-3 gap-3">
+            <MiniStat label="CS / min" value={match.stats.csPerMin} />
+            <MiniStat label="Vision" value={match.stats.visionScore} />
+            <MiniStat label="Damage share" value={match.stats.damageShare} />
+          </div>
+          <p className="text-success/90">
+            <span className="font-medium text-success">Strength: </span>
+            {match.biggestStrength}
+          </p>
+          <p className="text-warning/90">
+            <span className="font-medium text-warning">Mistake: </span>
+            {match.biggestMistake}
+          </p>
+          <p className="text-muted-foreground">
+            <span className="font-medium text-primary">Coach: </span>
+            {match.recommendation}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InsightCard({
+  icon: Icon,
+  tone,
+  title,
+  body,
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="glass glass-hover rounded-2xl p-5">
+      <div className={`flex items-center gap-2 text-sm font-medium ${toneText[tone]}`}>
+        <Icon className="size-4" /> {title}
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/90">{body}</p>
+    </div>
   );
 }

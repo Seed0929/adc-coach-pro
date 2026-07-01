@@ -38,6 +38,41 @@ export interface Snapshot {
 export interface TodaysFocus {
   headline: string;
   detail: string;
+  confidence: number; // 0-100
+  impact: "Low" | "Medium" | "High";
+  difficulty: "Easy" | "Medium" | "Hard";
+  practiceTime: string; // e.g. "10 minutes"
+}
+
+export interface CoachingOverview {
+  primaryStrength: string;
+  primaryWeakness: string;
+  consistencyScore: number; // 0-100
+  improvementTrendPct: number; // e.g. +14
+}
+
+export interface PerformanceOverview {
+  grade: string;
+  rank: string;
+  role: string;
+  championPool: number;
+  avgCs: string;
+  avgVision: string;
+  avgKda: string;
+}
+
+export interface AiInsight {
+  biggestOpportunity: string;
+  recommendedPractice: string;
+  commonMistake: string;
+  positiveHabit: string;
+  estimatedLpGain: string;
+}
+
+export interface DailyGoal {
+  label: string;
+  progress: number; // 0-100
+  done: boolean;
 }
 
 export interface MatchTimelinePoint {
@@ -66,6 +101,7 @@ export interface Match {
   cs: string;
   lp: string;
   when: string;
+  gameLength: string;
   biggestMistake: string;
   biggestStrength: string;
   recommendation: string;
@@ -81,12 +117,15 @@ export interface Champion {
   games: number;
   note: string;
   tone: Tone;
+  avgGrade: string;
+  trend: number; // e.g. +6 or -3 (win-rate/grade momentum)
 }
 
 export interface SkillTrend {
   label: string;
   value: number;
   tone: Tone;
+  delta: number; // week-over-week change, e.g. +8 or -3
 }
 
 export interface TrendPoint {
@@ -107,6 +146,10 @@ export interface PlayerData {
   coachingSummary: string;
   snapshot: Snapshot;
   todaysFocus: TodaysFocus;
+  coachingOverview: CoachingOverview;
+  performanceOverview: PerformanceOverview;
+  aiInsight: AiInsight;
+  dailyGoals: DailyGoal[];
   matches: Match[];
   champions: Champion[];
   skills: SkillTrend[];
@@ -166,7 +209,43 @@ export const SAMPLE_PLAYER: PlayerData = {
     headline: "Hold your position one screen back in mid-game teamfights.",
     detail:
       "You died first in 6 of your last 10 fights. Kiting from the backline is the single highest-impact habit to fix this week.",
+    confidence: 92,
+    impact: "High",
+    difficulty: "Easy",
+    practiceTime: "10 minutes",
   },
+  coachingOverview: {
+    primaryStrength: "Excellent late-game positioning and kiting under pressure.",
+    primaryWeakness: "Overextending after taking first tower without vision.",
+    consistencyScore: 81,
+    improvementTrendPct: 14,
+  },
+  performanceOverview: {
+    grade: "A-",
+    rank: "Diamond I · 47 LP",
+    role: "Bot / ADC",
+    championPool: 6,
+    avgCs: "8.4 / min",
+    avgVision: "26",
+    avgKda: "3.8 : 1",
+  },
+  aiInsight: {
+    biggestOpportunity:
+      "Wave management before rotating — you leave 12+ CS on the map each game before roaming.",
+    recommendedPractice:
+      "Practice tool: crash three cannon waves cleanly, then recall on the crash for 10 minutes.",
+    commonMistake:
+      "Stepping past your frontline in the first 3 seconds of every mid-game fight.",
+    positiveHabit:
+      "Consistently buying and placing control wards before objectives.",
+    estimatedLpGain: "+65 LP per month if wave management improves.",
+  },
+  dailyGoals: [
+    { label: "Reach 8 CS / min", progress: 76, done: false },
+    { label: "Die fewer than 5 times", progress: 100, done: true },
+    { label: "Place 10 control wards", progress: 60, done: false },
+    { label: "Avoid fights before objectives", progress: 45, done: false },
+  ],
   matches: [
     {
       id: 1,
@@ -178,6 +257,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "241",
       lp: "+24",
       when: "2h ago",
+      gameLength: "32:14",
       biggestMistake: "Overextended in the river without vision at 14:00 and got caught.",
       biggestStrength: "Excellent early trades — you won lane by 900 gold at 10 minutes.",
       recommendation:
@@ -195,6 +275,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "198",
       lp: "-19",
       when: "3h ago",
+      gameLength: "28:47",
       biggestMistake: "Missed 4 recalls on wave crashes and fell 1.2k gold behind by 20 minutes.",
       biggestStrength: "Kept a positive vision score even while behind.",
       recommendation:
@@ -212,6 +293,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "268",
       lp: "+21",
       when: "Yesterday",
+      gameLength: "34:52",
       biggestMistake: "Took a risky flash forward at 28:00 that could have thrown the lead.",
       biggestStrength: "Flawless kiting in the 26-minute teamfight — 4 kills, zero deaths.",
       recommendation:
@@ -229,6 +311,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       cs: "212",
       lp: "-17",
       when: "Yesterday",
+      gameLength: "36:20",
       biggestMistake: "Grouped too late for the 30-minute Baron and lost the objective.",
       biggestStrength: "Strong mid-game farm — you hit your two-item spike on time.",
       recommendation:
@@ -246,6 +329,8 @@ export const SAMPLE_PLAYER: PlayerData = {
       games: 148,
       note: "Your best carry. Keep prioritizing this in tough queues.",
       tone: "success",
+      avgGrade: "A",
+      trend: 6,
     },
     {
       name: "Ezreal",
@@ -255,13 +340,16 @@ export const SAMPLE_PLAYER: PlayerData = {
       games: 96,
       note: "Safe pick, but your mid-game positioning dips here.",
       tone: "warning",
+      avgGrade: "B-",
+      trend: -3,
     },
   ],
   skills: [
-    { label: "Positioning", value: 68, tone: "warning" },
-    { label: "Wave Management", value: 82, tone: "success" },
-    { label: "Vision", value: 74, tone: "success" },
-    { label: "Trading", value: 71, tone: "success" },
+    { label: "Wave Management", value: 82, tone: "success", delta: 9 },
+    { label: "Team Fighting", value: 68, tone: "warning", delta: -4 },
+    { label: "CS", value: 79, tone: "success", delta: 6 },
+    { label: "Vision", value: 74, tone: "success", delta: 3 },
+    { label: "Objective Control", value: 63, tone: "warning", delta: -2 },
   ],
   trend: [
     { week: "W1", score: 62 },
