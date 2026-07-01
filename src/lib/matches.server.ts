@@ -51,11 +51,12 @@ type MatchRow = {
   queue_label: string | null;
   game_duration: number;
   game_creation: string | null;
+  puuid: string | null;
   raw: unknown;
 };
 
 export const SELECT_COLS =
-  "id, match_id, champion_name, champion_id, win, kills, deaths, assists, cs, gold, vision_score, team_position, queue_id, queue_label, game_duration, game_creation, raw";
+  "id, match_id, champion_name, champion_id, win, kills, deaths, assists, cs, gold, vision_score, team_position, queue_id, queue_label, game_duration, game_creation, puuid, raw";
 
 function extractDamage(raw: unknown, championName: string, puuidOrName: string) {
   try {
@@ -76,7 +77,7 @@ function extractDamage(raw: unknown, championName: string, puuidOrName: string) 
 }
 
 export function rowToMatch(r: MatchRow): StoredMatch {
-  const dmg = extractDamage(r.raw, r.champion_name, "");
+  const dmg = extractDamage(r.raw, r.champion_name, r.puuid ?? "");
   return {
     id: r.id,
     matchId: r.match_id,
