@@ -7,8 +7,8 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-import { AppShell, Pill, SampleBadge } from "@/components/app-shell";
-import { usePlayerData } from "@/lib/player-data";
+import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
+import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,15 +32,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { isSample, data } = usePlayerData();
+  const { isDemo, data, identity } = useBotDiffData();
+  const greetingName = identity?.riotId ?? data.playerName;
   return (
     <AppShell>
       {/* Greeting */}
       <div className="rise mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-1 flex items-center gap-3 text-sm text-muted-foreground">
-            Welcome back
-            {isSample && <SampleBadge />}
+            Welcome back, <span className="font-medium text-foreground">{greetingName}</span>
+            {isDemo && <DemoModeBadge />}
           </div>
           <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
             How am I doing?
