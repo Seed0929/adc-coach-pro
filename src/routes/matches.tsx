@@ -92,14 +92,138 @@ function CurveChart({
 }
 
 function Matches() {
-  const { isDemo, data } = useBotDiffData();
   const history = useMatchHistory();
-
   // Real Riot match history takes over once the account is linked.
-  if (history.linked) {
-    return <RealMatches history={history} />;
-  }
+  if (history.linked) return <RealMatches history={history} />;
+  return <DemoMatches />;
+}
 
+function fmtDuration(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}m ${s.toString().padStart(2, "0")}s`;
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function championIconUrl(name: string): string {
+  return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${name}.png`;
+}
+
+function kdaRatio(m: StoredMatch): string {
+  const ratio = m.deaths === 0 ? m.kills + m.assists : (m.kills + m.assists) / m.deaths;
+  return `${ratio.toFixed(2)} KDA`;
+}
+
+function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> }) {
+  const { matches, loading, syncing, error, lastImported, sync } = history;
+
+  return (
+    <AppShell>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          eyebrow="Match Review"
+          title="Your recent games"
+          subtitle="Imported directly from your linked Riot account."
+        />
+        <button
+          onClick={() => void sync()}
+          disabled={syncing}
+          className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+        >
+          {syncing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4" />
+          )}
+          {syncing ? "Syncing…" : "Sync Matches"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/[0.06] p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      {lastImported != null && !error && (
+        <div className="mb-4 rounded-2xl border border-success/20 bg-success/[0.06] p-4 text-sm text-success">
+          {lastImported > 0
+            ? `Imported ${lastImported} new match${lastImported === 1 ? "" : "es"}.`
+            : "You're already up to date."}
+        </div>
+      )}
+
+      {loading && matches.length === 0 ? (
+        <div className="glass flex items-center gap-3 rounded-3xl p-8 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Loading your matches…
+        </div>
+      ) : matches.length === 0 ? (
+        <div className="glass rounded-3xl p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No matches imported yet. Hit <span className="font-medium text-foreground">Sync Matches</span> to
+            pull your 20 most recent games from Riot.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {matches.map((m, i) => {
+            const win = m.win;
+            return (
+              <div
+                key={m.id}
+                style={{ animationDelay: `${i * 40}ms` }}
+                className={`glass rise flex flex-wrap items-center gap-4 rounded-2xl p-4 ${
+                  win ? "border-success/25" : "border-destructive/25"
+                }`}
+              >
+                <img
+                  src={championIconUrl(m.championName)}
+                  alt={m.championName}
+                  className="size-11 rounded-xl object-cover"
+                  loading="lazy"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{m.championName}</span>
+                    <Pill tone={win ? "success" : "danger"}>{win ? "Victory" : "Defeat"}</Pill>
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {m.queueLabel ?? "Match"} · {fmtDate(m.gameCreation)} · {fmtDuration(m.gameDuration)}
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-right sm:grid-cols-3">
+                  <div>
+                    <div className="font-display text-base font-semibold">
+                      {m.kills}/{m.deaths}/{m.assists}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{kdaRatio(m)}</div>
+                  </div>
+                  <div>
+                    <div className="font-display text-base font-semibold">{m.cs}</div>
+                    <div className="text-xs text-muted-foreground">CS</div>
+                  </div>
+                  <div>
+                    <div className="font-display text-base font-semibold text-primary">
+                      {(m.gold / 1000).toFixed(1)}k
+                    </div>
+                    <div className="text-xs text-muted-foreground">Gold</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </AppShell>
+  );
+}
+
+function DemoMatches() {
+  const { isDemo, data } = useBotDiffData();
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
 
