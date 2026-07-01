@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as MatchesRouteImport } from './routes/matches'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CoachRouteImport } from './routes/coach'
 import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -50,6 +51,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const MatchesRoute = MatchesRouteImport.update({
   id: '/matches',
   path: '/matches',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoachRoute = CoachRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/dashboard'
     | '/matches'
     | '/progress'
     | '/reset-password'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/dashboard'
     | '/matches'
     | '/progress'
     | '/reset-password'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/dashboard'
     | '/matches'
     | '/progress'
     | '/reset-password'
@@ -174,6 +186,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChampionsRoute: typeof ChampionsRoute
   CoachRoute: typeof CoachRoute
+  DashboardRoute: typeof DashboardRoute
   MatchesRoute: typeof MatchesRoute
   ProgressRoute: typeof ProgressRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       path: '/matches'
       fullPath: '/matches'
       preLoaderRoute: typeof MatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coach': {
@@ -290,6 +310,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChampionsRoute: ChampionsRoute,
   CoachRoute: CoachRoute,
+  DashboardRoute: DashboardRoute,
   MatchesRoute: MatchesRoute,
   ProgressRoute: ProgressRoute,
   ResetPasswordRoute: ResetPasswordRoute,
