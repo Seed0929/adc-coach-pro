@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      matches: {
+        Row: {
+          assists: number
+          champion_id: number | null
+          champion_name: string
+          created_at: string
+          cs: number
+          deaths: number
+          game_creation: string | null
+          game_duration: number
+          gold: number
+          id: string
+          kills: number
+          match_id: string
+          profile_id: string
+          puuid: string
+          queue_id: number | null
+          queue_label: string | null
+          raw: Json | null
+          team_position: string | null
+          timeline: Json | null
+          timeline_fetched: boolean
+          updated_at: string
+          vision_score: number | null
+          win: boolean
+        }
+        Insert: {
+          assists?: number
+          champion_id?: number | null
+          champion_name: string
+          created_at?: string
+          cs?: number
+          deaths?: number
+          game_creation?: string | null
+          game_duration?: number
+          gold?: number
+          id?: string
+          kills?: number
+          match_id: string
+          profile_id: string
+          puuid: string
+          queue_id?: number | null
+          queue_label?: string | null
+          raw?: Json | null
+          team_position?: string | null
+          timeline?: Json | null
+          timeline_fetched?: boolean
+          updated_at?: string
+          vision_score?: number | null
+          win?: boolean
+        }
+        Update: {
+          assists?: number
+          champion_id?: number | null
+          champion_name?: string
+          created_at?: string
+          cs?: number
+          deaths?: number
+          game_creation?: string | null
+          game_duration?: number
+          gold?: number
+          id?: string
+          kills?: number
+          match_id?: string
+          profile_id?: string
+          puuid?: string
+          queue_id?: number | null
+          queue_label?: string | null
+          raw?: Json | null
+          team_position?: string | null
+          timeline?: Json | null
+          timeline_fetched?: boolean
+          updated_at?: string
+          vision_score?: number | null
+          win?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
