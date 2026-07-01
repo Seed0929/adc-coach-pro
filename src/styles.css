@@ -4,6 +4,44 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+  --color-brand: var(--primary);
+  --color-brand-dim: var(--primary-dim);
+  --color-gold: var(--gold);
+  --color-surface: var(--surface);
+  --color-surface-bright: var(--surface-bright);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@utility scanline-effect {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, oklch(0.86 0.16 200 / 0.06), transparent);
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+  }
+}
+
 /*
  * Design system definition.
  *
