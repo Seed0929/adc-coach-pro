@@ -65,6 +65,65 @@ export type Database = {
         }
         Relationships: []
       }
+      riot_accounts: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          game_name: string
+          id: string
+          last_sync: string | null
+          linked_at: string
+          profile_icon_id: number | null
+          profile_id: string
+          puuid: string | null
+          region: string
+          summoner_id: string | null
+          summoner_level: number | null
+          tag_line: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          game_name: string
+          id?: string
+          last_sync?: string | null
+          linked_at?: string
+          profile_icon_id?: number | null
+          profile_id: string
+          puuid?: string | null
+          region: string
+          summoner_id?: string | null
+          summoner_level?: number | null
+          tag_line: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          game_name?: string
+          id?: string
+          last_sync?: string | null
+          linked_at?: string
+          profile_icon_id?: number | null
+          profile_id?: string
+          puuid?: string | null
+          region?: string
+          summoner_id?: string | null
+          summoner_level?: number | null
+          tag_line?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riot_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
