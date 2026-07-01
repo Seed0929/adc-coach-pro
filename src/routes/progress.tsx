@@ -8,8 +8,8 @@ import {
   YAxis,
 } from "recharts";
 import { ArrowUpRight, Target } from "lucide-react";
-import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
-import { usePlayerData } from "@/lib/player-data";
+import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
+import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -28,11 +28,11 @@ export const Route = createFileRoute("/progress")({
 });
 
 function Progress() {
-  const { isSample, data } = usePlayerData();
+  const { isDemo, data } = useBotDiffData();
   const { trend, skills } = data;
   return (
     <AppShell>
-      {isSample && <SampleBanner />}
+      {isDemo && <DemoModeBanner />}
       <PageHeader
         eyebrow="Progress"
         title="You're improving"

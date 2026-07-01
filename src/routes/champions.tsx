@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
-import { usePlayerData } from "@/lib/player-data";
+import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
+import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/champions")({
   head: () => ({
@@ -19,10 +19,10 @@ export const Route = createFileRoute("/champions")({
 });
 
 function Champions() {
-  const { isSample, data } = usePlayerData();
+  const { isDemo, data } = useBotDiffData();
   return (
     <AppShell>
-      {isSample && <SampleBanner />}
+      {isDemo && <DemoModeBanner />}
       <PageHeader
         eyebrow="Champion Pool"
         title="Master your pool"

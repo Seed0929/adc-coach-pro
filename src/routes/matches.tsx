@@ -9,8 +9,8 @@ import {
   YAxis,
 } from "recharts";
 import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp } from "lucide-react";
-import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
-import { usePlayerData, type Match } from "@/lib/player-data";
+import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
+import { useBotDiffData, type Match } from "@/lib/player-data";
 
 export const Route = createFileRoute("/matches")({
   head: () => ({
@@ -90,13 +90,13 @@ function CurveChart({
 }
 
 function Matches() {
-  const { isSample, data } = usePlayerData();
+  const { isDemo, data } = useBotDiffData();
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
 
   return (
     <AppShell>
-      {isSample && <SampleBanner />}
+      {isDemo && <DemoModeBanner />}
       <PageHeader
         eyebrow="Match Review"
         title="Your recent games"
