@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Gamepad2, Hash, Globe, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
+import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useBotDiffData } from "@/lib/player-data";
 
@@ -38,6 +38,7 @@ function WelcomePage() {
   const navigate = useNavigate();
   const { loading, isAuthenticated, user, profile, refreshProfile } = useAuth();
   const { identity, refreshIdentity } = useBotDiffData();
+  const onboardingComplete = hasCompletedOnboarding(profile);
 
   const [gameName, setGameName] = useState("");
   const [tagLine, setTagLine] = useState("");
@@ -85,13 +86,13 @@ function WelcomePage() {
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ onboarding_completed: true })
+        .update({ onboarding_complete: true, onboarding_completed: true })
         .eq("id", user.id);
       if (profileError) throw profileError;
 
       await Promise.all([refreshProfile(), refreshIdentity()]);
       toast.success("Riot identity saved. Welcome to BotDiff!");
-      navigate({ to: "/", replace: true });
+      navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally {
@@ -116,7 +117,7 @@ function WelcomePage() {
 
       <div className="rise glass w-full max-w-lg rounded-3xl p-8 md:p-10">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
-          <Sparkles className="size-3.5" /> First-time setup
+          <Sparkles className="size-3.5" /> {onboardingComplete ? "Riot identity" : "First-time setup"}
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
           Welcome to BotDiff
@@ -184,7 +185,7 @@ function WelcomePage() {
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
-                Continue to dashboard
+                Continue to Dashboard
                 <ArrowRight className="size-4" />
               </>
             )}

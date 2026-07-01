@@ -99,7 +99,7 @@ function Progress() {
           </div>
         </div>
 
-        {/* Mission + weaknesses */}
+        {/* Mission + plan */}
         <div className="space-y-6">
           <div className="glass rise rounded-3xl p-6">
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
@@ -115,6 +115,38 @@ function Progress() {
               ))}
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 md:grid-cols-3">
+        <div className="glass rise rounded-3xl p-6">
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Personalized Plan</h2>
+          <ol className="space-y-3 text-sm text-muted-foreground">
+            {data.improvementPlan.map((item, index) => (
+              <li key={item} className="flex gap-3">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                  {index + 1}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="glass rise rounded-3xl p-6">
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Strengths</h2>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {data.strengths.map((item) => (
+              <li key={item}>✓ {item}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="glass rise rounded-3xl p-6">
+          <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Weaknesses</h2>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {data.weaknesses.map((item) => (
+              <li key={item}>• {item}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </AppShell>

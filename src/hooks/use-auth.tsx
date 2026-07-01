@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -13,6 +14,10 @@ import { lovable } from "@/integrations/lovable";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type Profile = Tables<"profiles">;
+
+export function hasCompletedOnboarding(profile: Profile | null | undefined): boolean {
+  return Boolean(profile?.onboarding_complete);
+}
 
 interface AuthContextValue {
   session: Session | null;
@@ -58,37 +63,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
+  const profileRef = useRef<Profile | null>(null);
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
     if (!nextUser) {
       setProfile(null);
-      return;
+      profileRef.current = null;
+      return null;
     }
     const p = await ensureProfile(nextUser);
     setProfile(p);
+    profileRef.current = p;
+    return p;
   }, []);
 
   useEffect(() => {
-    // Register the listener first, then hydrate the existing session.
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    let active = true;
+
+    async function applySession(nextSession: Session | null) {
+      if (!active) return;
+      const nextUser = nextSession?.user ?? null;
       setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      // Defer Supabase calls to avoid deadlocks inside the callback.
-      if (nextSession?.user) {
-        setTimeout(() => void loadProfile(nextSession.user), 0);
-      } else {
+      setUser(nextUser);
+
+      if (!nextUser) {
+        userIdRef.current = null;
         setProfile(null);
+        setLoading(false);
+        return;
       }
+
+      userIdRef.current = nextUser.id;
+      try {
+        await loadProfile(nextUser);
+      } catch (error) {
+        console.error("Failed to load profile", error);
+        if (active) setProfile(null);
+        profileRef.current = null;
+      }
+      if (active) setLoading(false);
+    }
+
+    // Register the listener first, then hydrate the existing session. Profile
+    // reads are intentionally deferred outside the auth callback to avoid
+    // blocking auth events while still keeping routing gated until ready.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      const nextUser = nextSession?.user ?? null;
+      setSession(nextSession);
+      setUser(nextUser);
+
+      if (!nextUser) {
+        userIdRef.current = null;
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      if (userIdRef.current === nextUser.id && profileRef.current) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setTimeout(() => {
+        void applySession(nextSession);
+      }, 0);
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) void loadProfile(data.session.user);
-      setLoading(false);
+      if (active) {
+        void applySession(data.session);
+      } else {
+        setLoading(false);
+      }
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, [loadProfile]);
 
   const signUp = useCallback<AuthContextValue["signUp"]>(async ({ email, password, username }) => {
@@ -118,7 +172,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
     setProfile(null);
+    profileRef.current = null;
+    setLoading(false);
   }, []);
 
   const resetPassword = useCallback<AuthContextValue["resetPassword"]>(async (email) => {

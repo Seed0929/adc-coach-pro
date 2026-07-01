@@ -13,15 +13,15 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
+import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { useBotDiffData } from "@/lib/player-data";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/coach", label: "Coach", icon: MessageSquareText },
-  { to: "/matches", label: "Matches", icon: Swords },
+  { to: "/dashboard", label: "Dashboard", icon: Home },
+  { to: "/coach", label: "AI Coach", icon: MessageSquareText },
+  { to: "/matches", label: "Match History", icon: Swords },
   { to: "/champions", label: "Champions", icon: Sparkles },
-  { to: "/progress", label: "Progress", icon: TrendingUp },
+  { to: "/progress", label: "Analytics", icon: TrendingUp },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -40,16 +40,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { loading, isAuthenticated, profile, user, signOut } = useAuth();
   const { identity } = useBotDiffData();
+  const onboardingComplete = hasCompletedOnboarding(profile);
+  const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
 
-  // Protect every route that renders inside the shell, and gate on onboarding.
+  // Single protected-route gate: unauthenticated users go to auth; first-time
+  // users go to welcome exactly until the profile says onboarding is complete.
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated) {
       navigate({ to: "/auth", search: { redirect: pathname }, replace: true });
-    } else if (profile && !profile.onboarding_completed) {
+    } else if (profile && !onboardingComplete) {
       navigate({ to: "/welcome", replace: true });
     }
-  }, [loading, isAuthenticated, profile, navigate, pathname]);
+  }, [loading, isAuthenticated, profile, onboardingComplete, navigate, pathname]);
 
   async function handleSignOut() {
     await signOut();
@@ -57,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (loading || !isAuthenticated) {
+  if (loading || !isAuthenticated || (profile && !onboardingComplete)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background text-foreground">
         <Ambient />
@@ -76,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col p-4 lg:flex">
         <div className="glass flex h-full flex-col rounded-3xl p-5">
-          <Link to="/" className="mb-8 flex items-center gap-2.5 px-2">
+          <Link to="/dashboard" className="mb-8 flex items-center gap-2.5 px-2">
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--primary)]">
               <span className="font-display text-lg font-bold">B</span>
             </span>
@@ -85,7 +88,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="flex flex-1 flex-col gap-1">
             {nav.map(({ to, label, icon: Icon }) => {
-              const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+              const active =
+                to === "/dashboard" ? pathname === "/" || pathname.startsWith(to) : pathname.startsWith(to);
               return (
                 <Link
                   key={to}
@@ -108,8 +112,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="size-9 rounded-full object-cover" />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="size-9 rounded-full object-cover" />
             ) : (
               <div className="size-9 rounded-full bg-gradient-to-br from-primary to-primary-dim" />
             )}
@@ -130,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile top bar */}
       <header className="glass sticky top-0 z-40 mx-4 mt-4 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-display font-bold">
             B
           </span>
@@ -138,7 +142,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <nav className="flex items-center gap-1">
           {nav.map(({ to, icon: Icon }) => {
-            const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+            const active =
+              to === "/dashboard" ? pathname === "/" || pathname.startsWith(to) : pathname.startsWith(to);
             return (
               <Link
                 key={to}

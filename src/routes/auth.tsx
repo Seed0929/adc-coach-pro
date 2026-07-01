@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Mail, Lock, User as UserIcon, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
+import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -40,7 +40,7 @@ function Field({
 function AuthPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const { isAuthenticated, loading, signIn, signUp, resetPassword, signInWithGoogle } = useAuth();
+  const { isAuthenticated, loading, profile, signIn, signUp, resetPassword, signInWithGoogle } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -48,14 +48,15 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const dest = search.redirect && search.redirect !== "/auth" ? search.redirect : "/";
+  const dest = search.redirect && search.redirect !== "/auth" ? search.redirect : "/dashboard";
 
-  // Already signed in → go to the dashboard (or intended destination).
+  // Already signed in → go to onboarding only when incomplete; otherwise go to
+  // the dashboard or intended protected destination.
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate({ to: dest, replace: true });
+      navigate({ to: profile && !hasCompletedOnboarding(profile) ? "/welcome" : dest, replace: true });
     }
-  }, [loading, isAuthenticated, navigate, dest]);
+  }, [loading, isAuthenticated, profile, navigate, dest]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,7 +78,6 @@ function AuthPage() {
           return;
         }
         toast.success("Account created. Welcome to BotDiff.");
-        navigate({ to: dest, replace: true });
         return;
       }
 
@@ -87,7 +87,6 @@ function AuthPage() {
         return;
       }
       toast.success("Welcome back.");
-      navigate({ to: dest, replace: true });
     } finally {
       setSubmitting(false);
     }

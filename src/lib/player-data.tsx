@@ -46,6 +46,8 @@ export interface MatchTimelinePoint {
   csBenchmark: number; // rank-average CS at this minute
   gold: number; // your gold at this minute
   goldBenchmark: number; // rank-average gold at this minute
+  damage: number; // damage to champions at this minute
+  damageBenchmark: number; // rank-average damage at this minute
 }
 
 export interface MatchStats {
@@ -100,6 +102,9 @@ export interface CoachMessage {
 export interface PlayerData {
   playerName: string;
   rank: RankInfo;
+  performanceGrade: string;
+  visionScore: number;
+  coachingSummary: string;
   snapshot: Snapshot;
   todaysFocus: TodaysFocus;
   matches: Match[];
@@ -108,6 +113,9 @@ export interface PlayerData {
   trend: TrendPoint[];
   improvementScore: number;
   improvementDelta: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvementPlan: string[];
   recentImprovements: string[];
   todaysMission: string;
   heatmapImg: string;
@@ -122,17 +130,22 @@ function buildTimeline(
   goldRate: number,
   csEdge: number,
   goldEdge: number,
+  damageRate = 420,
+  damageEdge = 0,
 ): MatchTimelinePoint[] {
   const minutes = [5, 10, 15, 20, 25, 30];
   return minutes.map((minute) => {
     const csBenchmark = Math.round(minute * 7.6);
     const goldBenchmark = Math.round(300 + minute * 380);
+    const damageBenchmark = Math.round(minute * 390);
     return {
       minute,
       cs: Math.round(minute * csRate) + csEdge,
       csBenchmark,
       gold: Math.round(300 + minute * goldRate) + goldEdge,
       goldBenchmark,
+      damage: Math.max(0, Math.round(minute * damageRate) + damageEdge),
+      damageBenchmark,
     };
   });
 }
@@ -140,6 +153,10 @@ function buildTimeline(
 export const SAMPLE_PLAYER: PlayerData = {
   playerName: "Sample ADC",
   rank: { tier: "Diamond I", lp: 47 },
+  performanceGrade: "A-",
+  visionScore: 26,
+  coachingSummary:
+    "Your lane fundamentals are climbing, but mid-game positioning still decides most losses. Prioritize safe rotations and fight from one screen behind your frontline.",
   snapshot: {
     improvementScore: 84,
     improvementDelta: 3.1,
@@ -166,7 +183,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       recommendation:
         "Ward the river bush before rotating and hold back until your team groups. Patience before mid-game skirmishes would have saved this game.",
       stats: { csPerMin: "8.9", visionScore: "24", damageShare: "31%" },
-      timeline: buildTimeline(8.9, 430, 6, 700),
+      timeline: buildTimeline(8.9, 430, 6, 700, 475, 900),
     },
     {
       id: 2,
@@ -183,7 +200,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       recommendation:
         "Recall on wave crashes instead of shoving into a frozen lane. Track the enemy jungler before stepping up.",
       stats: { csPerMin: "7.1", visionScore: "28", damageShare: "24%" },
-      timeline: buildTimeline(7.1, 350, -8, -600),
+      timeline: buildTimeline(7.1, 350, -8, -600, 330, -650),
     },
     {
       id: 3,
@@ -200,7 +217,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       recommendation:
         "Keep prioritizing Kai'Sa in tough queues. Trust your positioning — you don't need the flash-forward plays.",
       stats: { csPerMin: "9.4", visionScore: "31", damageShare: "38%" },
-      timeline: buildTimeline(9.4, 470, 12, 1100),
+      timeline: buildTimeline(9.4, 470, 12, 1100, 540, 1300),
     },
     {
       id: 4,
@@ -217,7 +234,7 @@ export const SAMPLE_PLAYER: PlayerData = {
       recommendation:
         "Rotate to objectives 20 seconds earlier. Ping your team before the objective spawns so you're grouped in time.",
       stats: { csPerMin: "7.6", visionScore: "22", damageShare: "27%" },
-      timeline: buildTimeline(7.6, 390, 2, 100),
+      timeline: buildTimeline(7.6, 390, 2, 100, 405, 150),
     },
   ],
   champions: [
@@ -257,6 +274,21 @@ export const SAMPLE_PLAYER: PlayerData = {
   ],
   improvementScore: 84,
   improvementDelta: 22,
+  strengths: [
+    "Wave control before first recall",
+    "Teamfight damage when positioned safely",
+    "Kai'Sa execution around two-item spikes",
+  ],
+  weaknesses: [
+    "River rotations without support or jungle information",
+    "Late objective setup around Baron and third dragon",
+    "Recall timing after crashing cannon waves",
+  ],
+  improvementPlan: [
+    "For the next 5 games, say enemy jungle position out loud before crossing river.",
+    "Recall immediately after clean wave crashes instead of fishing for one more plate.",
+    "In every mid-game fight, start one screen behind your frontline and only step up after key engage cooldowns are used.",
+  ],
   recentImprovements: [
     "Vision score up 18% over 2 weeks",
     "CS at 10 min improved from 72 → 81",
@@ -311,7 +343,25 @@ export interface BotDiffDataValue {
 
 const DataContext = createContext<BotDiffDataValue | undefined>(undefined);
 
-export function DataProvider({ children }: { children: ReactNode }) {
+function useDemoDataSource(): PlayerData {
+  return SAMPLE_PLAYER;
+}
+
+function useRiotDataSource(): PlayerData | null {
+  // TODO(riot): fetch verified Riot match, timeline, champion, and coaching data
+  // and return the exact same PlayerData shape used by demo mode.
+  return null;
+}
+
+export function DemoDataProvider({ children }: { children: ReactNode }) {
+  return <DataContext.Provider value={useDemoBotDiffValue()}>{children}</DataContext.Provider>;
+}
+
+export function RiotDataProvider({ children }: { children: ReactNode }) {
+  return <DataContext.Provider value={useRiotBotDiffValue()}>{children}</DataContext.Provider>;
+}
+
+function useSharedIdentity() {
   const { user, profile } = useAuth();
   const [identity, setIdentity] = useState<PlayerIdentity | null>(null);
 
@@ -337,29 +387,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
     );
   }, [user]);
 
-  // Re-read identity whenever the signed-in user or their profile changes
-  // (e.g. right after onboarding saves the Riot account).
   useEffect(() => {
     void refreshIdentity();
   }, [refreshIdentity, profile]);
 
+  return { profile, identity, refreshIdentity };
+}
+
+function useDemoBotDiffValue(): BotDiffDataValue {
+  const { identity, refreshIdentity } = useSharedIdentity();
+  const data = useDemoDataSource();
+  return useMemo(
+    () => ({ isDemo: true, identity, data, refreshIdentity }),
+    [identity, data, refreshIdentity],
+  );
+}
+
+function useRiotBotDiffValue(): BotDiffDataValue {
+  const { identity, refreshIdentity } = useSharedIdentity();
+  const riotData = useRiotDataSource();
+  const data = riotData ?? SAMPLE_PLAYER;
+  return useMemo(
+    () => ({ isDemo: !riotData, identity, data, refreshIdentity }),
+    [riotData, identity, data, refreshIdentity],
+  );
+}
+
+export function DataProvider({ children }: { children: ReactNode }) {
   // Demo mode is on until a real Riot API connection exists. This flag flips
   // off automatically once `riot_connected` becomes true.
-  const isDemo = !profile?.riot_connected;
-
-  const value = useMemo<BotDiffDataValue>(
-    () => ({
-      isDemo,
-      identity,
-      // TODO(riot): replace SAMPLE_PLAYER with live Riot-derived PlayerData
-      // when `!isDemo`. The shape is identical, so the UI stays unchanged.
-      data: SAMPLE_PLAYER,
-      refreshIdentity,
-    }),
-    [isDemo, identity, refreshIdentity],
-  );
-
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  const { profile } = useAuth();
+  return profile?.riot_connected ? <RiotDataProvider>{children}</RiotDataProvider> : <DemoDataProvider>{children}</DemoDataProvider>;
 }
 
 /** Single interface every dashboard surface consumes. */
