@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Settings,
   LogOut,
+  LogIn,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
