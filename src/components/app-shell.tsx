@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
+import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -202,5 +203,45 @@ export function PageHeader({
       <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">{title}</h1>
       {subtitle && <p className="mt-3 max-w-xl text-base text-muted-foreground">{subtitle}</p>}
     </div>
+  );
+}
+
+/**
+ * Subtle badge signalling that the surface is showing sample data. It doubles
+ * as a call-to-action: connecting a Riot account swaps every example for the
+ * player's own match history and personalized AI analysis.
+ */
+export function SampleBadge({ className = "" }: { className?: string }) {
+  return (
+    <Link
+      to="/welcome"
+      className={`group inline-flex items-center gap-2 rounded-full border border-warning/25 bg-warning/[0.08] px-3 py-1.5 text-xs font-medium text-warning transition-colors hover:bg-warning/[0.14] ${className}`}
+      title="Connect your Riot account to replace this with your own data"
+    >
+      <FlaskConical className="size-3.5" />
+      Sample data
+      <span className="hidden text-warning/70 group-hover:inline sm:inline">
+        · connect Riot to see yours
+      </span>
+    </Link>
+  );
+}
+
+/** Full-width banner variant for the top of data-heavy pages. */
+export function SampleBanner() {
+  return (
+    <Link
+      to="/welcome"
+      className="rise mb-6 flex items-center gap-3 rounded-2xl border border-warning/20 bg-warning/[0.06] px-4 py-3 text-sm transition-colors hover:bg-warning/[0.1]"
+    >
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-warning/15 text-warning">
+        <FlaskConical className="size-4" />
+      </span>
+      <span className="text-muted-foreground">
+        <span className="font-medium text-foreground">You're exploring with sample data.</span>{" "}
+        Connect your Riot account to automatically replace every example with your own match
+        history and personalized AI analysis.
+      </span>
+    </Link>
   );
 }

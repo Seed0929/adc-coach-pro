@@ -8,7 +8,8 @@ import {
   YAxis,
 } from "recharts";
 import { ArrowUpRight, Target } from "lucide-react";
-import { AppShell, Pill, PageHeader } from "@/components/app-shell";
+import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
+import { usePlayerData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -26,26 +27,12 @@ export const Route = createFileRoute("/progress")({
   component: Progress,
 });
 
-const trend = [
-  { week: "W1", score: 62 },
-  { week: "W2", score: 65 },
-  { week: "W3", score: 61 },
-  { week: "W4", score: 70 },
-  { week: "W5", score: 74 },
-  { week: "W6", score: 78 },
-  { week: "W7", score: 84 },
-];
-
-const skills = [
-  { label: "Positioning", value: 68, tone: "warning" as const },
-  { label: "Wave Management", value: 82, tone: "success" as const },
-  { label: "Vision", value: 74, tone: "success" as const },
-  { label: "Trading", value: 71, tone: "success" as const },
-];
-
 function Progress() {
+  const { isSample, data } = usePlayerData();
+  const { trend, skills } = data;
   return (
     <AppShell>
+      {isSample && <SampleBanner />}
       <PageHeader
         eyebrow="Progress"
         title="You're improving"
@@ -57,7 +44,9 @@ function Progress() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="text-sm text-muted-foreground">Improvement Score</div>
-            <div className="font-display text-3xl font-semibold tracking-tight">84 <span className="text-lg text-success">+22</span></div>
+            <div className="font-display text-3xl font-semibold tracking-tight">
+              {data.improvementScore} <span className="text-lg text-success">+{data.improvementDelta}</span>
+            </div>
           </div>
           <Pill tone="success"><ArrowUpRight className="size-3.5" /> Trending up</Pill>
         </div>
@@ -116,14 +105,14 @@ function Progress() {
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
               <Target className="size-4" /> Today's Mission
             </div>
-            <p className="text-lg font-medium leading-snug">Die fewer than 4 times and stay behind your frontline.</p>
+            <p className="text-lg font-medium leading-snug">{data.todaysMission}</p>
           </div>
           <div className="glass rise rounded-3xl p-6">
             <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">Recent Improvements</h2>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>✓ Vision score up 18% over 2 weeks</li>
-              <li>✓ CS at 10 min improved from 72 → 81</li>
-              <li>✓ First-death rate down from 41% → 28%</li>
+              {data.recentImprovements.map((r) => (
+                <li key={r}>✓ {r}</li>
+              ))}
             </ul>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, Pill, PageHeader } from "@/components/app-shell";
-import champKaisa from "@/assets/champ-1.jpg";
-import champEzreal from "@/assets/champ-2.jpg";
+import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
+import { usePlayerData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/champions")({
   head: () => ({
@@ -19,30 +18,11 @@ export const Route = createFileRoute("/champions")({
   component: Champions,
 });
 
-const champions = [
-  {
-    name: "Kai'Sa",
-    img: champKaisa,
-    mastery: 92,
-    wr: "62%",
-    games: 148,
-    note: "Your best carry. Keep prioritizing this in tough queues.",
-    tone: "success" as const,
-  },
-  {
-    name: "Ezreal",
-    img: champEzreal,
-    mastery: 74,
-    wr: "48%",
-    games: 96,
-    note: "Safe pick, but your mid-game positioning dips here.",
-    tone: "warning" as const,
-  },
-];
-
 function Champions() {
+  const { isSample, data } = usePlayerData();
   return (
     <AppShell>
+      {isSample && <SampleBanner />}
       <PageHeader
         eyebrow="Champion Pool"
         title="Master your pool"
@@ -50,7 +30,7 @@ function Champions() {
       />
 
       <div className="grid gap-6 md:grid-cols-2">
-        {champions.map((c, i) => (
+        {data.champions.map((c, i) => (
           <div
             key={c.name}
             style={{ animationDelay: `${i * 70}ms` }}
