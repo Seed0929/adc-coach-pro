@@ -178,6 +178,12 @@ export function DashboardPage() {
             >
               Review latest matches
             </Link>
+            <Link
+              to="/coaching"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-medium transition-colors hover:bg-white/[0.06]"
+            >
+              Open coaching library
+            </Link>
           </div>
         </div>
       </section>
