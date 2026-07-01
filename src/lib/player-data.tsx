@@ -7,8 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { getRiotDashboard, type DashboardData } from "@/lib/dashboard.functions";
 import champKaisa from "@/assets/champ-1.jpg";
 import champEzreal from "@/assets/champ-2.jpg";
 import heatmapImg from "@/assets/heatmap.jpg";
