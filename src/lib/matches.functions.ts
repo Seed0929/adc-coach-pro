@@ -174,7 +174,7 @@ export const syncMatches = createServerFn({ method: "POST" })
             team_position: me.teamPosition || null,
             game_duration: match.info.gameDuration,
             game_creation: new Date(match.info.gameCreation).toISOString(),
-            raw: match as unknown as Record<string, unknown>,
+            raw: match as unknown as import("@/integrations/supabase/types").Json,
           },
           { onConflict: "profile_id,match_id" },
         );
