@@ -6,6 +6,7 @@ import {
   Sparkles,
   Target,
   Trophy,
+  Eye,
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
@@ -90,15 +91,19 @@ export function DashboardPage() {
       <div className="mt-6 grid gap-6 md:grid-cols-3">
         {[
           {
+            label: "Overall Grade",
+            value: data.performanceGrade,
+            sub: "current coaching assessment",
+          },
+          {
             label: "Improvement Score",
             value: `${data.snapshot.improvementScore}`,
             sub: `up ${data.snapshot.improvementDelta} this week`,
           },
-          { label: "Current Rank", value: data.rank.tier, sub: "peak this season" },
           {
-            label: "Focus Streak",
-            value: `${data.snapshot.focusStreakDays} days`,
-            sub: "keep it going",
+            label: "Vision Score",
+            value: `${data.visionScore}`,
+            sub: "recent match average",
           },
         ].map((s, i) => (
           <div
@@ -111,6 +116,13 @@ export function DashboardPage() {
             <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 glass rise rounded-3xl p-6">
+        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
+          <Eye className="size-4" /> AI Coaching Summary
+        </div>
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{data.coachingSummary}</p>
       </div>
 
       {/* Secondary actions */}
