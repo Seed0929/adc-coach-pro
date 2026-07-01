@@ -75,7 +75,12 @@ function SettingsPage() {
           title="Connected Riot Account"
           desc={riot ? `${riot.game_name}#${riot.tag_line} · ${riot.region}` : "Not linked yet"}
           action={
-            riot ? <Pill tone="success">Linked</Pill> : <Pill tone="warning">Not linked</Pill>
+            <Link
+              to="/welcome"
+              className="rounded-full border border-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/[0.06]"
+            >
+              {riot ? "Update Riot ID" : "Set Riot ID"}
+            </Link>
           }
         />
         <Row

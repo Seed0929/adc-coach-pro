@@ -4,6 +4,7 @@ import { Loader2, Gamepad2, Hash, Globe, ArrowRight, Sparkles } from "lucide-rea
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -36,21 +37,28 @@ const REGIONS = [
 function WelcomePage() {
   const navigate = useNavigate();
   const { loading, isAuthenticated, user, profile, refreshProfile } = useAuth();
+  const { identity, refreshIdentity } = useBotDiffData();
 
   const [gameName, setGameName] = useState("");
   const [tagLine, setTagLine] = useState("");
   const [region, setRegion] = useState("NA");
   const [submitting, setSubmitting] = useState(false);
 
-  // Not signed in → auth. Already onboarded → dashboard.
+  // Only guard authentication here. Onboarded users may still open this page
+  // manually (e.g. from Settings) to update their Riot identity — we never
+  // bounce them away automatically.
   useEffect(() => {
     if (loading) return;
-    if (!isAuthenticated) {
-      navigate({ to: "/auth", replace: true });
-    } else if (profile?.onboarding_completed) {
-      navigate({ to: "/", replace: true });
-    }
-  }, [loading, isAuthenticated, profile?.onboarding_completed, navigate]);
+    if (!isAuthenticated) navigate({ to: "/auth", replace: true });
+  }, [loading, isAuthenticated, navigate]);
+
+  // Prefill with the existing Riot identity when editing after onboarding.
+  useEffect(() => {
+    if (!identity) return;
+    setGameName(identity.gameName);
+    setTagLine(identity.tagLine);
+    setRegion(identity.region);
+  }, [identity]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,12 +85,12 @@ function WelcomePage() {
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ onboarding_completed: true, riot_connected: true })
+        .update({ onboarding_completed: true })
         .eq("id", user.id);
       if (profileError) throw profileError;
 
-      await refreshProfile();
-      toast.success("Riot account linked. Welcome to BotDiff!");
+      await Promise.all([refreshProfile(), refreshIdentity()]);
+      toast.success("Riot identity saved. Welcome to BotDiff!");
       navigate({ to: "/", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Try again.");
@@ -91,7 +99,7 @@ function WelcomePage() {
     }
   }
 
-  if (loading || !isAuthenticated || profile?.onboarding_completed) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="grid min-h-screen place-items-center bg-background text-foreground">
         <Loader2 className="size-6 animate-spin text-primary" />

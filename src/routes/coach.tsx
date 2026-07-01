@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Send, Sparkles } from "lucide-react";
-import { AppShell, SampleBadge } from "@/components/app-shell";
-import { usePlayerData, type CoachMessage } from "@/lib/player-data";
+import { AppShell, DemoModeBadge } from "@/components/app-shell";
+import { useBotDiffData, type CoachMessage } from "@/lib/player-data";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/coach")({
 });
 
 function Coach() {
-  const { isSample, data } = usePlayerData();
+  const { isDemo, data } = useBotDiffData();
   const [messages, setMessages] = useState<CoachMessage[]>(data.coachSeed);
   const [input, setInput] = useState("");
 
@@ -36,7 +36,7 @@ function Coach() {
       { role: "you", text: t },
       {
         role: "coach",
-        text: isSample
+        text: isDemo
           ? "This is a sample conversation. Once you connect your Riot account, I'll answer using your own game data. For now: focus on positioning one screen back and recall on wave crashes."
           : "Here's the plan based on your recent games: focus on positioning one screen back and recall on wave crashes.",
       },
@@ -54,7 +54,7 @@ function Coach() {
           <h1 className="font-display text-2xl font-semibold tracking-tight">AI Coach</h1>
           <p className="text-sm text-muted-foreground">Personal, honest, and always about your games.</p>
         </div>
-        {isSample && <SampleBadge />}
+        {isDemo && <DemoModeBadge />}
       </div>
 
       <div className="glass rise flex h-[62vh] flex-col rounded-3xl">
