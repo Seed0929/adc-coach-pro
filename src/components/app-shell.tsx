@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Settings,
   LogOut,
+  LogIn,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
@@ -43,16 +44,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const onboardingComplete = hasCompletedOnboarding(profile);
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
 
-  // Single protected-route gate: unauthenticated users go to auth; first-time
-  // users go to welcome exactly until the profile says onboarding is complete.
+  // The whole app is browsable without an account (demo data). We only nudge
+  // signed-in, first-time users through onboarding — never block guests.
   useEffect(() => {
     if (loading) return;
-    if (!isAuthenticated) {
-      navigate({ to: "/auth", search: { redirect: pathname }, replace: true });
-    } else if (profile && !onboardingComplete) {
+    if (isAuthenticated && profile && !onboardingComplete) {
       navigate({ to: "/welcome", replace: true });
     }
-  }, [loading, isAuthenticated, profile, onboardingComplete, navigate, pathname]);
+  }, [loading, isAuthenticated, profile, onboardingComplete, navigate]);
 
   async function handleSignOut() {
     await signOut();
@@ -60,7 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (loading || !isAuthenticated || (profile && !onboardingComplete)) {
+  if (loading || (isAuthenticated && profile && !onboardingComplete)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background text-foreground">
         <Ambient />
@@ -69,8 +68,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const displayName = profile?.username ?? user?.email?.split("@")[0] ?? "Player";
-  const secondaryLine = identity?.riotId ?? profile?.email ?? user?.email ?? "";
+  const displayName = isAuthenticated
+    ? profile?.username ?? user?.email?.split("@")[0] ?? "Player"
+    : "Guest";
+  const secondaryLine = isAuthenticated
+    ? identity?.riotId ?? profile?.email ?? user?.email ?? ""
+    : "Browsing as guest";
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
@@ -121,13 +124,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="truncate text-sm font-medium">{displayName}</div>
               <div className="truncate text-xs text-muted-foreground">{secondaryLine}</div>
             </div>
-            <button
-              onClick={handleSignOut}
-              aria-label="Sign out"
-              className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
-            >
-              <LogOut className="size-[18px]" />
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={handleSignOut}
+                aria-label="Sign out"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+              >
+                <LogOut className="size-[18px]" />
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                aria-label="Sign in"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-primary transition-colors hover:bg-white/[0.06]"
+              >
+                <LogIn className="size-[18px]" />
+              </Link>
+            )}
           </div>
         </div>
       </aside>
