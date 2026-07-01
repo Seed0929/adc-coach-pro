@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Gamepad2, Hash, Globe, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { useBotDiffData } from "@/lib/player-data";
+import { linkRiotAccount } from "@/lib/riot.functions";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -39,6 +40,7 @@ function WelcomePage() {
   const { loading, isAuthenticated, user, profile, refreshProfile } = useAuth();
   const { identity, refreshIdentity } = useBotDiffData();
   const onboardingComplete = hasCompletedOnboarding(profile);
+  const link = useServerFn(linkRiotAccount);
 
   const [gameName, setGameName] = useState("");
   const [tagLine, setTagLine] = useState("");
@@ -72,26 +74,15 @@ function WelcomePage() {
 
     setSubmitting(true);
     try {
-      const { error: riotError } = await supabase.from("riot_accounts").upsert(
-        {
-          profile_id: user.id,
-          game_name: name,
-          tag_line: tag,
-          region,
-          linked_at: new Date().toISOString(),
-        },
-        { onConflict: "profile_id" },
-      );
-      if (riotError) throw riotError;
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ onboarding_complete: true, onboarding_completed: true })
-        .eq("id", user.id);
-      if (profileError) throw profileError;
-
+      const result = await link({ data: { gameName: name, tagLine: tag, region } });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
       await Promise.all([refreshProfile(), refreshIdentity()]);
-      toast.success("Riot identity saved. Welcome to BotDiff!");
+      toast.success(
+        `Linked ${result.account.gameName}#${result.account.tagLine}. Welcome to BotDiff!`,
+      );
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Try again.");
