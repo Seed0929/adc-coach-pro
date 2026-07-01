@@ -38,12 +38,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { loading, isAuthenticated, profile, user, signOut } = useAuth();
 
-  // Protect every route that renders inside the shell.
+  // Protect every route that renders inside the shell, and gate on onboarding.
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (loading) return;
+    if (!isAuthenticated) {
       navigate({ to: "/auth", search: { redirect: pathname }, replace: true });
+    } else if (profile && !profile.onboarding_completed) {
+      navigate({ to: "/welcome", replace: true });
     }
-  }, [loading, isAuthenticated, navigate, pathname]);
+  }, [loading, isAuthenticated, profile, navigate, pathname]);
 
   async function handleSignOut() {
     await signOut();
