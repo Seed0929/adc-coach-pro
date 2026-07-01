@@ -144,7 +144,7 @@ export const getCoachingAnalysis = createServerFn({ method: "GET" })
       const cache = new Map<string, MatchCoachingAnalysis>();
       for (const s of stored ?? []) {
         if (s.engine_version === COACHING_ENGINE_VERSION) {
-          cache.set(s.match_id, s.analysis as MatchCoachingAnalysis);
+          cache.set(s.match_id, s.analysis as unknown as MatchCoachingAnalysis);
         }
       }
 
