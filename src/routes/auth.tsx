@@ -48,7 +48,7 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const dest = search.redirect ?? "/";
+  const dest = search.redirect && search.redirect !== "/auth" ? search.redirect : "/";
 
   // Already signed in → go to the dashboard (or intended destination).
   useEffect(() => {
