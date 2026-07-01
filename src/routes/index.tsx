@@ -7,7 +7,8 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-import { AppShell, Pill } from "@/components/app-shell";
+import { AppShell, Pill, SampleBadge } from "@/components/app-shell";
+import { usePlayerData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,18 +32,22 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { isSample, data } = usePlayerData();
   return (
     <AppShell>
       {/* Greeting */}
       <div className="rise mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="mb-1 text-sm text-muted-foreground">Welcome back</div>
+          <div className="mb-1 flex items-center gap-3 text-sm text-muted-foreground">
+            Welcome back
+            {isSample && <SampleBadge />}
+          </div>
           <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
             How am I doing?
           </h1>
         </div>
         <Pill tone="primary">
-          <Trophy className="size-3.5" /> Diamond I · 47 LP
+          <Trophy className="size-3.5" /> {data.rank.tier} · {data.rank.lp} LP
         </Pill>
       </div>
 
@@ -57,11 +62,10 @@ function Index() {
             <Target className="size-4" /> Today's Focus
           </div>
           <h2 className="max-w-2xl font-display text-2xl font-semibold leading-snug tracking-tight md:text-3xl">
-            Hold your position one screen back in mid-game teamfights.
+            {data.todaysFocus.headline}
           </h2>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            You died first in 6 of your last 10 fights. Kiting from the backline is the single
-            highest-impact habit to fix this week.
+            {data.todaysFocus.detail}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -84,9 +88,17 @@ function Index() {
       {/* Snapshot */}
       <div className="mt-6 grid gap-6 md:grid-cols-3">
         {[
-          { label: "Improvement Score", value: "+12.4", sub: "up 3.1 this week", tone: "success" as const },
-          { label: "Current Rank", value: "Diamond I", sub: "peak this season", tone: "primary" as const },
-          { label: "Focus Streak", value: "4 days", sub: "keep it going", tone: "warning" as const },
+          {
+            label: "Improvement Score",
+            value: `${data.snapshot.improvementScore}`,
+            sub: `up ${data.snapshot.improvementDelta} this week`,
+          },
+          { label: "Current Rank", value: data.rank.tier, sub: "peak this season" },
+          {
+            label: "Focus Streak",
+            value: `${data.snapshot.focusStreakDays} days`,
+            sub: "keep it going",
+          },
         ].map((s, i) => (
           <div
             key={s.label}
