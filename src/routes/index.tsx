@@ -107,6 +107,98 @@ function SectionTitle({
 }
 
 export function DashboardPage() {
+  return <DashboardInner />;
+}
+
+function RiotAccountCard({
+  summary,
+  loading,
+  error,
+  onRefresh,
+}: {
+  summary: RiotAccountSummary | null;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  return (
+    <section className="glass rise mb-6 rounded-3xl p-5 md:p-6" style={{ animationDelay: "30ms" }}>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative">
+          {summary?.profileIconUrl ? (
+            <img
+              src={summary.profileIconUrl}
+              alt=""
+              className="size-14 rounded-2xl object-cover ring-1 ring-white/10"
+            />
+          ) : (
+            <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-dim ring-1 ring-white/10">
+              {loading ? <Loader2 className="size-5 animate-spin text-white" /> : <Trophy className="size-5 text-white" />}
+            </div>
+          )}
+          {summary?.summonerLevel != null && (
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background px-2 py-0.5 text-[10px] font-semibold ring-1 ring-white/10">
+              {summary.summonerLevel}
+            </span>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {summary ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                <span className="font-display text-lg font-semibold tracking-tight">
+                  {summary.gameName}
+                </span>
+                <span className="text-muted-foreground">#{summary.tagLine}</span>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Globe className="size-3.5" /> {summary.regionLabel}
+                </span>
+                {summary.summonerLevel != null && <span>· Level {summary.summonerLevel}</span>}
+              </div>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              {error ?? "Loading your Riot profile…"}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {summary && (
+            <Pill tone={summary.rank ? "primary" : "neutral"}>
+              <Trophy className="size-3.5" />
+              {summary.rank
+                ? `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`
+                : "Unranked"}
+            </Pill>
+          )}
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            aria-label="Refresh Riot profile"
+            className="grid size-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground disabled:opacity-50"
+          >
+            <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+      </div>
+      {summary?.rank && (
+        <div className="mt-3 text-xs text-muted-foreground">
+          {summary.rank.wins}W / {summary.rank.losses}L ·{" "}
+          {Math.round(
+            (summary.rank.wins / Math.max(1, summary.rank.wins + summary.rank.losses)) * 100,
+          )}
+          % win rate
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DashboardInner() {
   const { isDemo, data, identity } = useBotDiffData();
   const { profile, user } = useAuth();
   const { summary, loading: riotLoading, error: riotError, refresh: refreshRiot } = useRiotSummary();
