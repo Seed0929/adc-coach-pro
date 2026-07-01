@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { FlaskConical } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
