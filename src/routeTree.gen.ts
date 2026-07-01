@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as CoachRouteImport } from './routes/coach'
 import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -58,6 +59,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoachingRoute = CoachingRouteImport.update({
+  id: '/coaching',
+  path: '/coaching',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoachRoute = CoachRouteImport.update({
   id: '/coach',
   path: '/coach',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/coaching': typeof CoachingRoute
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/coaching': typeof CoachingRoute
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
+  '/coaching': typeof CoachingRoute
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRoute
   '/progress': typeof ProgressRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/coaching'
     | '/dashboard'
     | '/matches'
     | '/progress'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/coaching'
     | '/dashboard'
     | '/matches'
     | '/progress'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/champions'
     | '/coach'
+    | '/coaching'
     | '/dashboard'
     | '/matches'
     | '/progress'
@@ -186,6 +198,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChampionsRoute: typeof ChampionsRoute
   CoachRoute: typeof CoachRoute
+  CoachingRoute: typeof CoachingRoute
   DashboardRoute: typeof DashboardRoute
   MatchesRoute: typeof MatchesRoute
   ProgressRoute: typeof ProgressRoute
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coaching': {
+      id: '/coaching'
+      path: '/coaching'
+      fullPath: '/coaching'
+      preLoaderRoute: typeof CoachingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coach': {
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChampionsRoute: ChampionsRoute,
   CoachRoute: CoachRoute,
+  CoachingRoute: CoachingRoute,
   DashboardRoute: DashboardRoute,
   MatchesRoute: MatchesRoute,
   ProgressRoute: ProgressRoute,
