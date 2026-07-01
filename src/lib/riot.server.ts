@@ -239,12 +239,19 @@ export async function getRankByPuuid(
 }
 
 /** Latest Data Dragon version, for building profile-icon URLs. */
+let ddragonVersionCache: { value: string; expires: number } | null = null;
 export async function getLatestDDragonVersion(): Promise<string> {
+  if (ddragonVersionCache && Date.now() < ddragonVersionCache.expires) {
+    return ddragonVersionCache.value;
+  }
   try {
     const res = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
     if (res.ok) {
       const versions = (await res.json()) as string[];
-      if (versions.length > 0) return versions[0];
+      if (versions.length > 0) {
+        ddragonVersionCache = { value: versions[0], expires: Date.now() + 6 * 60 * 60 * 1000 };
+        return versions[0];
+      }
     }
   } catch {
     // fall through to a sensible default
