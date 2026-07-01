@@ -209,7 +209,43 @@ export const SAMPLE_PLAYER: PlayerData = {
     headline: "Hold your position one screen back in mid-game teamfights.",
     detail:
       "You died first in 6 of your last 10 fights. Kiting from the backline is the single highest-impact habit to fix this week.",
+    confidence: 92,
+    impact: "High",
+    difficulty: "Easy",
+    practiceTime: "10 minutes",
   },
+  coachingOverview: {
+    primaryStrength: "Excellent late-game positioning and kiting under pressure.",
+    primaryWeakness: "Overextending after taking first tower without vision.",
+    consistencyScore: 81,
+    improvementTrendPct: 14,
+  },
+  performanceOverview: {
+    grade: "A-",
+    rank: "Diamond I · 47 LP",
+    role: "Bot / ADC",
+    championPool: 6,
+    avgCs: "8.4 / min",
+    avgVision: "26",
+    avgKda: "3.8 : 1",
+  },
+  aiInsight: {
+    biggestOpportunity:
+      "Wave management before rotating — you leave 12+ CS on the map each game before roaming.",
+    recommendedPractice:
+      "Practice tool: crash three cannon waves cleanly, then recall on the crash for 10 minutes.",
+    commonMistake:
+      "Stepping past your frontline in the first 3 seconds of every mid-game fight.",
+    positiveHabit:
+      "Consistently buying and placing control wards before objectives.",
+    estimatedLpGain: "+65 LP per month if wave management improves.",
+  },
+  dailyGoals: [
+    { label: "Reach 8 CS / min", progress: 76, done: false },
+    { label: "Die fewer than 5 times", progress: 100, done: true },
+    { label: "Place 10 control wards", progress: 60, done: false },
+    { label: "Avoid fights before objectives", progress: 45, done: false },
+  ],
   matches: [
     {
       id: 1,
