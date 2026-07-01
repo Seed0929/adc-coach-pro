@@ -1,9 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp } from "lucide-react";
-import { AppShell, Pill, PageHeader } from "@/components/app-shell";
-import champKaisa from "@/assets/champ-1.jpg";
-import champEzreal from "@/assets/champ-2.jpg";
+import { AppShell, Pill, PageHeader, SampleBanner } from "@/components/app-shell";
+import { usePlayerData, type Match } from "@/lib/player-data";
 
 export const Route = createFileRoute("/matches")({
   head: () => ({
@@ -12,7 +19,7 @@ export const Route = createFileRoute("/matches")({
       {
         name: "description",
         content:
-          "Open any game like a report: overall grade, LP impact, biggest mistake, biggest strength, and the highest-impact recommendations.",
+          "Open any game like a report: overall grade, LP impact, biggest mistake, biggest strength, CS and gold curves, and the highest-impact recommendations.",
       },
       { property: "og:title", content: "Match Review — BotDiff" },
       { property: "og:description", content: "Every match feels like opening a coaching report." },
@@ -21,30 +28,75 @@ export const Route = createFileRoute("/matches")({
   component: Matches,
 });
 
-type Match = {
-  id: number;
-  champ: string;
-  img: string;
-  result: "Victory" | "Defeat";
-  grade: string;
-  kda: string;
-  cs: string;
-  lp: string;
-  when: string;
-};
+const chartTooltip = {
+  background: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  color: "var(--foreground)",
+} as const;
 
-const matches: Match[] = [
-  { id: 1, champ: "Kai'Sa", img: champKaisa, result: "Victory", grade: "A", kda: "8 / 3 / 11", cs: "241", lp: "+24", when: "2h ago" },
-  { id: 2, champ: "Ezreal", img: champEzreal, result: "Defeat", grade: "C", kda: "4 / 7 / 6", cs: "198", lp: "-19", when: "3h ago" },
-  { id: 3, champ: "Kai'Sa", img: champKaisa, result: "Victory", grade: "S", kda: "12 / 1 / 9", cs: "268", lp: "+21", when: "Yesterday" },
-  { id: 4, champ: "Ezreal", img: champEzreal, result: "Defeat", grade: "B", kda: "6 / 5 / 8", cs: "212", lp: "-17", when: "Yesterday" },
-];
+function CurveChart({
+  match,
+  dataKey,
+  benchKey,
+  label,
+}: {
+  match: Match;
+  dataKey: "cs" | "gold";
+  benchKey: "csBenchmark" | "goldBenchmark";
+  label: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs text-muted-foreground">You vs rank avg</span>
+      </div>
+      <div className="h-40">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={match.timeline} margin={{ left: -18, right: 8, top: 6, bottom: 0 }}>
+            <XAxis
+              dataKey="minute"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(m) => `${m}'`}
+            />
+            <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={44} />
+            <Tooltip contentStyle={chartTooltip} />
+            <Line
+              type="monotone"
+              dataKey={benchKey}
+              name="Rank avg"
+              stroke="var(--muted-foreground)"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey={dataKey}
+              name="You"
+              stroke="var(--primary)"
+              strokeWidth={2.5}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
 
 function Matches() {
-  const [active, setActive] = useState<Match>(matches[0]);
+  const { isSample, data } = usePlayerData();
+  const [activeId, setActiveId] = useState<number>(data.matches[0].id);
+  const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
 
   return (
     <AppShell>
+      {isSample && <SampleBanner />}
       <PageHeader
         eyebrow="Match Review"
         title="Your recent games"
@@ -54,13 +106,13 @@ function Matches() {
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         {/* List */}
         <div className="space-y-3">
-          {matches.map((m, i) => {
+          {data.matches.map((m, i) => {
             const win = m.result === "Victory";
             const selected = m.id === active.id;
             return (
               <button
                 key={m.id}
-                onClick={() => setActive(m)}
+                onClick={() => setActiveId(m.id)}
                 style={{ animationDelay: `${i * 50}ms` }}
                 className={`glass glass-hover rise flex w-full items-center gap-4 rounded-2xl p-4 text-left ${
                   selected ? "border-primary/40" : ""
@@ -107,25 +159,27 @@ function Matches() {
               <div className="mb-1 flex items-center gap-2 text-sm font-medium text-destructive">
                 <ShieldAlert className="size-4" /> Biggest Mistake
               </div>
-              <p className="text-sm text-muted-foreground">
-                Overextended in the river without vision at 14:00 and got caught.
-              </p>
+              <p className="text-sm text-muted-foreground">{active.biggestMistake}</p>
             </div>
             <div className="rounded-2xl border border-success/20 bg-success/[0.06] p-4">
               <div className="mb-1 flex items-center gap-2 text-sm font-medium text-success">
                 <ThumbsUp className="size-4" /> Biggest Strength
               </div>
-              <p className="text-sm text-muted-foreground">
-                Excellent early trades — you won lane by 900 gold at 10 minutes.
-              </p>
+              <p className="text-sm text-muted-foreground">{active.biggestStrength}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* CS & gold curves */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <CurveChart match={active} dataKey="cs" benchKey="csBenchmark" label="CS over time" />
+            <CurveChart match={active} dataKey="gold" benchKey="goldBenchmark" label="Gold over time" />
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { icon: Crosshair, label: "CS/min", value: "8.9" },
-              { icon: Eye, label: "Vision", value: "24" },
-              { icon: Sword, label: "DMG Share", value: "31%" },
+              { icon: Crosshair, label: "CS/min", value: active.stats.csPerMin },
+              { icon: Eye, label: "Vision", value: active.stats.visionScore },
+              { icon: Sword, label: "DMG Share", value: active.stats.damageShare },
               { icon: ArrowUpRight, label: "LP Impact", value: active.lp },
             ].map((s) => (
               <div key={s.label} className="rounded-2xl bg-white/[0.03] p-4">
@@ -138,11 +192,26 @@ function Matches() {
 
           <div className="mt-6 rounded-2xl bg-primary/[0.07] p-5">
             <div className="mb-1 text-sm font-medium text-primary">Recommendation</div>
-            <p className="text-sm text-muted-foreground">
-              Ward the river bush before rotating and hold back until your team groups. One habit —
-              patience before mid-game skirmishes — would have saved this game.
-            </p>
+            <p className="text-sm text-muted-foreground">{active.recommendation}</p>
           </div>
+        </div>
+      </div>
+
+      {/* Positioning heatmap */}
+      <div className="mt-6 glass rise rounded-3xl p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold tracking-tight">Death & Positioning Heatmap</h2>
+          <Pill tone="warning">Mid-game hotspots</Pill>
+        </div>
+        <div className="grid gap-5 md:grid-cols-[1.2fr_1fr] md:items-center">
+          <img
+            src={data.heatmapImg}
+            alt="Positioning heatmap showing where deaths cluster on the map"
+            className="w-full rounded-2xl border border-white/10 object-cover"
+          />
+          <p className="rounded-2xl bg-white/[0.03] p-4 text-sm text-muted-foreground">
+            {data.heatmapNote}
+          </p>
         </div>
       </div>
     </AppShell>
