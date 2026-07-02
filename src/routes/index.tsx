@@ -851,6 +851,13 @@ function MatchCard({ match }: { match: Match }) {
             <span className="font-medium text-primary">Coach: </span>
             {match.recommendation}
           </p>
+          <Link
+            to="/matches/$matchId"
+            params={{ matchId: match.matchId }}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+          >
+            <Sparkles className="size-3.5" /> Analyze Match
+          </Link>
         </div>
       )}
     </div>
