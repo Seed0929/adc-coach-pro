@@ -177,3 +177,39 @@ export async function analyzeAndStoreMatches(
 
   return analyses;
 }
+
+/**
+ * Load the user's stored matches and return normalized engine inputs, ordered
+ * most-recent-first. Used by the per-match AI Coach report (which needs the
+ * previous match for improvement-history comparisons). No Riot calls.
+ */
+export async function buildMatchInputs(
+  supabase: SupabaseLike,
+  userId: string,
+  limit = 20,
+): Promise<MatchAnalysisInput[]> {
+  const { data: account } = await supabase
+    .from("riot_accounts")
+    .select("puuid")
+    .eq("profile_id", userId)
+    .maybeSingle();
+  const puuid = (account?.puuid as string | null) ?? null;
+
+  const { data: rows } = await supabase
+    .from("matches")
+    .select(
+      "match_id, champion_name, team_position, win, kills, deaths, assists, cs, gold, vision_score, game_duration, game_creation, raw",
+    )
+    .eq("profile_id", userId)
+    .order("game_creation", { ascending: false })
+    .limit(limit);
+
+  if (!rows || rows.length === 0) return [];
+
+  const inputs: MatchAnalysisInput[] = [];
+  for (const row of rows) {
+    const input = extractInput(row, puuid);
+    if (input) inputs.push(input);
+  }
+  return inputs;
+}

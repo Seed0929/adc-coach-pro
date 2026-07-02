@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { analyzeAndStoreMatches } from "./coaching.server";
+import { analyzeAndStoreMatches, buildMatchInputs } from "./coaching.server";
 import {
   summarizeCoaching,
   buildDemoCoaching,
+  buildMatchReport,
   type CoachingSummary,
+  type MatchCoachingReport,
 } from "./coaching-engine";
 
 // ---------------------------------------------------------------------------
@@ -44,3 +46,26 @@ export const getCoachingAnalysis = createServerFn({ method: "GET" })
 export function demoCoachingSummary(): CoachingSummary {
   return buildDemoCoaching();
 }
+
+export type MatchReportResult =
+  | { ok: true; report: MatchCoachingReport }
+  | { ok: false; code: string; message: string };
+
+/** Build the full AI Coach report for a single match (with trend vs previous). */
+export const getMatchReport = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { matchId: string }) => data)
+  .handler(async ({ data, context }): Promise<MatchReportResult> => {
+    const { supabase, userId } = context;
+    try {
+      const inputs = await buildMatchInputs(supabase, userId);
+      const idx = inputs.findIndex((i) => i.matchId === data.matchId);
+      if (idx < 0) {
+        return { ok: false, code: "not_found", message: "That match hasn't been analyzed yet." };
+      }
+      const prev = inputs[idx + 1] ?? null;
+      return { ok: true, report: buildMatchReport(inputs[idx], prev) };
+    } catch {
+      return { ok: false, code: "unknown", message: "Couldn't build this match's report right now." };
+    }
+  });
