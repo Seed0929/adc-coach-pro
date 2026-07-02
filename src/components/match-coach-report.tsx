@@ -1,0 +1,173 @@
+import {
+  Trophy,
+  ThumbsUp,
+  ShieldAlert,
+  Target,
+  Flag,
+  Gauge,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
+import { Pill } from "@/components/app-shell";
+import type {
+  MatchCoachingReport,
+  Confidence,
+  TrendItem,
+} from "@/lib/coaching-engine";
+
+function confidenceTone(c: Confidence): "success" | "warning" | "danger" {
+  return c === "High" ? "success" : c === "Medium" ? "warning" : "danger";
+}
+
+function Card({
+  icon: Icon,
+  title,
+  accent = "text-primary",
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  accent?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="glass rise rounded-3xl p-6">
+      <div className={`mb-4 flex items-center gap-2 text-sm font-semibold ${accent}`}>
+        <Icon className="size-4" />
+        <span className="uppercase tracking-wide">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TrendRow({ t }: { t: TrendItem }) {
+  const Icon = t.direction === "up" ? TrendingUp : t.direction === "down" ? TrendingDown : Minus;
+  const color = t.direction === "flat"
+    ? "text-muted-foreground"
+    : t.improved
+      ? "text-success"
+      : "text-destructive";
+  return (
+    <div className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+      <span className="text-sm text-muted-foreground">{t.label}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-muted-foreground">{t.previous} →</span>
+        <span className="font-display text-base font-semibold">{t.current}</span>
+        <span className={`inline-flex items-center gap-1 text-xs font-medium ${color}`}>
+          <Icon className="size-3.5" />
+          {t.change}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
+  return (
+    <div className="space-y-5">
+      {/* Match summary */}
+      <Card icon={Trophy} title="Match Summary">
+        <div className="flex items-start gap-5">
+          <div className="text-center">
+            <div className="font-display text-5xl font-semibold text-primary leading-none">
+              {report.overallGrade}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">Grade</div>
+          </div>
+          <div className="flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="font-medium">{report.champion}</span>
+              <Pill tone={report.win ? "success" : "danger"}>
+                {report.win ? "Victory" : "Defeat"}
+              </Pill>
+              <Pill tone={confidenceTone(report.confidence)}>
+                <Gauge className="size-3.5" /> {report.confidence} confidence
+              </Pill>
+            </div>
+            <p className="text-sm text-foreground/90">{report.summary}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{report.confidenceReason}</p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Strengths */}
+      <Card icon={ThumbsUp} title="3 Biggest Strengths" accent="text-success">
+        <div className="space-y-3">
+          {report.strengths.map((s, i) => (
+            <div key={i} className="rounded-2xl border border-success/20 bg-success/[0.06] p-4">
+              <div className="mb-1 text-sm font-medium text-success">{s.title}</div>
+              <p className="text-sm text-muted-foreground">{s.why}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Mistakes */}
+      <Card icon={ShieldAlert} title="3 Biggest Mistakes" accent="text-destructive">
+        <div className="space-y-3">
+          {report.mistakes.map((m, i) => (
+            <div key={i} className="rounded-2xl border border-destructive/20 bg-destructive/[0.06] p-4">
+              <div className="mb-2 text-sm font-medium text-destructive">{m.title}</div>
+              <dl className="space-y-1.5 text-sm">
+                <div>
+                  <dt className="inline font-medium text-foreground/80">What happened: </dt>
+                  <dd className="inline text-muted-foreground">{m.what}</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium text-foreground/80">Why it hurt: </dt>
+                  <dd className="inline text-muted-foreground">{m.why}</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium text-foreground/80">Do differently: </dt>
+                  <dd className="inline text-muted-foreground">{m.fix}</dd>
+                </div>
+              </dl>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* Priority improvement */}
+        <Card icon={Target} title="Priority Improvement">
+          <div className="rounded-2xl bg-primary/[0.07] p-5">
+            <div className="mb-1 flex items-center gap-2 text-sm font-medium text-primary">
+              <Sparkles className="size-4" /> {report.priorityImprovement.title}
+            </div>
+            <p className="text-sm text-muted-foreground">{report.priorityImprovement.why}</p>
+          </div>
+        </Card>
+
+        {/* Practice goal */}
+        <Card icon={Flag} title="Practice Goal">
+          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-5">
+            <ArrowRight className="size-5 shrink-0 text-primary" />
+            <p className="text-sm font-medium">{report.practiceGoal}</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Improvement history */}
+      <Card icon={TrendingUp} title="Player Improvement History">
+        {report.history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            This is your earliest analyzed match — play another game to unlock match-over-match trends.
+          </p>
+        ) : (
+          <>
+            <p className="mb-3 text-xs text-muted-foreground">Compared to your previous game.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {report.history.map((t) => (
+                <TrendRow key={t.key} t={t} />
+              ))}
+            </div>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
