@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Pill } from "@/components/app-shell";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
   MatchCoachingReport,
   Confidence,
@@ -67,11 +68,18 @@ function TrendRow({ t }: { t: TrendItem }) {
 }
 
 export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
+  const { assets } = useRiotAssets();
   return (
     <div className="space-y-5">
       {/* Match summary */}
       <Card icon={Trophy} title="Match Summary">
         <div className="flex items-start gap-5">
+          <img
+            src={assets.championSquare(report.champion)}
+            alt={report.champion}
+            className="size-14 rounded-2xl object-cover ring-1 ring-white/10"
+            loading="lazy"
+          />
           <div className="text-center">
             <div className="font-display text-5xl font-semibold text-primary leading-none">
               {report.overallGrade}
