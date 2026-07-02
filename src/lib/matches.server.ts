@@ -11,6 +11,7 @@ import {
   getMatchById,
   queueLabel,
 } from "./riot.server";
+import { analyzeAndStoreMatches } from "./coaching.server";
 import type { Json } from "@/integrations/supabase/types";
 
 export interface StoredMatch {
