@@ -93,29 +93,6 @@ export interface MatchCoachingAnalysis {
   source: "rule-based" | "llm";
 }
 
-export interface CoachingSummary {
-  isDemo: boolean;
-  matchesAnalyzed: number;
-  wins: number;
-  losses: number;
-
-  overallScore: number;
-  overallGrade: Grade;
-
-  grades: CoachingGrades;
-  gradeLetters: Record<keyof CoachingGrades, Grade>;
-
-  aggressionScore: number;
-  riskScore: number;
-  carryPotential: number;
-
-  topStrengths: string[];
-  topWeaknesses: string[];
-  focusTip: string;
-
-  perMatch: MatchCoachingAnalysis[];
-}
-
 /** Future-proofing seam: an LLM engine implements the same contract. */
 export interface CoachingEngine {
   readonly version: number;
@@ -404,57 +381,6 @@ function avg(nums: number[]): number {
   return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
 }
 
-export function summarizeCoaching(
-  analyses: MatchCoachingAnalysis[],
-  isDemo = false,
-): CoachingSummary {
-  const n = analyses.length;
-  const grades: CoachingGrades = {
-    laning: round(avg(analyses.map((a) => a.grades.laning))),
-    farming: round(avg(analyses.map((a) => a.grades.farming))),
-    vision: round(avg(analyses.map((a) => a.grades.vision))),
-    objective: round(avg(analyses.map((a) => a.grades.objective))),
-    teamfight: round(avg(analyses.map((a) => a.grades.teamfight))),
-    consistency: round(avg(analyses.map((a) => a.grades.consistency))),
-  };
-
-  // Aggregate consistency also rewards low variance across games.
-  const scores = analyses.map((a) => a.overallScore);
-  const mean = avg(scores);
-  const variance = avg(scores.map((s) => (s - mean) ** 2));
-  const stddev = Math.sqrt(variance);
-  const stabilityBonus = clamp(100 - stddev * 3, 0, 100);
-  grades.consistency = round(clamp(grades.consistency * 0.65 + stabilityBonus * 0.35));
-
-  const overallScore = round(avg(scores));
-  const gradeLetters = {
-    laning: toGrade(grades.laning),
-    farming: toGrade(grades.farming),
-    vision: toGrade(grades.vision),
-    objective: toGrade(grades.objective),
-    teamfight: toGrade(grades.teamfight),
-    consistency: toGrade(grades.consistency),
-  } satisfies Record<keyof CoachingGrades, Grade>;
-
-  return {
-    isDemo,
-    matchesAnalyzed: n,
-    wins: analyses.filter((a) => a.win).length,
-    losses: analyses.filter((a) => !a.win).length,
-    overallScore,
-    overallGrade: toGrade(overallScore),
-    grades,
-    gradeLetters,
-    aggressionScore: round(avg(analyses.map((a) => a.aggressionScore))),
-    riskScore: round(avg(analyses.map((a) => a.riskScore))),
-    carryPotential: round(avg(analyses.map((a) => a.carryPotential))),
-    topStrengths: frequency(analyses.map((a) => a.strengths), 4),
-    topWeaknesses: frequency(analyses.map((a) => a.weaknesses), 4),
-    focusTip: analyses[0]?.tips[0] ?? "Play a ranked game to unlock personalized coaching.",
-    perMatch: analyses,
-  };
-}
-
 // --- demo analysis ---------------------------------------------------------
 
 /** Deterministic demo inputs so guests / unlinked users see a full report. */
@@ -492,11 +418,6 @@ export const DEMO_INPUTS: MatchAnalysisInput[] = [
     objectivesStolen: 0, laneMinions10: 68, maxCsAdvantage: 2, earlyGoldExpAdvantage: 200,
   },
 ];
-
-export function buildDemoCoaching(): CoachingSummary {
-  const analyses = DEMO_INPUTS.map(analyzeMatch);
-  return summarizeCoaching(analyses, true);
-}
 
 // ---------------------------------------------------------------------------
 // AI Coach v1 — per-match narrative report.
