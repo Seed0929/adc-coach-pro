@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Line,
@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, Loader2, Sparkles } from "lucide-react";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
