@@ -334,6 +334,14 @@ function DemoMatches() {
             <div className="mb-1 text-sm font-medium text-primary">Recommendation</div>
             <p className="text-sm text-muted-foreground">{active.recommendation}</p>
           </div>
+
+          <Link
+            to="/matches/$matchId"
+            params={{ matchId: `demo-${activeIndex < 0 ? 0 : activeIndex}` }}
+            className="glass glass-hover mt-4 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-primary"
+          >
+            Open full AI Coach report <ArrowUpRight className="size-4" />
+          </Link>
         </div>
       </div>
 
