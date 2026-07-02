@@ -96,6 +96,7 @@ export interface MatchStats {
 
 export interface Match {
   id: number;
+  matchId: string;
   champ: string;
   img: string;
   result: "Victory" | "Defeat";
@@ -252,6 +253,7 @@ export const SAMPLE_PLAYER: PlayerData = {
   matches: [
     {
       id: 1,
+      matchId: "demo-0",
       champ: "Kai'Sa",
       img: champKaisa,
       result: "Victory",
@@ -270,6 +272,7 @@ export const SAMPLE_PLAYER: PlayerData = {
     },
     {
       id: 2,
+      matchId: "demo-1",
       champ: "Ezreal",
       img: champEzreal,
       result: "Defeat",
@@ -288,6 +291,7 @@ export const SAMPLE_PLAYER: PlayerData = {
     },
     {
       id: 3,
+      matchId: "demo-2",
       champ: "Kai'Sa",
       img: champKaisa,
       result: "Victory",
@@ -306,6 +310,7 @@ export const SAMPLE_PLAYER: PlayerData = {
     },
     {
       id: 4,
+      matchId: "demo-3",
       champ: "Ezreal",
       img: champEzreal,
       result: "Defeat",
@@ -502,6 +507,7 @@ function dashboardToPlayerData(dash: DashboardData): PlayerData {
     });
     return {
       id: i + 1,
+      matchId: m.matchId,
       champ: m.championName,
       img: m.championImg,
       result: m.win ? "Victory" : "Defeat",

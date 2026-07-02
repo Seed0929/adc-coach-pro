@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
@@ -33,10 +33,12 @@ function Champions() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {data.champions.map((c, i) => (
-          <div
+          <Link
             key={c.name}
+            to="/profile/$champion"
+            params={{ champion: c.name }}
             style={{ animationDelay: `${i * 70}ms` }}
-            className="glass glass-hover rise rounded-3xl p-6"
+            className="glass glass-hover rise block rounded-3xl p-6"
           >
             <div className="flex items-center gap-4">
               <img src={assets.championSquare(c.name)} alt={c.name} className="size-16 rounded-2xl object-cover" />
@@ -65,7 +67,10 @@ function Champions() {
             <p className="mt-5 rounded-2xl bg-white/[0.03] p-4 text-sm text-muted-foreground">
               {c.note}
             </p>
-          </div>
+            <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary">
+              View champion analysis →
+            </span>
+          </Link>
         ))}
       </div>
     </AppShell>

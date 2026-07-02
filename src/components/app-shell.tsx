@@ -12,11 +12,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Brain, UserRound } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
-import { FlaskConical } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { FlaskConical, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { useBotDiffData } from "@/lib/player-data";
+import { useSync, formatLastSynced } from "@/hooks/use-sync";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
@@ -117,6 +118,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
 
+          <RiotRefresh />
+
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="size-9 rounded-full object-cover" />
@@ -203,6 +206,62 @@ export function Pill({
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * "Refresh Riot Data" control for the sidebar. Runs the same sync path the app
+ * uses automatically, but with visible staged status for on-demand refreshes.
+ * Only shown to signed-in players with a linked Riot account.
+ */
+function RiotRefresh() {
+  const { linked, checking, lastSyncedAt, syncNow } = useSync();
+  const [phase, setPhase] = useState<"idle" | "checking" | "importing" | "analyzing" | "done">("idle");
+
+  if (!linked) return null;
+
+  const labels: Record<string, string> = {
+    idle: "Refresh Riot Data",
+    checking: "Checking Riot…",
+    importing: "Importing…",
+    analyzing: "Analyzing…",
+    done: "Complete",
+  };
+  const busy = checking || (phase !== "idle" && phase !== "done");
+
+  async function run() {
+    if (busy) return;
+    setPhase("checking");
+    const t1 = setTimeout(() => setPhase("importing"), 600);
+    const t2 = setTimeout(() => setPhase("analyzing"), 1400);
+    try {
+      await syncNow();
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setPhase("done");
+      setTimeout(() => setPhase("idle"), 1800);
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={run}
+        disabled={busy}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.08] px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-70"
+      >
+        {phase === "done" ? (
+          <CheckCircle2 className="size-[16px]" />
+        ) : (
+          <RefreshCw className={`size-[16px] ${busy ? "animate-spin" : ""}`} />
+        )}
+        {labels[phase]}
+      </button>
+      <div className="mt-1.5 px-1 text-center text-[11px] text-muted-foreground">
+        {formatLastSynced(lastSyncedAt)}
+      </div>
+    </div>
   );
 }
 

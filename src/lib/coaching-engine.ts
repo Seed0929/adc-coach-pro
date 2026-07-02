@@ -458,7 +458,7 @@ export function summarizeCoaching(
 // --- demo analysis ---------------------------------------------------------
 
 /** Deterministic demo inputs so guests / unlinked users see a full report. */
-const DEMO_INPUTS: MatchAnalysisInput[] = [
+export const DEMO_INPUTS: MatchAnalysisInput[] = [
   {
     matchId: "DEMO_1", champion: "Kai'Sa", role: "Bot / ADC", win: true, gameCreation: null,
     durationMin: 32, kills: 8, deaths: 3, assists: 11, cs: 241, csPerMin: 7.5, gold: 14200,
