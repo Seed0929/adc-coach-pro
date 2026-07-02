@@ -13,6 +13,7 @@ import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-she
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 import type { StoredMatch } from "@/lib/matches.functions";
 
 export const Route = createFileRoute("/matches/")({
@@ -277,7 +278,7 @@ function DemoMatches() {
         </div>
 
         {/* Report */}
-        <div className="glass rise rounded-3xl p-7" key={active.id}>
+        <div className="glass rise relative overflow-hidden rounded-3xl p-7" key={active.id}>
           <ChampionBackdrop champions={active.champ} intensity="medium" />
           <div className="relative flex items-center gap-4">
             <img src={assets.championSquare(active.champ)} alt={active.champ} className="size-14 rounded-2xl object-cover" />
