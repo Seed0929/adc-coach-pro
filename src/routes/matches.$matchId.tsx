@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { AppShell, PageHeader, DemoModeBadge } from "@/components/app-shell";
 import { MatchCoachReport } from "@/components/match-coach-report";
 import { useMatchReport } from "@/hooks/use-match-report";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 
 export const Route = createFileRoute("/matches/$matchId")({
   head: () => ({
@@ -36,6 +37,11 @@ function MatchReportPage() {
 
   return (
     <AppShell>
+      {report?.champion && (
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <ChampionBackdrop champions={report.champion} intensity="medium" />
+        </div>
+      )}
       <Link
         to="/matches"
         className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
