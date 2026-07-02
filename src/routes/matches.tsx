@@ -173,10 +173,12 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
           {matches.map((m, i) => {
             const win = m.win;
             return (
-              <div
+              <Link
                 key={m.id}
+                to="/matches/$matchId"
+                params={{ matchId: m.matchId }}
                 style={{ animationDelay: `${i * 40}ms` }}
-                className={`glass rise flex flex-wrap items-center gap-4 rounded-2xl p-4 ${
+                className={`glass glass-hover rise flex flex-wrap items-center gap-4 rounded-2xl p-4 ${
                   win ? "border-success/25" : "border-destructive/25"
                 }`}
               >
@@ -213,7 +215,10 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
                     <div className="text-xs text-muted-foreground">Gold</div>
                   </div>
                 </div>
-              </div>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                  <Sparkles className="size-3.5" /> AI Coach
+                </span>
+              </Link>
             );
           })}
         </div>
