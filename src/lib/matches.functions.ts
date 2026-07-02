@@ -4,6 +4,7 @@ import { RiotError } from "./riot.server";
 import {
   readStoredMatches,
   syncMatchesForUser,
+  autoSyncForUser,
   type StoredMatch,
 } from "./matches.server";
 
@@ -15,6 +16,10 @@ export type { StoredMatch };
 
 export type MatchesResult =
   | { ok: true; matches: StoredMatch[]; imported?: number }
+  | { ok: false; code: RiotError["code"]; message: string };
+
+export type AutoSyncResponse =
+  | { ok: true; changed: boolean; imported: number; lastSyncedAt: string }
   | { ok: false; code: RiotError["code"]; message: string };
 
 function toResultError(err: unknown): MatchesResult {
@@ -46,5 +51,23 @@ export const syncMatches = createServerFn({ method: "POST" })
       return { ok: true, matches, imported };
     } catch (err) {
       return toResultError(err);
+    }
+  });
+
+/**
+ * Lightweight automatic sync: imports Riot's newest completed match(es) if any
+ * are missing, analyzes them, and records the sync timestamp. Returns quickly
+ * with `changed: false` when nothing new exists so the client keeps cached data.
+ */
+export const autoSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AutoSyncResponse> => {
+    const { supabase, userId } = context;
+    try {
+      const result = await autoSyncForUser(supabase, userId);
+      return { ok: true, ...result };
+    } catch (err) {
+      if (err instanceof RiotError) return { ok: false, code: err.code, message: err.message };
+      return { ok: false, code: "unknown", message: "Sync failed. Using cached data." };
     }
   });

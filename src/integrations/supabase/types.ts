@@ -133,6 +133,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          last_synced_at: string | null
           onboarding_complete: boolean
           onboarding_completed: boolean
           preferred_role: string | null
@@ -149,6 +150,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          last_synced_at?: string | null
           onboarding_complete?: boolean
           onboarding_completed?: boolean
           preferred_role?: string | null
@@ -165,6 +167,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          last_synced_at?: string | null
           onboarding_complete?: boolean
           onboarding_completed?: boolean
           preferred_role?: string | null

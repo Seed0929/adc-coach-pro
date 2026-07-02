@@ -11,6 +11,7 @@ import {
   getMatchById,
   queueLabel,
 } from "./riot.server";
+import { analyzeAndStoreMatches } from "./coaching.server";
 import type { Json } from "@/integrations/supabase/types";
 
 export interface StoredMatch {
@@ -202,4 +203,112 @@ export async function syncMatchesForUser(
     .eq("profile_id", userId);
 
   return imported;
+}
+
+/** Persist a single Match-V5 payload for a user. Idempotent upsert. */
+async function upsertMatch(
+  supabase: SupabaseLike,
+  userId: string,
+  puuid: string,
+  match: Awaited<ReturnType<typeof getMatchById>>,
+): Promise<boolean> {
+  const me = match.info.participants.find((p) => p.puuid === puuid);
+  if (!me) return false;
+  const cs = (me.totalMinionsKilled ?? 0) + (me.neutralMinionsKilled ?? 0);
+  const { error } = await supabase.from("matches").upsert(
+    {
+      profile_id: userId,
+      match_id: match.metadata.matchId,
+      puuid,
+      queue_id: match.info.queueId,
+      queue_label: queueLabel(match.info.queueId),
+      champion_name: me.championName,
+      champion_id: me.championId,
+      win: me.win,
+      kills: me.kills,
+      deaths: me.deaths,
+      assists: me.assists,
+      cs,
+      gold: me.goldEarned,
+      vision_score: me.visionScore ?? null,
+      team_position: me.teamPosition || null,
+      game_duration: match.info.gameDuration,
+      game_creation: new Date(match.info.gameCreation).toISOString(),
+      raw: match as unknown as Json,
+    },
+    { onConflict: "profile_id,match_id" },
+  );
+  return !error;
+}
+
+export interface AutoSyncResult {
+  changed: boolean;
+  imported: number;
+  lastSyncedAt: string;
+}
+
+/**
+ * Lightweight automatic sync. Fetches the few most-recent COMPLETED match IDs
+ * from Riot (match-v5 only ever lists finished games, so in-progress matches
+ * are ignored), imports any that aren't stored yet — deduped on match_id —
+ * analyzes the new games, and records the sync timestamp on the profile.
+ *
+ * Returns `changed: false` fast when Riot's newest match is already stored so
+ * the client can keep using cached data.
+ */
+export async function autoSyncForUser(
+  supabase: SupabaseLike,
+  userId: string,
+  lookback = 5,
+): Promise<AutoSyncResult> {
+  const account = await getLinkedAccount(supabase, userId);
+  if (!account) throw new RiotError("not_found", "No Riot account linked yet.");
+  const { puuid, region } = account;
+
+  const now = new Date().toISOString();
+  const recentIds = await getMatchIdsByPuuid(puuid, region, lookback);
+
+  let imported = 0;
+  if (recentIds.length > 0) {
+    const { data: existingRows } = await supabase
+      .from("matches")
+      .select("match_id")
+      .eq("profile_id", userId)
+      .in("match_id", recentIds);
+    const existing = new Set(
+      (existingRows ?? []).map((r: { match_id: string }) => r.match_id),
+    );
+    // Newest first — only import genuinely new games.
+    const toFetch = recentIds.filter((id) => !existing.has(id));
+
+    for (const matchId of toFetch) {
+      let match;
+      try {
+        match = await getMatchById(matchId, region);
+      } catch (err) {
+        // Rate limits are retried inside riotFetch; if it still fails, stop and
+        // keep whatever we managed to import — never interrupt the session.
+        if (err instanceof RiotError && err.code === "rate_limited") break;
+        continue;
+      }
+      if (await upsertMatch(supabase, userId, puuid, match)) imported += 1;
+    }
+  }
+
+  if (imported > 0) {
+    // Generate full coaching analysis for the freshly imported matches.
+    try {
+      await analyzeAndStoreMatches(supabase, userId);
+    } catch {
+      // Analysis is best-effort here; the coaching hook recomputes on demand.
+    }
+  }
+
+  await supabase
+    .from("riot_accounts")
+    .update({ last_sync: now })
+    .eq("profile_id", userId);
+  await supabase.from("profiles").update({ last_synced_at: now }).eq("id", userId);
+
+  return { changed: imported > 0, imported, lastSyncedAt: now };
 }

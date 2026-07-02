@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { useSync } from "@/hooks/use-sync";
 import { getCoachingAnalysis } from "@/lib/coaching.functions";
 import { buildDemoCoaching, type CoachingSummary } from "@/lib/coaching-engine";
 
@@ -13,6 +14,7 @@ import { buildDemoCoaching, type CoachingSummary } from "@/lib/coaching-engine";
  */
 export function useCoaching(): { summary: CoachingSummary; loading: boolean } {
   const { isAuthenticated, profile } = useAuth();
+  const { version } = useSync();
   const fetchCoaching = useServerFn(getCoachingAnalysis);
   const demo = useMemo(() => buildDemoCoaching(), []);
   const [summary, setSummary] = useState<CoachingSummary>(demo);
@@ -41,7 +43,7 @@ export function useCoaching(): { summary: CoachingSummary; loading: boolean } {
     return () => {
       active = false;
     };
-  }, [linked, fetchCoaching, demo]);
+  }, [linked, fetchCoaching, demo, version]);
 
   return { summary, loading };
 }

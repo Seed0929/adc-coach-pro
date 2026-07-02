@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { useSync } from "@/hooks/use-sync";
 import { getStoredMatches, syncMatches, type StoredMatch } from "@/lib/matches.functions";
 
 interface MatchHistoryState {
@@ -21,6 +22,7 @@ interface MatchHistoryState {
  */
 export function useMatchHistory(): MatchHistoryState {
   const { isAuthenticated, profile } = useAuth();
+  const { version } = useSync();
   const fetchStored = useServerFn(getStoredMatches);
   const runSync = useServerFn(syncMatches);
 
@@ -71,7 +73,7 @@ export function useMatchHistory(): MatchHistoryState {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, version]);
 
   return { matches, loading, syncing, error, lastImported, sync, linked };
 }
