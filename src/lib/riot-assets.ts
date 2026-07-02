@@ -104,7 +104,7 @@ const MANUAL_IDS: Record<string, string> = {
   "Jarvan IV": "JarvanIV",
   "Lee Sin": "LeeSin",
   "Aurelion Sol": "AurelionSol",
-  "Tahm Kench": "TahmKench";
+  "Tahm Kench": "TahmKench",
 };
 
 /** Resolve a champion display name (or already-normalised id) to a DDragon id. */
