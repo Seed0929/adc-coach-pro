@@ -334,7 +334,7 @@ function ProfilePage() {
                 className="glass-hover rounded-2xl bg-white/[0.03] p-4"
               >
                 <div className="flex items-center gap-3">
-                  <img src={c.img} alt="" className="size-11 rounded-xl object-cover" />
+                  <img src={assets.championSquare(c.name)} alt="" className="size-11 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{c.name}</span>
