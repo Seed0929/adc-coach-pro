@@ -32,8 +32,7 @@ import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
 import { useRiotSummary } from "@/hooks/use-riot-summary";
 import type { RiotAccountSummary } from "@/lib/riot.functions";
-import { useCoaching } from "@/hooks/use-coaching";
-import type { CoachingSummary, Grade } from "@/lib/coaching-engine";
+import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useSync, formatLastSynced } from "@/hooks/use-sync";
 
 /** Live "Checking Riot..." / "Last synced: X ago" indicator for the hero. */
