@@ -93,29 +93,6 @@ export interface MatchCoachingAnalysis {
   source: "rule-based" | "llm";
 }
 
-export interface CoachingSummary {
-  isDemo: boolean;
-  matchesAnalyzed: number;
-  wins: number;
-  losses: number;
-
-  overallScore: number;
-  overallGrade: Grade;
-
-  grades: CoachingGrades;
-  gradeLetters: Record<keyof CoachingGrades, Grade>;
-
-  aggressionScore: number;
-  riskScore: number;
-  carryPotential: number;
-
-  topStrengths: string[];
-  topWeaknesses: string[];
-  focusTip: string;
-
-  perMatch: MatchCoachingAnalysis[];
-}
-
 /** Future-proofing seam: an LLM engine implements the same contract. */
 export interface CoachingEngine {
   readonly version: number;
