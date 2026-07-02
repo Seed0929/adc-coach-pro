@@ -12,6 +12,7 @@ import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, 
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type { StoredMatch } from "@/lib/matches.functions";
 
 export const Route = createFileRoute("/matches/")({
@@ -110,10 +111,6 @@ function fmtDate(iso: string | null): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function championIconUrl(name: string): string {
-  return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${name}.png`;
-}
-
 function kdaRatio(m: StoredMatch): string {
   const ratio = m.deaths === 0 ? m.kills + m.assists : (m.kills + m.assists) / m.deaths;
   return `${ratio.toFixed(2)} KDA`;
@@ -121,6 +118,7 @@ function kdaRatio(m: StoredMatch): string {
 
 function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> }) {
   const { matches, loading, syncing, error, lastImported, sync } = history;
+  const { assets } = useRiotAssets();
 
   return (
     <AppShell>
@@ -183,10 +181,11 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
                 }`}
               >
                 <img
-                  src={championIconUrl(m.championName)}
+                  src={assets.championSquare(m.championName)}
                   alt={m.championName}
                   className="size-11 rounded-xl object-cover"
                   loading="lazy"
+                  onError={(e) => (e.currentTarget.style.visibility = "hidden")}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
