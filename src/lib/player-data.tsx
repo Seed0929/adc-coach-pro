@@ -96,6 +96,7 @@ export interface MatchStats {
 
 export interface Match {
   id: number;
+  matchId: string;
   champ: string;
   img: string;
   result: "Victory" | "Defeat";
