@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { useSync } from "@/hooks/use-sync";
 import { supabase } from "@/integrations/supabase/client";
 import { getRiotDashboard, type DashboardData } from "@/lib/dashboard.functions";
 import champKaisa from "@/assets/champ-1.jpg";
@@ -556,6 +557,7 @@ function dashboardToPlayerData(dash: DashboardData): PlayerData {
 
 function useRiotDataSource(): PlayerData | null {
   const { isAuthenticated, profile } = useAuth();
+  const { version } = useSync();
   const fetchDashboard = useServerFn(getRiotDashboard);
   const [data, setData] = useState<PlayerData | null>(null);
   const linked = isAuthenticated && Boolean(profile?.riot_connected);
@@ -578,7 +580,7 @@ function useRiotDataSource(): PlayerData | null {
     return () => {
       active = false;
     };
-  }, [linked, fetchDashboard]);
+  }, [linked, fetchDashboard, version]);
 
   return data;
 }
