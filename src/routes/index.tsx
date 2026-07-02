@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   MessageSquareText,
@@ -33,6 +33,37 @@ import { useRiotSummary } from "@/hooks/use-riot-summary";
 import type { RiotAccountSummary } from "@/lib/riot.functions";
 import { useCoaching } from "@/hooks/use-coaching";
 import type { CoachingSummary, Grade } from "@/lib/coaching-engine";
+import { useSync, formatLastSynced } from "@/hooks/use-sync";
+
+/** Live "Checking Riot..." / "Last synced: X ago" indicator for the hero. */
+function SyncStatus() {
+  const { checking, lastSyncedAt, linked } = useSync();
+  const [, tick] = useState(0);
+
+  // Re-render every 20s so the relative timestamp stays fresh.
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 20_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!linked) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {checking ? (
+        <>
+          <Loader2 className="size-3.5 animate-spin text-primary" />
+          <span>Checking Riot…</span>
+        </>
+      ) : (
+        <>
+          <RefreshCw className="size-3.5" />
+          <span>{formatLastSynced(lastSyncedAt)}</span>
+        </>
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
