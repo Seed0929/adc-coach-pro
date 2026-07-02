@@ -26,6 +26,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
 import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
+import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
 import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
 import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
 
@@ -114,6 +115,11 @@ const SettingsProfileRoute = SettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => SettingsRoute,
 } as any)
+const ProfileChampionRoute = ProfileChampionRouteImport.update({
+  id: '/$champion',
+  path: '/$champion',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const MatchesMatchIdRoute = MatchesMatchIdRouteImport.update({
   id: '/$matchId',
   path: '/$matchId',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches/': typeof MatchesIndexRoute
   '/profile/': typeof ProfileIndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches': typeof MatchesIndexRoute
   '/profile': typeof ProfileIndexRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches/': typeof MatchesIndexRoute
   '/profile/': typeof ProfileIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches/'
     | '/profile/'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches'
     | '/profile'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches/'
     | '/profile/'
@@ -386,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/profile/$champion': {
+      id: '/profile/$champion'
+      path: '/$champion'
+      fullPath: '/profile/$champion'
+      preLoaderRoute: typeof ProfileChampionRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/matches/$matchId': {
       id: '/matches/$matchId'
       path: '/$matchId'
@@ -429,10 +448,12 @@ const MatchesRouteWithChildren =
   MatchesRoute._addFileChildren(MatchesRouteChildren)
 
 interface ProfileRouteChildren {
+  ProfileChampionRoute: typeof ProfileChampionRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileChampionRoute: ProfileChampionRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
 
