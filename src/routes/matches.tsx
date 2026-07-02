@@ -231,6 +231,7 @@ function DemoMatches() {
   const { isDemo, data } = useBotDiffData();
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
+  const activeIndex = data.matches.findIndex((m) => m.id === active.id);
 
   return (
     <AppShell>
