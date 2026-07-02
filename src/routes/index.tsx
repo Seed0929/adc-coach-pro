@@ -279,9 +279,12 @@ function DashboardInner() {
             </div>
           </div>
         </div>
-        <Pill tone="primary">
-          <Trophy className="size-3.5" /> {rankPill}
-        </Pill>
+        <div className="flex flex-col items-end gap-2">
+          <Pill tone="primary">
+            <Trophy className="size-3.5" /> {rankPill}
+          </Pill>
+          <SyncStatus />
+        </div>
       </div>
 
       {/* Linked Riot account — real data replaces the demo profile once connected */}
