@@ -29,6 +29,7 @@ import {
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 import { useRiotSummary } from "@/hooks/use-riot-summary";
 import type { RiotAccountSummary } from "@/lib/riot.functions";
 import { useCoaching } from "@/hooks/use-coaching";
@@ -246,9 +247,16 @@ function DashboardInner() {
       ? `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`
       : "Unranked"
     : `${data.rank.tier} · ${data.rank.lp} LP`;
+  // The champion from the most recent game becomes the session's visual identity.
+  const sessionChampion = data.matches[0]?.champ;
 
   return (
     <AppShell>
+      {sessionChampion && (
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <ChampionBackdrop champions={sessionChampion} />
+        </div>
+      )}
       {/* ---------------- HERO ---------------- */}
       <div className="rise mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
