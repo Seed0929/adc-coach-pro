@@ -11,7 +11,7 @@ import {
   Loader2,
   type LucideIcon,
 } from "lucide-react";
-import { Brain } from "lucide-react";
+import { Brain, UserRound } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { useBotDiffData } from "@/lib/player-data";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
+  { to: "/profile", label: "Profile", icon: UserRound },
   { to: "/coach", label: "AI Coach", icon: MessageSquareText },
   { to: "/coaching", label: "Coaching", icon: Brain },
   { to: "/matches", label: "Match History", icon: Swords },

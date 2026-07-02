@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CoachingRouteImport } from './routes/coaching'
@@ -22,8 +23,10 @@ import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
 import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
+import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
 import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
 import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
 
@@ -50,6 +53,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -92,6 +100,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SettingsRoute,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const MatchesIndexRoute = MatchesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -101,6 +114,11 @@ const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => SettingsRoute,
+} as any)
+const ProfileChampionRoute = ProfileChampionRouteImport.update({
+  id: '/$champion',
+  path: '/$champion',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const MatchesMatchIdRoute = MatchesMatchIdRouteImport.update({
   id: '/$matchId',
@@ -121,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRouteWithChildren
+  '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -128,8 +147,10 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches/': typeof MatchesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -145,8 +166,10 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches': typeof MatchesIndexRoute
+  '/profile': typeof ProfileIndexRoute
   '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -158,6 +181,7 @@ export interface FileRoutesById {
   '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRouteWithChildren
+  '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
@@ -165,8 +189,10 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/profile/$champion': typeof ProfileChampionRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/matches/': typeof MatchesIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -179,6 +205,7 @@ export interface FileRouteTypes {
     | '/coaching'
     | '/dashboard'
     | '/matches'
+    | '/profile'
     | '/progress'
     | '/reset-password'
     | '/settings'
@@ -186,8 +213,10 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches/'
+    | '/profile/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -203,8 +232,10 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches'
+    | '/profile'
     | '/settings'
   id:
     | '__root__'
@@ -215,6 +246,7 @@ export interface FileRouteTypes {
     | '/coaching'
     | '/dashboard'
     | '/matches'
+    | '/profile'
     | '/progress'
     | '/reset-password'
     | '/settings'
@@ -222,8 +254,10 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/coaching/history'
     | '/matches/$matchId'
+    | '/profile/$champion'
     | '/settings/profile'
     | '/matches/'
+    | '/profile/'
     | '/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +269,7 @@ export interface RootRouteChildren {
   CoachingRoute: typeof CoachingRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   MatchesRoute: typeof MatchesRouteWithChildren
+  ProfileRoute: typeof ProfileRouteWithChildren
   ProgressRoute: typeof ProgressRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRouteWithChildren
@@ -277,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -335,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/matches/': {
       id: '/matches/'
       path: '/'
@@ -348,6 +397,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/profile'
       preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/profile/$champion': {
+      id: '/profile/$champion'
+      path: '/$champion'
+      fullPath: '/profile/$champion'
+      preLoaderRoute: typeof ProfileChampionRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/matches/$matchId': {
       id: '/matches/$matchId'
@@ -391,6 +447,19 @@ const MatchesRouteChildren: MatchesRouteChildren = {
 const MatchesRouteWithChildren =
   MatchesRoute._addFileChildren(MatchesRouteChildren)
 
+interface ProfileRouteChildren {
+  ProfileChampionRoute: typeof ProfileChampionRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileChampionRoute: ProfileChampionRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 interface SettingsRouteChildren {
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -413,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoachingRoute: CoachingRouteWithChildren,
   DashboardRoute: DashboardRoute,
   MatchesRoute: MatchesRouteWithChildren,
+  ProfileRoute: ProfileRouteWithChildren,
   ProgressRoute: ProgressRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRouteWithChildren,
@@ -422,3 +492,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
