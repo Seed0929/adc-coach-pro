@@ -228,6 +228,7 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
 
 function DemoMatches() {
   const { isDemo, data } = useBotDiffData();
+  const { assets } = useRiotAssets();
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
   const activeIndex = data.matches.findIndex((m) => m.id === active.id);
@@ -256,7 +257,7 @@ function DemoMatches() {
                   selected ? "border-primary/40" : ""
                 }`}
               >
-                <img src={m.img} alt={m.champ} className="size-11 rounded-xl object-cover" />
+                <img src={assets.championSquare(m.champ)} alt={m.champ} className="size-11 rounded-xl object-cover" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{m.champ}</span>
@@ -277,8 +278,9 @@ function DemoMatches() {
 
         {/* Report */}
         <div className="glass rise rounded-3xl p-7" key={active.id}>
-          <div className="flex items-center gap-4">
-            <img src={active.img} alt={active.champ} className="size-14 rounded-2xl object-cover" />
+          <ChampionBackdrop champions={active.champ} intensity="medium" />
+          <div className="relative flex items-center gap-4">
+            <img src={assets.championSquare(active.champ)} alt={active.champ} className="size-14 rounded-2xl object-cover" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-xl font-semibold tracking-tight">{active.champ}</h2>
