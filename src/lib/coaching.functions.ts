@@ -5,9 +5,12 @@ import {
   summarizeCoaching,
   buildDemoCoaching,
   buildMatchReport,
+  analyzeMatch,
+  DEMO_INPUTS,
   type CoachingSummary,
   type MatchCoachingReport,
 } from "./coaching-engine";
+import { buildCoachDossier, type CoachDossier } from "./player-memory";
 
 // ---------------------------------------------------------------------------
 // Coaching analysis server function.
@@ -45,6 +48,39 @@ export const getCoachingAnalysis = createServerFn({ method: "GET" })
 /** Demo coaching used for guests / unlinked accounts. Same shape as live. */
 export function demoCoachingSummary(): CoachingSummary {
   return buildDemoCoaching();
+}
+
+// ---------------------------------------------------------------------------
+// Coach dossier — the persistent, longitudinal player-memory profile.
+// ---------------------------------------------------------------------------
+
+export type CoachDossierResult =
+  | { ok: true; dossier: CoachDossier }
+  | { ok: false; code: string; message: string };
+
+/** Build the signed-in player's full coaching dossier from cached analyses. */
+export const getCoachDossier = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<CoachDossierResult> => {
+    const { supabase, userId } = context;
+    try {
+      const [inputs, analyses] = await Promise.all([
+        buildMatchInputs(supabase, userId, 50),
+        analyzeAndStoreMatches(supabase, userId, 50),
+      ]);
+      if (inputs.length === 0) {
+        return { ok: false, code: "no_matches", message: "No matches to analyze yet." };
+      }
+      return { ok: true, dossier: buildCoachDossier(inputs, analyses, false) };
+    } catch {
+      return { ok: false, code: "unknown", message: "Couldn't build your coaching profile right now." };
+    }
+  });
+
+/** Demo dossier for guests / unlinked accounts. Same shape as live. */
+export function buildDemoDossier(): CoachDossier {
+  const analyses = DEMO_INPUTS.map(analyzeMatch);
+  return buildCoachDossier(DEMO_INPUTS, analyses, true);
 }
 
 export type MatchReportResult =
