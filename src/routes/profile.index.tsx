@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBanner } from "@/components/app-shell";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 import {
   computeTrends,
   type PlayerProfile,
@@ -176,15 +178,21 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
 
 function ProfilePage() {
   const { profile, loading } = usePlayerProfile();
+  const { assets } = useRiotAssets();
   const { overview, score, champions, achievements, sessionSummary, records } = profile;
+  // Favorite champion (+ up to top 3) drive the profile's living backdrop.
+  const topChampNames = overview.topChampions.slice(0, 3).map((c) => c.name);
 
   return (
     <AppShell>
       {profile.isDemo && <DemoModeBanner />}
 
       {/* Overview */}
-      <div className="glass rise rounded-3xl p-6">
-        <div className="flex flex-wrap items-center gap-5">
+      <div className="glass rise relative overflow-hidden rounded-3xl p-6">
+        {topChampNames.length > 0 && (
+          <ChampionBackdrop champions={topChampNames} intensity="medium" />
+        )}
+        <div className="relative flex flex-wrap items-center gap-5">
           {overview.profileIconUrl ? (
             <img
               src={overview.profileIconUrl}
@@ -214,7 +222,7 @@ function ProfilePage() {
         </div>
 
         {overview.topChampions.length > 0 && (
-          <div className="mt-6">
+          <div className="relative mt-6">
             <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Top Champions</div>
             <div className="flex flex-wrap gap-3">
               {overview.topChampions.map((c) => (
@@ -224,7 +232,7 @@ function ProfilePage() {
                   params={{ champion: c.name }}
                   className="glass-hover flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2"
                 >
-                  <img src={c.img} alt="" className="size-9 rounded-lg object-cover" />
+                  <img src={assets.championSquare(c.name)} alt="" className="size-9 rounded-lg object-cover" />
                   <div>
                     <div className="text-sm font-medium">{c.name}</div>
                     <div className="text-xs text-muted-foreground">{c.games} games · {c.winrate}% WR</div>
@@ -326,7 +334,7 @@ function ProfilePage() {
                 className="glass-hover rounded-2xl bg-white/[0.03] p-4"
               >
                 <div className="flex items-center gap-3">
-                  <img src={c.img} alt="" className="size-11 rounded-xl object-cover" />
+                  <img src={assets.championSquare(c.name)} alt="" className="size-11 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{c.name}</span>

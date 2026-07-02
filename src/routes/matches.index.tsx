@@ -12,6 +12,8 @@ import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, 
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 import type { StoredMatch } from "@/lib/matches.functions";
 
 export const Route = createFileRoute("/matches/")({
@@ -110,10 +112,6 @@ function fmtDate(iso: string | null): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function championIconUrl(name: string): string {
-  return `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${name}.png`;
-}
-
 function kdaRatio(m: StoredMatch): string {
   const ratio = m.deaths === 0 ? m.kills + m.assists : (m.kills + m.assists) / m.deaths;
   return `${ratio.toFixed(2)} KDA`;
@@ -121,6 +119,7 @@ function kdaRatio(m: StoredMatch): string {
 
 function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> }) {
   const { matches, loading, syncing, error, lastImported, sync } = history;
+  const { assets } = useRiotAssets();
 
   return (
     <AppShell>
@@ -183,10 +182,11 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
                 }`}
               >
                 <img
-                  src={championIconUrl(m.championName)}
+                  src={assets.championSquare(m.championName)}
                   alt={m.championName}
                   className="size-11 rounded-xl object-cover"
                   loading="lazy"
+                  onError={(e) => (e.currentTarget.style.visibility = "hidden")}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -229,6 +229,7 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
 
 function DemoMatches() {
   const { isDemo, data } = useBotDiffData();
+  const { assets } = useRiotAssets();
   const [activeId, setActiveId] = useState<number>(data.matches[0].id);
   const active = data.matches.find((m) => m.id === activeId) ?? data.matches[0];
   const activeIndex = data.matches.findIndex((m) => m.id === active.id);
@@ -257,7 +258,7 @@ function DemoMatches() {
                   selected ? "border-primary/40" : ""
                 }`}
               >
-                <img src={m.img} alt={m.champ} className="size-11 rounded-xl object-cover" />
+                <img src={assets.championSquare(m.champ)} alt={m.champ} className="size-11 rounded-xl object-cover" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{m.champ}</span>
@@ -277,9 +278,10 @@ function DemoMatches() {
         </div>
 
         {/* Report */}
-        <div className="glass rise rounded-3xl p-7" key={active.id}>
-          <div className="flex items-center gap-4">
-            <img src={active.img} alt={active.champ} className="size-14 rounded-2xl object-cover" />
+        <div className="glass rise relative overflow-hidden rounded-3xl p-7" key={active.id}>
+          <ChampionBackdrop champions={active.champ} intensity="medium" />
+          <div className="relative flex items-center gap-4">
+            <img src={assets.championSquare(active.champ)} alt={active.champ} className="size-14 rounded-2xl object-cover" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-xl font-semibold tracking-tight">{active.champ}</h2>

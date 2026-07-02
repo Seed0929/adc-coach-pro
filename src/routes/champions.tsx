@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
 
 export const Route = createFileRoute("/champions")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/champions")({
 
 function Champions() {
   const { isDemo, data } = useBotDiffData();
+  const { assets } = useRiotAssets();
   return (
     <AppShell>
       {isDemo && <DemoModeBanner />}
@@ -37,7 +39,7 @@ function Champions() {
             className="glass glass-hover rise rounded-3xl p-6"
           >
             <div className="flex items-center gap-4">
-              <img src={c.img} alt={c.name} className="size-16 rounded-2xl object-cover" />
+              <img src={assets.championSquare(c.name)} alt={c.name} className="size-16 rounded-2xl object-cover" />
               <div className="flex-1">
                 <h2 className="font-display text-xl font-semibold tracking-tight">{c.name}</h2>
                 <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">

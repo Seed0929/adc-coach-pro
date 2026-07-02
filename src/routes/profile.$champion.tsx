@@ -3,6 +3,8 @@ import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "rec
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Minus, ShieldAlert, Sparkles } from "lucide-react";
 import { AppShell, Pill, DemoModeBanner } from "@/components/app-shell";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
+import { useRiotAssets } from "@/hooks/use-riot-assets";
+import { ChampionBackdrop } from "@/components/champion-backdrop";
 
 export const Route = createFileRoute("/profile/$champion")({
   component: ChampionProgressPage,
@@ -11,6 +13,7 @@ export const Route = createFileRoute("/profile/$champion")({
 function ChampionProgressPage() {
   const { champion } = Route.useParams();
   const { profile } = usePlayerProfile();
+  const { assets } = useRiotAssets();
   const champ = profile.champions.find((c) => c.name === champion);
   const matches = profile.matches.filter((m) => m.champion === champion);
 
@@ -44,12 +47,15 @@ function ChampionProgressPage() {
   return (
     <AppShell>
       {profile.isDemo && <DemoModeBanner />}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <ChampionBackdrop champions={champ.name} intensity="medium" />
+      </div>
       <Link to="/profile" className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Back to Profile
       </Link>
 
       <div className="glass rise flex flex-wrap items-center gap-4 rounded-3xl p-6">
-        <img src={champ.img} alt="" className="size-16 rounded-2xl object-cover ring-1 ring-white/10" />
+        <img src={assets.championSquare(champ.name)} alt="" className="size-16 rounded-2xl object-cover ring-1 ring-white/10" />
         <div className="flex-1">
           <h1 className="font-display text-3xl font-semibold tracking-tight">{champ.name}</h1>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
