@@ -14,7 +14,7 @@ import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
 import type { StoredMatch } from "@/lib/matches.functions";
 
-export const Route = createFileRoute("/matches")({
+export const Route = createFileRoute("/matches/")({
   head: () => ({
     meta: [
       { title: "Match Review — BotDiff" },
