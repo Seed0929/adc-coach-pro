@@ -540,17 +540,19 @@ function buildQuickPrompts(
   primaryWeakness: string,
   potential: string,
 ): QuickPrompt[] {
-  const prompts: QuickPrompt[] = [];
-  const top = champs[0];
+  // Each prompt maps to its OWN reasoning path in answerQuickAsk — never a
+  // shared generic summary.
+  const prompts: QuickPrompt[] = [
+    { id: "lose-lane", text: "Why do I lose lane?" },
+    { id: "early-game", text: "How can I improve my early game?" },
+    { id: "improved", text: `What improved over my last ${inputs.length} games?` },
+    { id: "climbing", text: "What is preventing me from climbing?" },
+    { id: "recurring", text: "What is my biggest recurring mistake?" },
+    { id: "next-game", text: "What should I focus on before my next ranked game?" },
+  ];
   const weak = [...champs].sort((a, b) => a.winRate - b.winRate)[0];
-  if (weak && weak.winRate < 50) prompts.push({ id: "lose-lane-champ", text: `Why am I losing on ${weak.name}?` });
-  if (top) prompts.push({ id: "improve-champ", text: `How can I improve my ${top.name} teamfighting?` });
-  prompts.push({ id: "recurring", text: "What is my biggest recurring mistake?" });
-  prompts.push({ id: "winrate", text: "Why has my win rate changed recently?" });
-  prompts.push({ id: "next-game", text: "What should I focus on before my next ranked game?" });
-  prompts.push({ id: "rank-goal", text: `What habits are stopping me from reaching ${potential.includes("Emerald") ? "Diamond" : "Emerald"}?` });
-  prompts.push({ id: "improved", text: `What has improved over my last ${inputs.length} games?` });
-  return prompts.slice(0, 7);
+  if (weak && weak.winRate < 50) prompts.push({ id: "champ", text: `Why am I losing on ${weak.name}?` });
+  return prompts;
 }
 
 // --- assemble --------------------------------------------------------------
