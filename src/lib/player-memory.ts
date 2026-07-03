@@ -644,6 +644,8 @@ export function buildCoachDossier(
     strengths: strengths.slice(0, 3).map((s) => ({ title: s.title, detail: s.detail })),
     weaknesses: weaknesses.slice(0, 3).map((w) => ({ title: w.title, detail: w.detail })),
     recurringHabits: recurring,
+    weaknessPatterns: weaknesses,
+    strengthPatterns: strengths,
     biggestImprovementArea: topWeakness?.title ?? "Consistency",
     trainingGoal: improvementPlan.practiceGoal,
     weeklySummary,
