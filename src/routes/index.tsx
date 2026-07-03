@@ -604,7 +604,7 @@ function CoachingAnalysisSection() {
           <div className="grid size-20 shrink-0 place-items-center rounded-2xl bg-primary/12">
             <div className="text-center">
               <div className="font-display text-3xl font-semibold text-foreground">
-                {Math.round(dossier.winRate * 100)}%
+                {dossier.winRate}%
               </div>
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 win rate
