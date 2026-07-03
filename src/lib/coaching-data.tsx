@@ -134,326 +134,198 @@ export interface CoachingEngineData {
   reports: CoachingReport[];
 }
 
-// --- Demo dataset ----------------------------------------------------------
+// --- Dossier → coaching-library derivation ---------------------------------
 
-const INSIGHTS: CoachInsight[] = [
-  {
-    id: "positioning-overextend",
-    title: "You consistently overextend after taking first tower.",
-    category: "Positioning",
-    severity: "High",
-    confidence: 92,
-    description:
-      "After you take the first tower, you push into the enemy half of the map without vision, staying there far longer than your lead is worth.",
-    whyItMatters:
-      "First tower gives you map priority, but standing in fog resets the lead the moment you get collapsed on. 6 of your last 10 deaths happened here.",
-    recommendedAction:
-      "After a tower falls, place a control ward in the river, crash the next wave, then recall or group with your team. Never chase a fourth plate alone.",
-    expectedImprovement: "First-death rate should drop from 41% to under 25% within two weeks.",
-    estimatedLpImpact: "+65 LP / month",
-    practiceDifficulty: "Easy",
-    estimatedPracticeTime: "10 minutes",
-    examples: [
-      "14:00 vs Ezreal — caught in enemy river after first tower with no ward.",
-      "17:30 vs Jinx — pushed past the T2 alone and got collapsed by jungle + support.",
-    ],
-    tracking: { currentScore: 58, goalScore: 80, trend: "Declining", status: "In Progress" },
-    isTopPriority: true,
-  },
-  {
-    id: "wave-recall-timing",
-    title: "Your recall timing after wave crashes is leaking gold.",
-    category: "Wave Management",
-    severity: "Medium",
-    confidence: 87,
-    description:
-      "You often recall on a slow-push or a frozen lane, then walk back to a wave sitting under your tower — losing 12+ CS every game.",
-    whyItMatters:
-      "Recalling on a clean crash resets you with full item power and zero lost CS. Mistimed recalls compound into a lost item spike by 20 minutes.",
-    recommendedAction:
-      "Only recall immediately after crashing a wave into the enemy tower. Practice tool: crash three cannon waves cleanly and recall on the crash.",
-    expectedImprovement: "Recover ~12 CS per game and hit your two-item spike ~90s earlier.",
-    estimatedLpImpact: "+40 LP / month",
-    practiceDifficulty: "Medium",
-    estimatedPracticeTime: "15 minutes",
-    examples: [
-      "Game 2 vs Ezreal — 4 recalls on frozen waves, fell 1.2k gold behind by 20:00.",
-    ],
-    tracking: { currentScore: 62, goalScore: 80, trend: "Improving", status: "In Progress" },
-  },
-  {
-    id: "vision-objective-setup",
-    title: "Objective vision goes down too late.",
-    category: "Vision",
-    severity: "Medium",
-    confidence: 84,
-    description:
-      "Control wards and deep vision around Dragon and Baron are placed within the last 30 seconds before the objective, not 60-90 seconds ahead.",
-    whyItMatters:
-      "Vision placed late gives your team no time to rotate or contest safely. Early vision converts objectives into free kills.",
-    recommendedAction:
-      "Buy a control ward every back and place it 75+ seconds before the objective spawns. Ping your team to group as you place it.",
-    expectedImprovement: "Objective control rating up from 63 toward 80.",
-    estimatedLpImpact: "+30 LP / month",
-    practiceDifficulty: "Easy",
-    estimatedPracticeTime: "One game of focus",
-    examples: [
-      "Game 4 — grouped late for the 30:00 Baron and lost the objective + game.",
-    ],
-    tracking: { currentScore: 63, goalScore: 80, trend: "Steady", status: "In Progress" },
-  },
-  {
-    id: "teamfight-frontline",
-    title: "You step past your frontline in the first 3 seconds of fights.",
-    category: "Team Fighting",
-    severity: "High",
-    confidence: 90,
-    description:
-      "In mid-game skirmishes you move up to deal damage before your frontline has committed, exposing yourself to the enemy engage.",
-    whyItMatters:
-      "As the ADC, your damage only counts if you survive the first engage. Dying first turns a 5v5 into a 4v5 you can't win.",
-    recommendedAction:
-      "Start every fight one screen behind your frontline. Only step up after the enemy's primary engage (flash/dash/ult) is used.",
-    expectedImprovement: "Teamfight rating up from 68 toward 82; fewer first-deaths.",
-    estimatedLpImpact: "+50 LP / month",
-    practiceDifficulty: "Medium",
-    estimatedPracticeTime: "Review 3 fights per game",
-    examples: [
-      "26:00 teamfight — walked forward before frontline and got chain-CC'd.",
-    ],
-    tracking: { currentScore: 68, goalScore: 82, trend: "Improving", status: "On Track" },
-  },
-  {
-    id: "farming-early-cs",
-    title: "Early CS under pressure dips below rank average.",
-    category: "Farming",
-    severity: "Low",
-    confidence: 78,
-    description:
-      "When the lane is contested you drop last-hits, ending the laning phase 6-9 CS behind the benchmark for your rank.",
-    whyItMatters:
-      "CS is free gold. Consistent last-hitting under pressure keeps you on curve even in losing lanes.",
-    recommendedAction:
-      "In the practice tool, last-hit the first three waves perfectly without using abilities. Do this daily for a week.",
-    expectedImprovement: "Average CS/min from 8.4 toward 8.8.",
-    estimatedLpImpact: "+20 LP / month",
-    practiceDifficulty: "Easy",
-    estimatedPracticeTime: "5 minutes",
-    examples: ["Game 2 — 7.1 CS/min vs a 7.9 benchmark for Diamond ADC."],
-    tracking: { currentScore: 79, goalScore: 88, trend: "Improving", status: "On Track" },
-  },
-  {
-    id: "map-jungle-tracking",
-    title: "You lose track of the enemy jungler before stepping up.",
-    category: "Map Awareness",
-    severity: "Medium",
-    confidence: 81,
-    description:
-      "You cross the river or push without a recent read on where the enemy jungler is, walking into avoidable ganks.",
-    whyItMatters:
-      "Most avoidable deaths in the bot lane come from an unknown jungler. A quick check every 30 seconds removes them.",
-    recommendedAction:
-      "Say the enemy jungler's likely position out loud before crossing river. Track their clear from the first camp you see.",
-    expectedImprovement: "Deaths to ganks down noticeably over 5 games.",
-    estimatedLpImpact: "+25 LP / month",
-    practiceDifficulty: "Medium",
-    estimatedPracticeTime: "Every game, ongoing",
-    examples: ["17:30 — stepped up with jungler unaccounted for and got collapsed on."],
-    tracking: { currentScore: 60, goalScore: 78, trend: "Steady", status: "In Progress" },
-  },
-  {
-    id: "mental-tilt-reset",
-    title: "Your performance drops after an early death.",
-    category: "Mental / Consistency",
-    severity: "Low",
-    confidence: 74,
-    description:
-      "Games where you die before 8 minutes show a measurable dip in CS and decision quality for the following 5 minutes.",
-    whyItMatters:
-      "One death shouldn't cost the game. Resetting mentally keeps a small mistake from snowballing.",
-    recommendedAction:
-      "After any early death, take one deep breath, farm safely for 60 seconds, and reset your plan before re-engaging.",
-    expectedImprovement: "More consistent grades across games; fewer tilt losses.",
-    estimatedLpImpact: "+20 LP / month",
-    practiceDifficulty: "Hard",
-    estimatedPracticeTime: "Ongoing habit",
-    examples: ["Two losses this week began with a sub-8-minute death followed by a CS drop."],
-    tracking: { currentScore: 71, goalScore: 85, trend: "Improving", status: "On Track" },
-  },
-];
-
-const TASKS: PracticeTask[] = [
-  {
-    id: "task-lasthit",
-    label: "Focus on last-hitting the first three waves perfectly.",
-    category: "Farming",
-    difficulty: "Easy",
-    estimatedDuration: "5 minutes",
-    done: false,
-  },
-  {
-    id: "task-controlward",
-    label: "Place a control ward in the river before 8 minutes.",
-    category: "Vision",
-    difficulty: "Easy",
-    estimatedDuration: "1 game",
-    done: true,
-  },
-  {
-    id: "task-recall",
-    label: "Recall immediately after crashing the fourth wave.",
-    category: "Wave Management",
-    difficulty: "Medium",
-    estimatedDuration: "1 game",
-    done: false,
-  },
-  {
-    id: "task-jungletrack",
-    label: "Track the enemy jungler every 30 seconds.",
-    category: "Map Awareness",
-    difficulty: "Medium",
-    estimatedDuration: "Every game",
-    done: false,
-  },
-  {
-    id: "task-backline",
-    label: "Start each teamfight one screen behind your frontline.",
-    category: "Team Fighting",
-    difficulty: "Medium",
-    estimatedDuration: "Review 3 fights",
-    done: false,
-  },
-];
-
-const GOALS: ImprovementGoal[] = [
-  {
-    id: "goal-rank",
-    title: "Reach Emerald",
-    detail: "Climb from Diamond I to Emerald with cleaner mid-game play.",
-    category: "Macro",
-    current: 47,
-    target: 100,
-    unit: "LP to promo",
-    trend: "Improving",
-    status: "In Progress",
-  },
-  {
-    id: "goal-cs",
-    title: "Average 8.5 CS/min",
-    detail: "Keep farm on curve even in contested lanes.",
-    category: "Farming",
-    current: 84,
-    target: 85,
-    unit: "CS/min ×10",
-    trend: "Improving",
-    status: "On Track",
-  },
-  {
-    id: "goal-deaths",
-    title: "Reduce deaths under 5 per game",
-    detail: "Cut avoidable deaths from overextending and ganks.",
-    category: "Positioning",
-    current: 6,
-    target: 5,
-    unit: "avg deaths",
-    trend: "Improving",
-    status: "In Progress",
-    invert: true,
-  },
-  {
-    id: "goal-vision",
-    title: "Increase Vision Score",
-    detail: "Consistently out-ward your lane opponent.",
-    category: "Vision",
-    current: 26,
-    target: 35,
-    unit: "vision score",
-    trend: "Steady",
-    status: "In Progress",
-  },
-  {
-    id: "goal-wave",
-    title: "Improve Wave Management",
-    detail: "Master recall timing and slow-push setups.",
-    category: "Wave Management",
-    current: 62,
-    target: 80,
-    unit: "rating",
-    trend: "Improving",
-    status: "In Progress",
-  },
-];
-
-const REPORTS: CoachingReport[] = [
-  {
-    id: "report-w7",
-    date: "Jul 1, 2026",
-    timeAgo: "Today",
-    title: "Mid-game positioning is your climb ceiling",
-    summary:
-      "Your laning is sharp and improving, but overextending after first tower is resetting your leads. Fix this one habit and the LP follows.",
-    overallGrade: "A-",
-    gamesAnalyzed: 10,
-    insightIds: ["positioning-overextend", "teamfight-frontline", "wave-recall-timing"],
-    highlights: [
-      "First-death rate still high after first tower.",
-      "Teamfight positioning trending up (+4 this week).",
-      "Recall timing improving but still costing ~12 CS/game.",
-    ],
-    focusCategory: "Positioning",
-  },
-  {
-    id: "report-w6",
-    date: "Jun 24, 2026",
-    timeAgo: "1 week ago",
-    title: "Vision habits are paying off",
-    summary:
-      "Control ward usage improved noticeably. Objective setup is still late — the next step is placing vision 75s before spawns.",
-    overallGrade: "B+",
-    gamesAnalyzed: 12,
-    insightIds: ["vision-objective-setup", "map-jungle-tracking"],
-    highlights: [
-      "Vision score up 18% over two weeks.",
-      "Objective vision still going down late.",
-      "Jungle tracking inconsistent in the mid-game.",
-    ],
-    focusCategory: "Vision",
-  },
-  {
-    id: "report-w5",
-    date: "Jun 17, 2026",
-    timeAgo: "2 weeks ago",
-    title: "Laning fundamentals locked in",
-    summary:
-      "Early CS under pressure reached rank average and your trading patterns are clean. Focus is shifting from lane to map play.",
-    overallGrade: "B",
-    gamesAnalyzed: 11,
-    insightIds: ["farming-early-cs", "mental-tilt-reset"],
-    highlights: [
-      "CS at 10 min improved 72 → 81.",
-      "Fewer greedy trades in unfavorable matchups.",
-      "Tilt after early deaths still costing consistency.",
-    ],
-    focusCategory: "Laning",
-  },
-];
-
-export const DEMO_COACHING: CoachingEngineData = {
-  insights: INSIGHTS,
-  tasks: TASKS,
-  goals: GOALS,
-  reports: REPORTS,
+const CATEGORY_MAP: Record<CoachPattern["category"], CoachingCategory> = {
+  lane: "Laning",
+  wave: "Wave Management",
+  positioning: "Positioning",
+  decision: "Decision Making",
+  objective: "Objective Control",
+  teamfight: "Team Fighting",
+  champion: "Champion Mastery",
+  farming: "Farming",
+  vision: "Vision",
 };
 
-// --- Hook ------------------------------------------------------------------
+function severityFrom(p: CoachPattern): Severity {
+  if (p.rate >= 0.6 || p.streak >= 3) return "High";
+  if (p.rate >= 0.35) return "Medium";
+  return "Low";
+}
+
+function lpImpact(p: CoachPattern): string {
+  return p.rate >= 0.6 ? "High" : p.rate >= 0.35 ? "Moderate" : "Situational";
+}
+
+function gradeFromWinRate(wr: number): string {
+  if (wr >= 60) return "A";
+  if (wr >= 55) return "A-";
+  if (wr >= 52) return "B+";
+  if (wr >= 48) return "B";
+  if (wr >= 45) return "B-";
+  return "C";
+}
+
+function insightFromPattern(p: CoachPattern, d: CoachDossier, top: boolean): CoachInsight {
+  const isPlanTarget = d.improvementPlan.biggestWeakness === p.title;
+  const currentScore = Math.max(10, Math.round(100 - p.rate * 70));
+  return {
+    id: p.id,
+    title: p.title,
+    category: CATEGORY_MAP[p.category] ?? "Macro",
+    severity: severityFrom(p),
+    confidence: Math.min(96, 55 + p.count * 6),
+    description: p.detail,
+    whyItMatters: `This pattern showed up in ${p.count} of your last ${d.matchesAnalyzed} games${
+      p.streak >= 3 ? ` — the last ${p.streak} in a row` : ""
+    }. Recurring habits, not one-off mistakes, are what decide your rank.`,
+    recommendedAction: isPlanTarget
+      ? d.improvementPlan.practiceGoal
+      : `Target "${p.title.toLowerCase()}" specifically for your next 5 games.`,
+    expectedImprovement: isPlanTarget
+      ? d.improvementPlan.expectedImprovement
+      : "Removing a recurring habit shows up as steadier grades and fewer avoidable losses.",
+    estimatedLpImpact: lpImpact(p),
+    practiceDifficulty: "Medium",
+    estimatedPracticeTime: "10–15 minutes",
+    examples: [
+      `Observed in ${p.count} of ${d.matchesAnalyzed} games (${Math.round(p.rate * 100)}%).`,
+      ...(p.streak >= 2 ? [`Current streak: ${p.streak} games in a row.`] : []),
+    ],
+    aiNotes: isPlanTarget ? d.improvementPlan.why : undefined,
+    tracking: {
+      currentScore,
+      goalScore: Math.min(100, currentScore + 20),
+      trend: p.streak >= 3 ? "Declining" : "Steady",
+      status: "In Progress",
+    },
+    isTopPriority: top,
+  };
+}
+
+function deriveCoachingData(d: CoachDossier): CoachingEngineData {
+  const patterns = d.weaknessPatterns.length
+    ? d.weaknessPatterns
+    : ([] as CoachPattern[]);
+
+  const insights: CoachInsight[] = patterns.map((p, i) => insightFromPattern(p, d, i === 0));
+
+  if (insights.length === 0) {
+    insights.push({
+      id: "consistency",
+      title: "Consistency is your climb ceiling",
+      category: "Mental / Consistency",
+      severity: "Medium",
+      confidence: 70,
+      description: d.improvementPlan.why,
+      whyItMatters: d.consistency.explanation,
+      recommendedAction: d.improvementPlan.practiceGoal,
+      expectedImprovement: d.improvementPlan.expectedImprovement,
+      estimatedLpImpact: "High",
+      practiceDifficulty: "Medium",
+      estimatedPracticeTime: "Ongoing",
+      examples: [`Consistency is ${d.consistency.current}/100 across your last ${d.matchesAnalyzed} games.`],
+      tracking: {
+        currentScore: d.consistency.current,
+        goalScore: 85,
+        trend: d.consistency.weeklyTrend > 2 ? "Improving" : d.consistency.weeklyTrend < -2 ? "Declining" : "Steady",
+        status: "In Progress",
+      },
+      isTopPriority: true,
+    });
+  }
+
+  const focusCategory = insights[0]?.category ?? "Macro";
+
+  const tasks: PracticeTask[] = d.practicePlan.map((label, i) => ({
+    id: `task-${i}`,
+    label,
+    category: focusCategory,
+    difficulty: i === 0 ? "Medium" : "Easy",
+    estimatedDuration: "10 minutes",
+    done: false,
+  }));
+
+  const consistencyTrend: ProgressTrend =
+    d.consistency.weeklyTrend > 2 ? "Improving" : d.consistency.weeklyTrend < -2 ? "Declining" : "Steady";
+  const wrTrend: ProgressTrend =
+    d.winRate >= 55 ? "Improving" : d.winRate <= 45 ? "Declining" : "Steady";
+
+  const goals: ImprovementGoal[] = [
+    {
+      id: "goal-consistency",
+      title: "Raise your consistency",
+      detail: d.consistency.explanation,
+      category: "Mental / Consistency",
+      current: d.consistency.current,
+      target: 85,
+      unit: "/100",
+      trend: consistencyTrend,
+      status: d.consistency.current >= 85 ? "Achieved" : "In Progress",
+    },
+    {
+      id: "goal-winrate",
+      title: "Reach a 55% win rate",
+      detail: `Currently ${d.winRate}% over ${d.matchesAnalyzed} games.`,
+      category: "Macro",
+      current: d.winRate,
+      target: 55,
+      unit: "% WR",
+      trend: wrTrend,
+      status: d.winRate >= 55 ? "Achieved" : "In Progress",
+    },
+    ...patterns.slice(0, 3).map((p) => {
+      const cur = Math.max(10, Math.round(100 - p.rate * 70));
+      return {
+        id: `goal-${p.id}`,
+        title: `Fix: ${p.title}`,
+        detail: p.detail,
+        category: CATEGORY_MAP[p.category] ?? "Macro",
+        current: cur,
+        target: Math.min(100, cur + 20),
+        unit: "rating",
+        trend: (p.streak >= 3 ? "Declining" : "Improving") as ProgressTrend,
+        status: "In Progress" as GoalStatus,
+      };
+    }),
+  ];
+
+  const upTrends = d.trends.filter((t) => t.improved && t.direction !== "flat");
+  const downTrends = d.trends.filter((t) => !t.improved && t.direction !== "flat");
+  const highlights = [
+    ...upTrends.slice(0, 2).map((t) => `${t.label} improving (${t.previous} → ${t.current}).`),
+    ...downTrends.slice(0, 2).map((t) => `${t.label} slipping (${t.previous} → ${t.current}).`),
+  ];
+  if (highlights.length === 0) highlights.push("Metrics holding steady across recent games.");
+
+  const reports: CoachingReport[] = [
+    {
+      id: "report-current",
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      timeAgo: "Latest",
+      title: `${d.biggestImprovementArea} is your climb ceiling`,
+      summary: d.weeklySummary,
+      overallGrade: gradeFromWinRate(d.winRate),
+      gamesAnalyzed: d.matchesAnalyzed,
+      insightIds: insights.slice(0, 3).map((i) => i.id),
+      highlights,
+      focusCategory,
+    },
+  ];
+
+  return { insights, tasks, goals, reports };
+}
+
+// --- Hooks -----------------------------------------------------------------
 
 /**
- * Single interface every coaching surface consumes. Backed by demo data today;
- * when Riot + AI analysis lands it returns the same shape with generated
- * `CoachInsight` / `CoachingReport` objects — no UI changes required.
+ * Single interface every coaching surface consumes. Derived live from the
+ * player-memory dossier — the app's one coaching source of truth.
  */
 export function useCoachingData(): CoachingEngineData {
-  return DEMO_COACHING;
+  const { dossier } = useCoachDossier();
+  return useMemo(() => deriveCoachingData(dossier), [dossier]);
 }
 
 /** The single highest-priority insight, surfaced as "Today's Focus". */
