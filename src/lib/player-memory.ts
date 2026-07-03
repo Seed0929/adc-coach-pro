@@ -117,6 +117,9 @@ export interface CoachDossier {
   strengths: { title: string; detail: string }[];
   weaknesses: { title: string; detail: string }[];
   recurringHabits: CoachPattern[];
+  /** Full detected pattern arrays (most-habitual first) for downstream views. */
+  weaknessPatterns: CoachPattern[];
+  strengthPatterns: CoachPattern[];
 
   biggestImprovementArea: string;
   trainingGoal: string;
