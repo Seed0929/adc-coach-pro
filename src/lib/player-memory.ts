@@ -734,45 +734,184 @@ function buildWeeklySummary(inputs: MatchAnalysisInput[], trends: CoachTrend[], 
 }
 
 // --- Quick-Ask answering ---------------------------------------------------
-// Deterministic, data-grounded responses. Never generic — every answer cites
-// the player's own numbers.
+// Deterministic, data-grounded responses. Each question has its OWN reasoning
+// path and cites the player's own numbers. Every answer follows the same
+// professional report structure: Problem → Evidence → Why it matters →
+// Practice Goal → Expected Improvement → Next Match Challenge.
+
+interface Report {
+  problem: string;
+  evidence: string;
+  why: string;
+  goal: string;
+  expected: string;
+  challenge: string;
+}
+
+function formatReport(r: Report): string {
+  return [
+    `Problem\n${r.problem}`,
+    `Evidence\n${r.evidence}`,
+    `Why it matters\n${r.why}`,
+    `Practice Goal\n${r.goal}`,
+    `Expected Improvement\n${r.expected}`,
+    `Next Match Challenge\n${r.challenge}`,
+  ].join("\n\n");
+}
 
 export function answerQuickAsk(d: CoachDossier, prompt: string): string {
   const q = prompt.toLowerCase();
+  const habitIn = (cats: Category[]) =>
+    d.recurringHabits.find((h) => h.kind === "weakness" && cats.includes(h.category));
+  const trend = (key: string) => d.trends.find((t) => t.key === key);
+  const evidence = (h?: CoachPattern) =>
+    h
+      ? `Observed in ${h.count} of your last ${d.matchesAnalyzed} games (${Math.round(h.rate * 100)}%)${
+          h.streak >= 3 ? `, including the last ${h.streak} in a row` : ""
+        }.`
+      : `Measured across your last ${d.matchesAnalyzed} games.`;
+
   const champMatch = d.championAdvice.find((c) => q.includes(c.name.toLowerCase()));
 
-  if (champMatch && (q.includes("los") || q.includes("why"))) {
-    return `On ${champMatch.name} you're at ${champMatch.winRate}% over ${champMatch.games} games. Your recurring issue there is "${champMatch.weakness.toLowerCase()}". ${d.primaryWeakness.detail} Focus that specific fix on ${champMatch.name} and the games should swing back.`;
+  // Champion-specific — its own path.
+  if (champMatch) {
+    return formatReport({
+      problem: `On ${champMatch.name}, your recurring issue is "${champMatch.weakness.toLowerCase()}".`,
+      evidence: `${champMatch.winRate}% win rate over ${champMatch.games} games on ${champMatch.name}. Your standout there is "${champMatch.strength.toLowerCase()}".`,
+      why: champMatch.note,
+      goal: d.improvementPlan.practiceGoal,
+      expected: d.improvementPlan.expectedImprovement,
+      challenge: `Next ${champMatch.name} game: lean on "${champMatch.strength.toLowerCase()}" and consciously avoid "${champMatch.weakness.toLowerCase()}".`,
+    });
   }
-  if (champMatch && (q.includes("improve") || q.includes("teamfight") || q.includes("better"))) {
-    return `Your ${champMatch.name} strength is "${champMatch.strength.toLowerCase()}", so lean on it. The thing capping you is "${champMatch.weakness.toLowerCase()}". Practice goal: ${d.improvementPlan.practiceGoal}`;
+
+  // 1. Why do I lose lane? — lane phase only.
+  if (q.includes("lose lane") || q.includes("losing lane") || q.includes("laning") || (q.includes("lane") && q.includes("why"))) {
+    const h = habitIn(["lane", "wave", "farming"]);
+    const laneTrend = trend("lane");
+    const cs = trend("cs");
+    return formatReport({
+      problem: h?.title ?? "Your laning phase is roughly even — no single lane leak dominates.",
+      evidence:
+        evidence(h) +
+        (laneTrend ? ` Early lane lead: ${laneTrend.previous} → ${laneTrend.current}.` : "") +
+        (cs ? ` CS/min: ${cs.current}.` : ""),
+      why: "Laning decides your item timings and lane priority. Falling behind early makes every trade, recall and skirmish harder for the rest of the game.",
+      goal: "Finish the laning phase even or ahead in CS at 10 minutes for your next 5 games. Only trade when the enemy's key spell is on cooldown, and freeze when you can't win the trade.",
+      expected: "A neutral-or-ahead lane removes the uphill start that loses close games — expect fewer snowballed losses.",
+      challenge: "Next game: hit 80+ CS by 10 minutes and back on the wave crash, not on a whim.",
+    });
   }
-  if (q.includes("recurring") || q.includes("biggest mistake") || q.includes("biggest leak")) {
+
+  // 2. How can I improve my early game? — first 10-15 min, tracking, recalls, priority, first objective.
+  if (q.includes("early game") || (q.includes("early") && q.includes("improve")) || q.includes("first 10") || q.includes("first objective")) {
+    const h = habitIn(["lane", "wave", "objective", "farming"]);
+    const obj = trend("obj");
+    return formatReport({
+      problem: h?.title ?? "Your early game is solid — the gains now are in converting it into the first objective.",
+      evidence:
+        evidence(h) + (obj ? ` Objectives/game: ${obj.previous} → ${obj.current}.` : ""),
+      why: "The first 10-15 minutes set the tempo: lane priority buys the first drake and lets your jungler path safely. A clean early game compounds into a mid-game lead.",
+      goal: "Track the enemy jungler from their first camp, recall only on wave crashes, and rotate to the first drake with lane priority.",
+      expected: "Fewer early deaths to ganks and more first-objective participation, which is where your leads should come from.",
+      challenge: "Next game: be present (alive, in position) for the first dragon and have priority before it spawns.",
+    });
+  }
+
+  // 3. What improved over my last N games? — historical trends only.
+  if (q.includes("improved") || q.includes("progress") || q.includes("better over") || q.includes("last")) {
+    const up = d.trends.filter((t) => t.improved && t.direction !== "flat");
+    const down = d.trends.filter((t) => !t.improved && t.direction !== "flat");
+    return formatReport({
+      problem: up.length ? "You're trending up in several areas — let's protect the gains." : "Your metrics have held roughly steady.",
+      evidence: up.length
+        ? `Improving: ${up.map((t) => `${t.label.toLowerCase()} (${t.previous} → ${t.current})`).join(", ")}.` +
+          (down.length ? ` Slipping: ${down.map((t) => `${t.label.toLowerCase()} (${t.previous} → ${t.current})`).join(", ")}.` : "")
+        : d.weeklySummary,
+      why: "Improvement compounds. Reinforcing what's already trending up is faster than fixing everything at once.",
+      goal: down.length
+        ? `Hold your improvements while steadying your ${down[0].label.toLowerCase()}, which slipped recently.`
+        : "Keep repeating the routines behind these gains for another 5 games.",
+      expected: "A steadier LP curve as your recent gains become permanent habits.",
+      challenge: `Next game: match your best recent number for ${(up[0] ?? d.trends[0])?.label.toLowerCase() ?? "CS/min"}.`,
+    });
+  }
+
+  // 4. What is preventing me from climbing? — ONE recurring high-impact habit.
+  if (q.includes("climb") || q.includes("preventing") || q.includes("stopping") || q.includes("stuck") || q.includes("reach") || q.includes("rank")) {
     const h = d.recurringHabits.find((x) => x.kind === "weakness");
-    if (h) return `Your biggest recurring mistake is "${h.title.toLowerCase()}" — it's shown up in ${h.count} of your last ${d.matchesAnalyzed} games${h.streak >= 3 ? ` and the last ${h.streak} in a row` : ""}. ${h.detail}`;
-    return `You don't have one dominant recurring mistake right now. ${d.improvementPlan.why}`;
+    return formatReport({
+      problem: h ? `One habit is capping your LP: "${h.title.toLowerCase()}".` : "You don't have one dominant leak — your ceiling right now is consistency.",
+      evidence: h ? evidence(h) : `Consistency is ${d.consistency.current}/100 across your last ${d.matchesAnalyzed} games.`,
+      why: `${d.rankAssessment} ${d.rankPotential}`,
+      goal: d.improvementPlan.practiceGoal,
+      expected: d.improvementPlan.expectedImprovement + " " + d.improvementPlan.estimatedImpact,
+      challenge: `Next game: attack only this one habit — ${h ? `"${h.title.toLowerCase()}"` : "replicate your best game's decisions"} — and ignore everything else.`,
+    });
   }
+
+  // Biggest recurring mistake.
+  if (q.includes("recurring") || q.includes("biggest mistake") || q.includes("biggest leak") || q.includes("weakness")) {
+    const h = d.recurringHabits.find((x) => x.kind === "weakness");
+    return formatReport({
+      problem: h ? `Your biggest recurring mistake is "${h.title.toLowerCase()}".` : "You don't have one dominant recurring mistake right now.",
+      evidence: h ? evidence(h) : d.improvementPlan.why,
+      why: h?.detail ?? "Your issue is the gap between your good and bad games, not any single mistake.",
+      goal: d.improvementPlan.practiceGoal,
+      expected: d.improvementPlan.expectedImprovement,
+      challenge: `Next game: keep a mental note every time this happens — awareness alone cuts it in half.`,
+    });
+  }
+
+  // Win rate change.
   if (q.includes("win rate") || q.includes("winrate") || q.includes("dropped") || q.includes("changed")) {
     const down = d.trends.find((t) => !t.improved && t.direction !== "flat");
-    return `You're at a ${d.winRate}% win rate over your last ${d.matchesAnalyzed} games. ${down ? `The biggest driver is your ${down.label.toLowerCase()} moving from ${down.previous} to ${down.current}. ${down.note}` : "Your stats are steady, so the swings are mostly variance — tighten your consistency (currently " + d.consistency.current + "/100) to smooth it out."}`;
+    return formatReport({
+      problem: `You're at a ${d.winRate}% win rate over your last ${d.matchesAnalyzed} games.`,
+      evidence: down ? `The biggest mover is your ${down.label.toLowerCase()} (${down.previous} → ${down.current}).` : `Your core stats are steady; consistency is ${d.consistency.current}/100.`,
+      why: down ? down.note : "Steady stats with swinging results usually means variance or mental, not mechanics.",
+      goal: d.improvementPlan.practiceGoal,
+      expected: "A tighter, more predictable LP curve.",
+      challenge: "Next game: hard-stop after two losses and treat each game as independent.",
+    });
   }
+
+  // Before next game.
   if (q.includes("next") && (q.includes("game") || q.includes("ranked"))) {
-    return `Before your next game, focus on one thing: ${d.trainingGoal} That directly attacks your biggest leak, "${d.biggestImprovementArea.toLowerCase()}". Ignore everything else for now.`;
+    return formatReport({
+      problem: `Your single highest-impact focus is "${d.biggestImprovementArea.toLowerCase()}".`,
+      evidence: evidence(d.recurringHabits.find((x) => x.kind === "weakness")),
+      why: d.improvementPlan.why,
+      goal: d.trainingGoal,
+      expected: d.improvementPlan.expectedImprovement,
+      challenge: `Next game: focus on this one thing and nothing else — ${d.trainingGoal.toLowerCase()}`,
+    });
   }
-  if (q.includes("reach") || q.includes("stopping") || q.includes("rank") || q.includes("climb")) {
-    return `${d.rankAssessment} ${d.rankPotential} The habit in your way is "${d.biggestImprovementArea.toLowerCase()}". ${d.improvementPlan.why}`;
-  }
-  if (q.includes("improved") || q.includes("better over") || q.includes("progress")) {
-    const up = d.trends.filter((t) => t.improved && t.direction !== "flat");
-    if (up.length) return `Over your last ${d.matchesAnalyzed} games you've improved: ${up.map((t) => `${t.label.toLowerCase()} (${t.previous} → ${t.current})`).join(", ")}. Keep it up. ${d.weeklySummary}`;
-    return `Your metrics have held roughly steady recently. ${d.weeklySummary}`;
-  }
+
+  // Practice.
   if (q.includes("practice") || q.includes("today") || q.includes("drill")) {
     return `Today's practice plan:\n• ${d.practicePlan.join("\n• ")}`;
   }
+
+  // Strength.
   if (q.includes("strength") || q.includes("good at")) {
-    return `Your standout strength is "${d.primaryStrength.title.toLowerCase()}". ${d.primaryStrength.detail} Build your game plan around it.`;
+    return formatReport({
+      problem: `Your standout strength is "${d.primaryStrength.title.toLowerCase()}" — build your game plan around it.`,
+      evidence: d.primaryStrength.detail,
+      why: "Winning players lean into their strengths rather than only patching weaknesses.",
+      goal: "Draft and play to force situations where this strength decides the game.",
+      expected: "More games where you dictate the pace instead of reacting.",
+      challenge: "Next game: create one situation that plays directly to this strength.",
+    });
   }
+
   // Default: full read.
-  return `${d.overallSummary} Right now the single highest-impact thing you can do is: ${d.trainingGoal}`;
+  return formatReport({
+    problem: d.primaryWeakness.title,
+    evidence: evidence(d.recurringHabits.find((x) => x.kind === "weakness")),
+    why: d.overallSummary,
+    goal: d.trainingGoal,
+    expected: d.improvementPlan.expectedImprovement,
+    challenge: `Next game: ${d.trainingGoal.toLowerCase()}`,
+  });
 }
