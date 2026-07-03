@@ -1,14 +1,15 @@
 // ---------------------------------------------------------------------------
-// BotDiff Coaching Engine
+// BotDiff Coaching Library adapter
 //
-// The coaching engine is the heart of BotDiff. It turns raw performance into
-// *actionable* insights: what to improve next, why it matters, and exactly how
-// to practice it. Everything here is demo data today, but every surface reads
-// from these reusable models. When Riot + AI integration lands, the analysis
-// layer simply produces the same `CoachInsight` / `PracticeTask` /
-// `ImprovementGoal` / `CoachingReport` objects and the UI renders them with no
-// redesign required.
+// Single source of truth: this module derives every coaching surface
+// (insights, tasks, goals, reports) DIRECTLY from the player-memory
+// `CoachDossier`. There is no separate/legacy summary engine anymore — the
+// Coaching Library, the AI Coach page and the dashboard all read from the same
+// dossier so they can never show conflicting coaching.
 // ---------------------------------------------------------------------------
+import { useMemo } from "react";
+import { useCoachDossier } from "@/hooks/use-coach-dossier";
+import type { CoachDossier, CoachPattern } from "./player-memory";
 
 export type CoachingCategory =
   | "Laning"
