@@ -586,7 +586,7 @@ export function buildCoachDossier(
 
   const improvedTrend = trends.find((t) => t.improved && t.direction !== "flat");
   const overallSummary =
-    `${summary} ${assessment}` +
+    `${assessment}` +
     (topWeakness ? ` Your highest-impact leak is "${topWeakness.title.toLowerCase()}".${streakNote}` : "") +
     (improvedTrend ? ` On the bright side, ${improvedTrend.note.toLowerCase()}` : "");
 
