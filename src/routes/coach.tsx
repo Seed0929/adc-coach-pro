@@ -20,7 +20,7 @@ import {
 import { AppShell, DemoModeBadge, Pill } from "@/components/app-shell";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useServerFn } from "@tanstack/react-start";
-import { coachAnswer, proactiveCoaching } from "@/lib/coaching";
+import { coachAnswer, proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 import { askCoach } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/coach")({
@@ -121,6 +121,8 @@ function Coach() {
 
   const consistency = dossier.consistency;
   const trendTone = (n: number) => (n > 0 ? "text-success" : n < 0 ? "text-destructive" : "text-muted-foreground");
+  const proactive = useMemo(() => proactiveCoaching(dossier), [dossier]);
+  const followUp = useMemo(() => followUpQuestion(dossier), [dossier]);
 
   return (
     <AppShell>
@@ -163,6 +165,34 @@ function Coach() {
             <p className="mt-1 text-sm text-muted-foreground">{dossier.winRate}% win rate</p>
           </div>
         </div>
+      </Section>
+
+      {/* Proactive coaching briefing — generated after every Riot sync. */}
+      <Section icon={Flag} title="Since your last sync" className="mb-6">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { label: "Biggest improvement", value: proactive.biggestImprovement, tone: "text-success" },
+            { label: "Biggest recurring mistake", value: proactive.biggestRecurringMistake, tone: "text-warning" },
+            { label: "Keep doing this", value: proactive.keepDoing, tone: "text-success" },
+            { label: "Fix this next", value: proactive.fixNext, tone: "text-warning" },
+          ].map((row) => (
+            <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className={`mb-1 text-xs uppercase tracking-wider ${row.tone}`}>{row.label}</div>
+              <p className="text-sm text-foreground/90">{row.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
+          <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
+            <Target className="size-3.5" /> Next game challenge
+          </div>
+          <p className="text-sm text-foreground/90">{proactive.nextGameChallenge}</p>
+        </div>
+        {followUp && (
+          <p className="mt-3 rounded-2xl bg-white/[0.03] p-4 text-sm italic text-muted-foreground">
+            "{followUp}"
+          </p>
+        )}
       </Section>
 
       {/* Quick Ask */}
