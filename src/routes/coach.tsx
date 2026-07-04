@@ -19,7 +19,9 @@ import {
 } from "lucide-react";
 import { AppShell, DemoModeBadge, Pill } from "@/components/app-shell";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
-import { answerQuickAsk } from "@/lib/player-memory";
+import { useServerFn } from "@tanstack/react-start";
+import { coachAnswer, proactiveCoaching } from "@/lib/coaching";
+import { askCoach } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
@@ -71,19 +73,44 @@ function Section({
 
 function Coach() {
   const { dossier, loading } = useCoachDossier();
+  const askServer = useServerFn(askCoach);
   const [messages, setMessages] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const ask = (text: string) => {
-    const t = text.trim();
-    if (!t) return;
-    const answer = answerQuickAsk(dossier, t);
-    setMessages((m) => [...m, { role: "you", text: t }, { role: "coach", text: answer }]);
-    setInput("");
+  const scrollDown = () =>
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     });
+
+  const ask = async (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    setInput("");
+    // Instant deterministic answer (works offline + for demo/guests).
+    const local = coachAnswer(dossier, t).answer;
+    setMessages((m) => [...m, { role: "you", text: t }, { role: "coach", text: local }]);
+    scrollDown();
+    // For linked players, upgrade to a live AI answer when a key is configured.
+    if (dossier.isDemo) return;
+    try {
+      const res = await askServer({ data: { question: t } });
+      if (res.ok && res.source === "ai" && res.answer !== local) {
+        setMessages((m) => {
+          const next = [...m];
+          for (let i = next.length - 1; i >= 0; i--) {
+            if (next[i].role === "coach") {
+              next[i] = { role: "coach", text: res.answer };
+              break;
+            }
+          }
+          return next;
+        });
+        scrollDown();
+      }
+    } catch {
+      /* keep the deterministic answer */
+    }
   };
 
   const dirIcon = (d: "up" | "down" | "flat", improved: boolean) => {
