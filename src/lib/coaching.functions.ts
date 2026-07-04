@@ -8,6 +8,9 @@ import {
   type MatchCoachingReport,
 } from "./coaching-engine";
 import { buildCoachDossier, type CoachDossier } from "./player-memory";
+import { buildCoachingContext } from "./coaching/context-builder";
+import { coachAnswer } from "./coaching";
+import type { AnalysisMode } from "./coaching/question-router";
 
 // ---------------------------------------------------------------------------
 // Coaching analysis server function.
@@ -50,6 +53,46 @@ export function buildDemoDossier(): CoachDossier {
   const analyses = DEMO_INPUTS.map(analyzeMatch);
   return buildCoachDossier(DEMO_INPUTS, analyses, true);
 }
+
+// ---------------------------------------------------------------------------
+// Quick Ask — routes a question through the central Coaching Engine and, when
+// an OpenAI key is configured, generates a live answer. With no key it returns
+// the deterministic, evidence-grounded answer. Either way the architecture is
+// identical, so adding the key is the only step needed to go live.
+// ---------------------------------------------------------------------------
+export type AskCoachResult =
+  | { ok: true; answer: string; mode: AnalysisMode; source: "deterministic" | "ai" }
+  | { ok: false; code: string; message: string };
+
+export const askCoach = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { question: string }) => data)
+  .handler(async ({ data, context }): Promise<AskCoachResult> => {
+    const { supabase, userId } = context;
+    try {
+      const [inputs, analyses] = await Promise.all([
+        buildMatchInputs(supabase, userId, 50),
+        analyzeAndStoreMatches(supabase, userId, 50),
+      ]);
+      if (inputs.length === 0) {
+        return { ok: false, code: "no_matches", message: "No matches to analyze yet." };
+      }
+      const dossier = buildCoachDossier(inputs, analyses, false);
+      const deterministic = coachAnswer(dossier, data.question);
+
+      // Try live AI; fall back gracefully when no provider / key.
+      const { resolveCoachProvider } = await import("./coaching/ai-provider.server");
+      const provider = resolveCoachProvider();
+      if (provider.available) {
+        const ctx = buildCoachingContext(dossier, data.question);
+        const ai = await provider.generate(ctx);
+        if (ai) return { ok: true, answer: ai, mode: deterministic.mode, source: "ai" };
+      }
+      return { ok: true, answer: deterministic.answer, mode: deterministic.mode, source: "deterministic" };
+    } catch {
+      return { ok: false, code: "unknown", message: "Couldn't answer that right now." };
+    }
+  });
 
 export type MatchReportResult =
   | { ok: true; report: MatchCoachingReport }
