@@ -211,3 +211,67 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Selectable member themes. `:root` above is "Classic Dark" (the default).
+ * Each block overrides only the tokens that define the theme's character;
+ * everything else inherits from :root. Applied via [data-theme] on <html>.
+ * ------------------------------------------------------------------------- */
+
+/* Challenger Blue — deep navy, vivid competitive blue + gold accents. */
+[data-theme="challenger"] {
+  --background: oklch(0.15 0.03 258);
+  --card: oklch(0.19 0.035 258);
+  --popover: oklch(0.2 0.038 258);
+  --primary: oklch(0.66 0.19 250);
+  --primary-dim: oklch(0.56 0.17 250);
+  --ring: oklch(0.66 0.19 250);
+  --accent: oklch(0.28 0.05 250);
+  --surface: oklch(0.19 0.035 258);
+  --surface-bright: oklch(0.24 0.04 258);
+  --gold: oklch(0.82 0.14 82);
+  --glass-border-strong: oklch(0.66 0.19 250 / 0.45);
+}
+
+/* Neon — near-black with electric magenta/cyan energy. */
+[data-theme="neon"] {
+  --background: oklch(0.13 0.02 300);
+  --card: oklch(0.17 0.03 300);
+  --popover: oklch(0.18 0.035 300);
+  --primary: oklch(0.68 0.26 330);
+  --primary-dim: oklch(0.58 0.23 330);
+  --ring: oklch(0.68 0.26 330);
+  --accent: oklch(0.3 0.09 330);
+  --secondary: oklch(0.22 0.04 300);
+  --muted: oklch(0.22 0.04 300);
+  --surface: oklch(0.17 0.03 300);
+  --surface-bright: oklch(0.22 0.05 300);
+  --success: oklch(0.78 0.2 180);
+  --gold: oklch(0.85 0.19 95);
+  --glass-bg: oklch(0.8 0.1 330 / 0.06);
+  --glass-border: oklch(0.75 0.2 330 / 0.18);
+  --glass-border-strong: oklch(0.68 0.26 330 / 0.55);
+}
+
+/* Frost / Glass — cool, airy, high-clarity glass over a soft slate. */
+[data-theme="frost"] {
+  --background: oklch(0.22 0.02 235);
+  --foreground: oklch(0.97 0.006 235);
+  --card: oklch(0.27 0.022 235);
+  --popover: oklch(0.29 0.024 235);
+  --primary: oklch(0.72 0.11 220);
+  --primary-dim: oklch(0.62 0.1 220);
+  --ring: oklch(0.72 0.11 220);
+  --accent: oklch(0.34 0.03 220);
+  --secondary: oklch(0.3 0.02 235);
+  --muted: oklch(0.3 0.02 235);
+  --muted-foreground: oklch(0.74 0.015 235);
+  --border: oklch(0.42 0.02 235);
+  --surface: oklch(0.27 0.022 235);
+  --surface-bright: oklch(0.33 0.026 235);
+  --glass-bg: oklch(0.99 0.01 235 / 0.08);
+  --glass-bg-strong: oklch(0.99 0.01 235 / 0.13);
+  --glass-border: oklch(1 0 0 / 0.16);
+  --glass-highlight: oklch(1 0 0 / 0.12);
+  --glass-border-strong: oklch(0.72 0.11 220 / 0.5);
+}
