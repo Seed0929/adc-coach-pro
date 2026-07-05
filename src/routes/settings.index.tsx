@@ -146,12 +146,7 @@ function SettingsPage() {
           desc="Daily focus reminders"
           action={<Pill tone="success">On</Pill>}
         />
-        <Row
-          icon={Palette}
-          title="Appearance"
-          desc="Calm dark theme"
-          action={<Pill tone="primary">Default</Pill>}
-        />
+        <ThemePicker />
       </div>
     </AppShell>
   );
