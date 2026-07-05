@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { User, Link2, Bell, Palette, type LucideIcon } from "lucide-react";
+import { User, Link2, Bell, Palette, Check, type LucideIcon } from "lucide-react";
 import { AppShell, Pill, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/settings/")({
@@ -30,6 +31,62 @@ function Row({
         <div className="truncate text-sm text-muted-foreground">{desc}</div>
       </div>
       {action}
+    </div>
+  );
+}
+
+function ThemePicker() {
+  const { theme, setTheme, themes } = useTheme();
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-5">
+      <div className="mb-4 flex items-center gap-4">
+        <span className="grid size-10 place-items-center rounded-xl bg-primary/12 text-primary">
+          <Palette className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium">Appearance</div>
+          <div className="truncate text-sm text-muted-foreground">
+            Pick a theme — BotDiff remembers it across sessions.
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {themes.map((t) => {
+          const active = t.id === theme;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTheme(t.id)}
+              aria-pressed={active}
+              className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-colors ${
+                active
+                  ? "border-primary/60 bg-primary/[0.08]"
+                  : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"
+              }`}
+            >
+              <span
+                className="grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-white/10"
+                style={{ background: t.swatch.background }}
+              >
+                <span
+                  className="size-4 rounded-full"
+                  style={{ background: t.swatch.primary }}
+                />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-medium">
+                  {t.name}
+                  {active && <Check className="size-4 text-primary" />}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {t.description}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
