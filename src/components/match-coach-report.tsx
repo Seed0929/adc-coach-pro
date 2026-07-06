@@ -11,6 +11,14 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
+import {
+  Swords,
+  Clock,
+  Compass,
+  Wrench,
+  MapPin,
+  Crown,
+} from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -18,9 +26,36 @@ import type {
   CoachAssessment,
   TrendItem,
 } from "@/lib/coaching-engine";
+import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
+}
+
+function verdictTone(v: PhaseReview["verdict"]): string {
+  return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
+}
+
+function PhaseRow({ p }: { p: PhaseReview }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{p.phase}</span>
+        <span className={`text-xs font-medium ${verdictTone(p.verdict)}`}>{p.headline}</span>
+      </div>
+      <p className="text-sm text-muted-foreground">{p.detail}</p>
+    </div>
+  );
+}
+
+function PlanRow({ item }: { item: PlanItem }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</div>
+      <div className="text-sm font-medium">{item.value}</div>
+      <p className="mt-1 text-sm text-muted-foreground">{item.why}</p>
+    </div>
+  );
 }
 
 function Card({
