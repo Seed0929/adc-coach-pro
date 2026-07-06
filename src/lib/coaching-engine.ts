@@ -430,7 +430,9 @@ export const DEMO_INPUTS: MatchAnalysisInput[] = [
 // ---------------------------------------------------------------------------
 
 export type ReportGrade = "S+" | "S" | "A" | "B" | "C" | "D";
-export type Confidence = "High" | "Medium" | "Low";
+// Player-friendly replacement for the old "confidence" wording. Describes how
+// much the coach trusts this read given the available match data.
+export type CoachAssessment = "Reliable read" | "Solid read" | "Early read";
 
 export interface CoachStrength {
   title: string;
@@ -474,8 +476,8 @@ export interface MatchCoachingReport {
   mistakes: CoachMistake[];
   priorityImprovement: { title: string; why: string };
   practiceGoal: string;
-  confidence: Confidence;
-  confidenceReason: string;
+  coachAssessment: CoachAssessment;
+  assessmentReason: string;
 
   history: TrendItem[];
   comparedMatchId: string | null;
