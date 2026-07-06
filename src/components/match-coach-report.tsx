@@ -11,6 +11,7 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
+import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -18,9 +19,36 @@ import type {
   CoachAssessment,
   TrendItem,
 } from "@/lib/coaching-engine";
+import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
+}
+
+function verdictTone(v: PhaseReview["verdict"]): string {
+  return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
+}
+
+function PhaseRow({ p }: { p: PhaseReview }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{p.phase}</span>
+        <span className={`text-xs font-medium ${verdictTone(p.verdict)}`}>{p.headline}</span>
+      </div>
+      <p className="text-sm text-muted-foreground">{p.detail}</p>
+    </div>
+  );
+}
+
+function PlanRow({ item }: { item: PlanItem }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</div>
+      <div className="text-sm font-medium">{item.value}</div>
+      <p className="mt-1 text-sm text-muted-foreground">{item.why}</p>
+    </div>
+  );
 }
 
 function Card({
@@ -158,6 +186,62 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
           </div>
         </Card>
       </div>
+
+      {/* Full phase-by-phase review */}
+      <Card icon={Swords} title="Full Match Review">
+        <div className="grid gap-3 md:grid-cols-2">
+          {report.plan.phases.map((p) => (
+            <PhaseRow key={p.phase} p={p} />
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* Turning point */}
+        <Card icon={Crown} title="Biggest Turning Point">
+          <p className="text-sm text-muted-foreground">{report.plan.turningPoint}</p>
+        </Card>
+        {/* Win condition */}
+        <Card icon={Compass} title="Win Condition">
+          <p className="text-sm text-muted-foreground">{report.plan.winCondition}</p>
+        </Card>
+      </div>
+
+      {/* Mistake timeline */}
+      <Card icon={Clock} title="Mistake Timeline">
+        <div className="space-y-3">
+          {report.plan.mistakeTimeline.map((t, i) => (
+            <div key={i} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.when}</div>
+              <div className="text-sm">{t.what}</div>
+              <p className="mt-1 text-sm text-muted-foreground">Fix: {t.fix}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Build & Matchup coach */}
+      <Card icon={Wrench} title="Recommended Build & Game Plan">
+        <div className="mb-4 rounded-2xl bg-primary/[0.07] p-4">
+          <p className="text-sm font-medium">{report.plan.gamePlan.matchupSummary}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{report.plan.gamePlan.enemyThreats}</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <PlanRow item={report.plan.gamePlan.runes} />
+          <PlanRow item={report.plan.gamePlan.summonerSpells} />
+          <PlanRow item={report.plan.gamePlan.startItem} />
+          <PlanRow item={report.plan.gamePlan.boots} />
+          <PlanRow item={report.plan.gamePlan.coreBuild} />
+          <PlanRow item={report.plan.gamePlan.situational} />
+          <PlanRow item={report.plan.gamePlan.laneStrategy} />
+          <PlanRow item={report.plan.gamePlan.tradingPattern} />
+          <PlanRow item={report.plan.gamePlan.waveStrategy} />
+          <PlanRow item={report.plan.gamePlan.recallTiming} />
+          <PlanRow item={report.plan.gamePlan.midGame} />
+          <PlanRow item={report.plan.gamePlan.teamfightRole} />
+          <PlanRow item={report.plan.gamePlan.splitVsGroup} />
+        </div>
+      </Card>
 
       {/* Improvement history */}
       <Card icon={TrendingUp} title="Player Improvement History">

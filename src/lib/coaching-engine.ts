@@ -14,6 +14,9 @@
 /** Bump when the scoring rules change so stored analyses can be recomputed. */
 export const COACHING_ENGINE_VERSION = 1;
 
+import { buildMatchPlan, type MatchPlan } from "./coaching/match-plan";
+export type { MatchPlan } from "./coaching/match-plan";
+
 export type Grade = "S" | "A" | "B" | "C" | "D";
 
 export interface CoachingGrades {
@@ -66,6 +69,14 @@ export interface MatchAnalysisInput {
   laneMinions10: number; // CS at 10 minutes
   maxCsAdvantage: number; // max CS lead over lane opponent
   earlyGoldExpAdvantage: number; // gold+xp advantage in the laning phase
+
+  // --- optional match composition (used by the Build & Matchup coach) -------
+  /** Allied champions (excluding the player), if known. */
+  allies?: string[];
+  /** Enemy champions, if known. */
+  enemies?: string[];
+  /** The direct lane opponent's champion, if known. */
+  laneOpponent?: string | null;
 }
 
 export interface MatchCoachingAnalysis {
@@ -479,6 +490,9 @@ export interface MatchCoachingReport {
   coachAssessment: CoachAssessment;
   assessmentReason: string;
 
+  /** Full phase-by-phase coaching + build & matchup game plan (Parts 7 & 8). */
+  plan: MatchPlan;
+
   history: TrendItem[];
   comparedMatchId: string | null;
 
@@ -873,6 +887,7 @@ export function buildMatchReport(
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
+    plan: buildMatchPlan(m),
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
