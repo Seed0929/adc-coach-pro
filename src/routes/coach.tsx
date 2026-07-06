@@ -428,17 +428,50 @@ function Coach() {
         </Section>
       </div>
 
-      <Section icon={ListChecks} title="Suggested practice plan" className="mt-6">
-        <ul className="space-y-2">
-          {dossier.practicePlan.map((p, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-primary/15 text-[10px] font-semibold text-primary">
-                {i + 1}
-              </span>
-              {p}
-            </li>
+      <Section icon={ListChecks} title="Your personal practice plan" className="mt-6">
+        <div className="mb-4">
+          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Top 3 priorities</div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {program.priorities.map((p, i) => (
+              <div key={i} className="rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
+                <div className="mb-1 text-sm font-medium text-primary">
+                  {i + 1}. {p.title}
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">{p.why}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Practice drills</div>
+          <ul className="space-y-2">
+            {program.drills.map((p, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-primary/15 text-[10px] font-semibold text-primary">
+                  {i + 1}
+                </span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { label: "Champion goal", value: program.championGoal },
+            { label: "Lane goal", value: program.laneGoal },
+            { label: "Mid-game goal", value: program.midGameGoal },
+            { label: "Teamfight goal", value: program.teamfightGoal },
+            { label: "What success looks like", value: program.successLooksLike },
+            { label: `Reevaluate after ${program.gamesUntilReevaluate} games`, value: program.timeline },
+          ].map((row) => (
+            <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">{row.label}</div>
+              <p className="text-sm text-foreground/90">{row.value}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       </Section>
     </AppShell>
   );
