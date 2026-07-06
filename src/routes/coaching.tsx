@@ -90,7 +90,7 @@ function InsightCard({ insight }: { insight: CoachInsight }) {
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex flex-wrap items-center gap-2">
             <Pill tone={severityTone[insight.severity]}>{insight.severity}</Pill>
-            <Pill tone="neutral">{insight.confidence}% confidence</Pill>
+            <Pill tone="neutral">{assessmentLabel(insight.confidence)}</Pill>
           </div>
           <div className="font-medium leading-snug">{insight.title}</div>
           <div className="mt-3 flex items-center gap-3">
@@ -276,7 +276,7 @@ function Coaching() {
                 <Target className="size-3.5" /> Today's Focus
               </Pill>
               <Pill tone={severityTone[focus.severity]}>{focus.severity} priority</Pill>
-              <Pill tone="neutral">{focus.confidence}% confidence</Pill>
+              <Pill tone="neutral">{assessmentLabel(focus.confidence)}</Pill>
             </div>
             <h2 className="font-display text-2xl font-semibold leading-snug md:text-3xl">
               {focus.title}
