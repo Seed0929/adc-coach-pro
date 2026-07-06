@@ -430,7 +430,9 @@ export const DEMO_INPUTS: MatchAnalysisInput[] = [
 // ---------------------------------------------------------------------------
 
 export type ReportGrade = "S+" | "S" | "A" | "B" | "C" | "D";
-export type Confidence = "High" | "Medium" | "Low";
+// Player-friendly replacement for the old "confidence" wording. Describes how
+// much the coach trusts this read given the available match data.
+export type CoachAssessment = "Reliable read" | "Solid read" | "Early read";
 
 export interface CoachStrength {
   title: string;
@@ -474,8 +476,8 @@ export interface MatchCoachingReport {
   mistakes: CoachMistake[];
   priorityImprovement: { title: string; why: string };
   practiceGoal: string;
-  confidence: Confidence;
-  confidenceReason: string;
+  coachAssessment: CoachAssessment;
+  assessmentReason: string;
 
   history: TrendItem[];
   comparedMatchId: string | null;
@@ -769,19 +771,19 @@ function buildPracticeGoal(m: MatchAnalysisInput, priorityTitle: string): string
 
 // --- confidence ------------------------------------------------------------
 
-function buildConfidence(m: MatchAnalysisInput): { level: Confidence; reason: string } {
+function buildAssessment(m: MatchAnalysisInput): { level: CoachAssessment; reason: string } {
   if (m.durationMin < 12) {
-    return { level: "Low", reason: "This game was very short (possible remake), so there isn't enough data to trust the advice." };
+    return { level: "Early read", reason: "This game was very short (possible remake), so I'm keeping this read light until you play a full one." };
   }
   const hasChallengeData =
     m.laneMinions10 > 0 || m.killParticipation > 0 || m.visionScore > 0;
   if (!hasChallengeData) {
-    return { level: "Low", reason: "Detailed stats were missing for this match, so the analysis is limited." };
+    return { level: "Early read", reason: "Some detailed stats were missing for this match, so I'm only calling out what I can clearly see." };
   }
   if (m.durationMin >= 20 && m.killParticipation > 0 && m.laneMinions10 > 0) {
-    return { level: "High", reason: "A full-length game with complete stats — this analysis is reliable." };
+    return { level: "Reliable read", reason: "Full-length game with complete stats — you can trust everything in this review." };
   }
-  return { level: "Medium", reason: "There's solid data here, but a few advanced stats were incomplete." };
+  return { level: "Solid read", reason: "Good data to work with here, though a couple of advanced stats were incomplete." };
 }
 
 // --- improvement history ---------------------------------------------------
@@ -851,7 +853,7 @@ export function buildMatchReport(
   const strengths = buildStrengths(m, analysis.grades);
   const mistakes = buildMistakes(m, analysis.grades);
   const priorityImprovement = buildPriority(m, mistakes);
-  const confidence = buildConfidence(m);
+  const assessment = buildAssessment(m);
 
   return {
     matchId: m.matchId,
@@ -869,8 +871,8 @@ export function buildMatchReport(
     mistakes,
     priorityImprovement,
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
-    confidence: confidence.level,
-    confidenceReason: confidence.reason,
+    coachAssessment: assessment.level,
+    assessmentReason: assessment.reason,
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,

@@ -15,12 +15,12 @@ import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
   MatchCoachingReport,
-  Confidence,
+  CoachAssessment,
   TrendItem,
 } from "@/lib/coaching-engine";
 
-function confidenceTone(c: Confidence): "success" | "warning" | "danger" {
-  return c === "High" ? "success" : c === "Medium" ? "warning" : "danger";
+function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
+  return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
 }
 
 function Card({
@@ -92,12 +92,12 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
               <Pill tone={report.win ? "success" : "danger"}>
                 {report.win ? "Victory" : "Defeat"}
               </Pill>
-              <Pill tone={confidenceTone(report.confidence)}>
-                <Gauge className="size-3.5" /> {report.confidence} confidence
+              <Pill tone={assessmentTone(report.coachAssessment)}>
+                <Gauge className="size-3.5" /> {report.coachAssessment}
               </Pill>
             </div>
             <p className="text-sm text-foreground/90">{report.summary}</p>
-            <p className="mt-2 text-xs text-muted-foreground">{report.confidenceReason}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{report.assessmentReason}</p>
           </div>
         </div>
       </Card>
