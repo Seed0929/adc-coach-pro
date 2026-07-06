@@ -47,6 +47,25 @@ export function extractInput(row: any, puuid: string | null): MatchAnalysisInput
     .filter((p) => p.teamId === teamId)
     .reduce((s, p) => s + num(p.totalDamageDealtToChampions), 0);
 
+  // Team compositions + lane opponent (for the Build & Matchup coach).
+  const enemyTeamId = teamId === 100 ? 200 : teamId === 200 ? 100 : undefined;
+  const nameOf = (p: any): string => String(p?.championName ?? "").trim();
+  const allies = parts
+    .filter((p) => p.teamId === teamId && p !== me)
+    .map(nameOf)
+    .filter(Boolean);
+  const enemies = parts
+    .filter((p) => enemyTeamId != null && p.teamId === enemyTeamId)
+    .map(nameOf)
+    .filter(Boolean);
+  const myPos = me?.teamPosition ?? row.team_position ?? null;
+  const laneOpponent =
+    (myPos &&
+      parts.find(
+        (p) => p.teamId === enemyTeamId && p.teamPosition === myPos,
+      )?.championName) ||
+    null;
+
   const kills = num(row.kills, num(me?.kills));
   const deaths = num(row.deaths, num(me?.deaths));
   const assists = num(row.assists, num(me?.assists));
@@ -96,6 +115,9 @@ export function extractInput(row: any, puuid: string | null): MatchAnalysisInput
       ch.earlyLaningPhaseGoldExpAdvantage,
       num(ch.laningPhaseGoldExpAdvantage),
     ),
+    allies,
+    enemies,
+    laneOpponent: laneOpponent ? String(laneOpponent) : null,
   };
 }
 
