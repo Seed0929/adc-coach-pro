@@ -27,6 +27,7 @@ export * from "./ai-provider";
 export * from "./master-prompt";
 export * from "./champion-knowledge";
 export * from "./match-plan";
+export * from "./practice-program";
 
 export interface CoachAnswer {
   answer: string;
