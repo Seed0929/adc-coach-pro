@@ -56,6 +56,13 @@ function TrendIcon({ trend }: { trend: ProgressTrend }) {
   return <Minus className="size-3.5" />;
 }
 
+/** Player-friendly replacement for "% confidence" — how sure the coach is. */
+function assessmentLabel(n: number): string {
+  if (n >= 80) return "Coach is sure";
+  if (n >= 60) return "Coach is confident";
+  return "Coach's early read";
+}
+
 function ScoreBar({ current, goal }: { current: number; goal: number }) {
   const pct = Math.max(0, Math.min(100, Math.round((current / goal) * 100)));
   return (
