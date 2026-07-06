@@ -123,6 +123,7 @@ function Coach() {
   const trendTone = (n: number) => (n > 0 ? "text-success" : n < 0 ? "text-destructive" : "text-muted-foreground");
   const proactive = useMemo(() => proactiveCoaching(dossier), [dossier]);
   const followUp = useMemo(() => followUpQuestion(dossier), [dossier]);
+  const program = useMemo(() => buildPracticeProgram(dossier), [dossier]);
 
   return (
     <AppShell>
