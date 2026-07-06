@@ -771,19 +771,19 @@ function buildPracticeGoal(m: MatchAnalysisInput, priorityTitle: string): string
 
 // --- confidence ------------------------------------------------------------
 
-function buildConfidence(m: MatchAnalysisInput): { level: Confidence; reason: string } {
+function buildAssessment(m: MatchAnalysisInput): { level: CoachAssessment; reason: string } {
   if (m.durationMin < 12) {
-    return { level: "Low", reason: "This game was very short (possible remake), so there isn't enough data to trust the advice." };
+    return { level: "Early read", reason: "This game was very short (possible remake), so I'm keeping this read light until you play a full one." };
   }
   const hasChallengeData =
     m.laneMinions10 > 0 || m.killParticipation > 0 || m.visionScore > 0;
   if (!hasChallengeData) {
-    return { level: "Low", reason: "Detailed stats were missing for this match, so the analysis is limited." };
+    return { level: "Early read", reason: "Some detailed stats were missing for this match, so I'm only calling out what I can clearly see." };
   }
   if (m.durationMin >= 20 && m.killParticipation > 0 && m.laneMinions10 > 0) {
-    return { level: "High", reason: "A full-length game with complete stats — this analysis is reliable." };
+    return { level: "Reliable read", reason: "Full-length game with complete stats — you can trust everything in this review." };
   }
-  return { level: "Medium", reason: "There's solid data here, but a few advanced stats were incomplete." };
+  return { level: "Solid read", reason: "Good data to work with here, though a couple of advanced stats were incomplete." };
 }
 
 // --- improvement history ---------------------------------------------------
