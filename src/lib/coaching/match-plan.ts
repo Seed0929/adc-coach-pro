@@ -287,7 +287,7 @@ function turningPointOf(m: MatchAnalysisInput): string {
 
 function winConditionOf(m: MatchAnalysisInput): string {
   const b = buildFor(m.champion);
-  if (b.archetype === "lethality" || b.archetype === "poke")
+  if (b.archetype === "lethality")
     return `As ${m.champion} your win condition is tempo: use your poke/early pressure to take towers and objectives before the enemy scales past you.`;
   if (b.archetype === "onhit")
     return `As ${m.champion} your win condition is the extended fight — get peel, reach two items, and shred the enemy frontline in prolonged 5v5s.`;
