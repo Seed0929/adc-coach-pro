@@ -66,6 +66,14 @@ export interface MatchAnalysisInput {
   laneMinions10: number; // CS at 10 minutes
   maxCsAdvantage: number; // max CS lead over lane opponent
   earlyGoldExpAdvantage: number; // gold+xp advantage in the laning phase
+
+  // --- optional match composition (used by the Build & Matchup coach) -------
+  /** Allied champions (excluding the player), if known. */
+  allies?: string[];
+  /** Enemy champions, if known. */
+  enemies?: string[];
+  /** The direct lane opponent's champion, if known. */
+  laneOpponent?: string | null;
 }
 
 export interface MatchCoachingAnalysis {
