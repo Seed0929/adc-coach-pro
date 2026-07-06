@@ -853,7 +853,7 @@ export function buildMatchReport(
   const strengths = buildStrengths(m, analysis.grades);
   const mistakes = buildMistakes(m, analysis.grades);
   const priorityImprovement = buildPriority(m, mistakes);
-  const confidence = buildConfidence(m);
+  const assessment = buildAssessment(m);
 
   return {
     matchId: m.matchId,
@@ -871,8 +871,8 @@ export function buildMatchReport(
     mistakes,
     priorityImprovement,
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
-    confidence: confidence.level,
-    confidenceReason: confidence.reason,
+    coachAssessment: assessment.level,
+    assessmentReason: assessment.reason,
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
