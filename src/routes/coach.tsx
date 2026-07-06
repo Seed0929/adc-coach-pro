@@ -20,7 +20,7 @@ import {
 import { AppShell, DemoModeBadge, Pill } from "@/components/app-shell";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useServerFn } from "@tanstack/react-start";
-import { coachAnswer, proactiveCoaching, followUpQuestion } from "@/lib/coaching";
+import { coachAnswer, proactiveCoaching, followUpQuestion, buildPracticeProgram } from "@/lib/coaching";
 import { askCoach } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/coach")({
