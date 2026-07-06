@@ -14,6 +14,9 @@
 /** Bump when the scoring rules change so stored analyses can be recomputed. */
 export const COACHING_ENGINE_VERSION = 1;
 
+import { buildMatchPlan, type MatchPlan } from "./coaching/match-plan";
+export type { MatchPlan } from "./coaching/match-plan";
+
 export type Grade = "S" | "A" | "B" | "C" | "D";
 
 export interface CoachingGrades {
@@ -487,6 +490,9 @@ export interface MatchCoachingReport {
   coachAssessment: CoachAssessment;
   assessmentReason: string;
 
+  /** Full phase-by-phase coaching + build & matchup game plan (Parts 7 & 8). */
+  plan: MatchPlan;
+
   history: TrendItem[];
   comparedMatchId: string | null;
 
@@ -881,6 +887,7 @@ export function buildMatchReport(
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
+    plan: buildMatchPlan(m),
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
