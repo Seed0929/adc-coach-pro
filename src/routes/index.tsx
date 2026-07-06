@@ -320,7 +320,7 @@ function DashboardInner() {
           <p className="mt-3 max-w-2xl text-muted-foreground">{focus.detail}</p>
 
           <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <FocusMetric icon={Gauge} label="Confidence" value={`${focus.confidence}%`} tone="primary" />
+            <FocusMetric icon={Gauge} label="Coach Assessment" value={focus.confidence >= 80 ? "Sure" : focus.confidence >= 60 ? "Confident" : "Early read"} tone="primary" />
             <FocusMetric icon={Zap} label="Est. Impact" value={focus.impact} tone="success" />
             <FocusMetric icon={Activity} label="Difficulty" value={focus.difficulty} tone="warning" />
             <FocusMetric icon={Clock} label="Practice Time" value={focus.practiceTime} tone="neutral" />
