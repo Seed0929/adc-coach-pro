@@ -276,15 +276,42 @@ function Coach() {
         </Section>
       </div>
 
+      {/* Coaching priorities — the five things every player should always see. */}
+      <Section icon={ListChecks} title={`Coaching priorities · ${dossier.coachingPriority.roleLabel}`} className="mb-6">
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            { label: "Biggest strength", item: dossier.coachingPriority.biggestStrength, tone: "text-success" },
+            { label: "Biggest weakness", item: dossier.coachingPriority.biggestWeakness, tone: "text-warning" },
+            { label: "Most improved habit", item: dossier.coachingPriority.mostImprovedHabit, tone: "text-success" },
+            { label: "Highest-impact habit to fix", item: dossier.coachingPriority.highestImpactToFix, tone: "text-warning" },
+          ].map((row) => (
+            <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className={`mb-1 text-xs uppercase tracking-wider ${row.tone}`}>{row.label}</div>
+              <p className="text-sm font-medium text-foreground/90">{row.item.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{row.item.why}</p>
+              <p className="mt-1.5 text-xs italic text-muted-foreground/80">{row.item.evidence}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
+          <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
+            <Target className="size-3.5" /> Current practice goal
+          </div>
+          <p className="text-sm text-foreground/90">{dossier.coachingPriority.currentPracticeGoal.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{dossier.coachingPriority.currentPracticeGoal.why}</p>
+          <p className="mt-1.5 text-xs italic text-muted-foreground/80">{dossier.coachingPriority.currentPracticeGoal.evidence}</p>
+        </div>
+      </Section>
+
       {/* Recurring habits */}
       <Section icon={Repeat} title="Recurring habits" className="mb-6">
-        {dossier.recurringHabits.length === 0 ? (
+        {dossier.habits.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No strong recurring habits yet — play more games to let me spot your patterns.
           </p>
         ) : (
           <div className="space-y-3">
-            {dossier.recurringHabits.map((h) => (
+            {dossier.habits.map((h) => (
               <div key={h.id} className="flex items-start gap-3 rounded-2xl bg-white/[0.03] p-4">
                 <span
                   className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg ${
@@ -295,13 +322,17 @@ function Coach() {
                 </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{h.title}</span>
+                    <span className="text-sm font-medium">{h.label}</span>
                     <Pill tone={h.kind === "strength" ? "success" : "warning"}>
-                      {h.count}/{dossier.matchesAnalyzed} games
+                      {h.evidence.games}/{h.evidence.total} games
                     </Pill>
-                    {h.streak >= 3 && <Pill tone="danger">{h.streak} in a row</Pill>}
+                    {h.evidence.streak >= 3 && <Pill tone="danger">{h.evidence.streak} in a row</Pill>}
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{h.detail}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{h.why}</p>
+                  <p className="mt-1.5 text-xs italic text-muted-foreground/80">{h.evidence.sentences.join(" ")}</p>
+                  {h.kind === "weakness" && (
+                    <p className="mt-1.5 text-xs text-primary/90">Practice: {h.practice}</p>
+                  )}
                 </div>
               </div>
             ))}
