@@ -15,7 +15,7 @@ import { buildBehaviorObservations } from "./behavior-engine";
 import type { Pillar } from "./pillars";
 import { categoryToPillar } from "./pillars";
 import { detectHabits, type DetectedHabit } from "./habit-engine";
-import { dominantRole, normalizeRole, ROLE_LABELS, type RoleId } from "./role-intelligence";
+import { dominantRole, ROLE_LABELS, type RoleId } from "./role-intelligence";
 
 export interface PlayerMemory {
   primaryRole: string;
@@ -196,5 +196,3 @@ export function buildLayeredPlayerMemory(
     lastUpdated: new Date().toISOString(),
   };
 }
-
-export { normalizeRole };
