@@ -18,7 +18,7 @@ import { categoryToPillar, type Pillar } from "./pillars";
 import {
   dominantRole,
   getHabitDefinitions,
-  normalizeRole,
+  ROLE_LABELS,
   type HabitCategory,
   type HabitDefinition,
   type HabitPhase,
@@ -256,7 +256,7 @@ export function buildCoachingPriority(
   trends: TrendLike[],
 ): CoachingPriority {
   const role = dominantRole(inputs);
-  const roleLabel = normalizeRole(role);
+  const roleLabel = ROLE_LABELS[role];
   const weaknesses = habits.filter((h) => h.kind === "weakness");
   const strengths = habits.filter((h) => h.kind === "strength");
   const top = weaknesses[0];
