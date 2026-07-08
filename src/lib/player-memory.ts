@@ -14,6 +14,16 @@
 // champion-specific mistakes, farming consistency, vision (only when genuine).
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput, MatchCoachingAnalysis } from "./coaching-engine";
+import {
+  detectHabits,
+  buildCoachingPriority,
+  type DetectedHabit,
+  type CoachingPriority,
+} from "./coaching/habit-engine";
+import {
+  buildLayeredPlayerMemory,
+  type LayeredPlayerMemory,
+} from "./coaching/player-memory-model";
 
 export const PLAYER_MEMORY_VERSION = 1;
 
@@ -135,6 +145,14 @@ export interface CoachDossier {
 
   trends: CoachTrend[];
   quickPrompts: QuickPrompt[];
+
+  // --- Coach IQ (habit intelligence) ---------------------------------------
+  /** Evidence-rich recurring habits detected across the match window. */
+  habits: DetectedHabit[];
+  /** The five ranked coaching priorities, each with a reason. */
+  coachingPriority: CoachingPriority;
+  /** Layered memory: universal / role / champion. */
+  layeredMemory: LayeredPlayerMemory;
 }
 
 // --- helpers ---------------------------------------------------------------
