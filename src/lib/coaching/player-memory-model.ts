@@ -14,6 +14,8 @@ import type { MatchAnalysisInput } from "../coaching-engine";
 import { buildBehaviorObservations } from "./behavior-engine";
 import type { Pillar } from "./pillars";
 import { categoryToPillar } from "./pillars";
+import { detectHabits, type DetectedHabit } from "./habit-engine";
+import { dominantRole, ROLE_LABELS, type RoleId } from "./role-intelligence";
 
 export interface PlayerMemory {
   primaryRole: string;
@@ -75,5 +77,122 @@ export function buildPlayerMemory(
     currentTrend: trend,
     recentCoachingTopics: topics,
     lastCoachingUpdate: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Layered Player Memory (Sprint: Coach IQ)
+//
+// A real coach remembers a player on three levels. This splits the flat memory
+// into reusable layers so every future role plugs into the same structure:
+//
+//   Universal Memory — role-independent: decision-making, objectives,
+//                      consistency, mental tendencies, improvement history.
+//   Role Memory      — habits specific to the role they play (ADC today).
+//   Champion Memory  — per-champion habits, improvements, matchup + mastery.
+//
+// PURE + client-safe. Derived deterministically from the dossier + inputs.
+// ---------------------------------------------------------------------------
+export interface UniversalMemory {
+  decisionMaking: string;
+  objectiveControl: string;
+  consistency: string;
+  mentalTendencies: string;
+  improvementHistory: string;
+}
+
+export interface RoleMemory {
+  role: RoleId;
+  roleLabel: string;
+  habits: { label: string; kind: "strength" | "weakness"; evidence: string }[];
+  focus: string;
+}
+
+export interface ChampionMemory {
+  name: string;
+  games: number;
+  winRate: number;
+  habits: { label: string; kind: "strength" | "weakness"; evidence: string }[];
+  improvement: string;
+  matchups: string;
+  masteryTrend: "rising" | "steady" | "falling";
+}
+
+export interface LayeredPlayerMemory {
+  universal: UniversalMemory;
+  role: RoleMemory;
+  champions: ChampionMemory[];
+  lastUpdated: string;
+}
+
+function habitLine(h: DetectedHabit) {
+  return { label: h.label, kind: h.kind, evidence: h.evidence.sentences[0] };
+}
+
+export function buildLayeredPlayerMemory(
+  d: CoachDossier,
+  inputs: MatchAnalysisInput[],
+): LayeredPlayerMemory {
+  const habits = detectHabits(inputs);
+  const role = dominantRole(inputs);
+
+  const universal: UniversalMemory = {
+    decisionMaking:
+      habits.find((h) => h.pillar === "decision")?.summary ??
+      "Your grouping and fight timing are steady — no recurring decision-making leak stands out.",
+    objectiveControl:
+      habits.find((h) => h.category === "objective")?.summary ??
+      "You attend objectives at a reasonable rate; keep setting up earlier for a clearer edge.",
+    consistency: d.consistency.explanation,
+    mentalTendencies: d.mentalNotes,
+    improvementHistory: d.weeklySummary,
+  };
+
+  const roleHabits = habits.filter((h) => h.role !== "universal");
+  const roleMemory: RoleMemory = {
+    role,
+    roleLabel: ROLE_LABELS[role],
+    habits: (roleHabits.length ? roleHabits : habits).slice(0, 5).map(habitLine),
+    focus: d.improvementPlan.biggestWeakness,
+  };
+
+  // Champion memory — per-champion habit slices from the same detection engine.
+  const byChamp = new Map<string, MatchAnalysisInput[]>();
+  for (const m of inputs) {
+    const list = byChamp.get(m.champion) ?? [];
+    list.push(m);
+    byChamp.set(m.champion, list);
+  }
+  const champions: ChampionMemory[] = [];
+  for (const advice of d.championAdvice) {
+    const ms = byChamp.get(advice.name) ?? [];
+    const champHabits = detectHabits(ms).slice(0, 3).map(habitLine);
+    const recent = ms.slice(0, Math.ceil(ms.length / 2));
+    const older = ms.slice(Math.ceil(ms.length / 2));
+    const recentWr = recent.length ? recent.filter((m) => m.win).length / recent.length : 0;
+    const olderWr = older.length ? older.filter((m) => m.win).length / older.length : recentWr;
+    const masteryTrend: ChampionMemory["masteryTrend"] =
+      recentWr - olderWr > 0.1 ? "rising" : olderWr - recentWr > 0.1 ? "falling" : "steady";
+    const opponents = Array.from(
+      new Set(ms.map((m) => m.laneOpponent).filter((x): x is string => Boolean(x))),
+    );
+    champions.push({
+      name: advice.name,
+      games: advice.games,
+      winRate: advice.winRate,
+      habits: champHabits,
+      improvement: `Your standout on ${advice.name} is "${advice.strength.toLowerCase()}"; the leak to watch is "${advice.weakness.toLowerCase()}".`,
+      matchups: opponents.length
+        ? `Recent matchups: ${opponents.slice(0, 4).join(", ")}.`
+        : "Not enough matchup data yet to profile lane opponents.",
+      masteryTrend,
+    });
+  }
+
+  return {
+    universal,
+    role: roleMemory,
+    champions,
+    lastUpdated: new Date().toISOString(),
   };
 }

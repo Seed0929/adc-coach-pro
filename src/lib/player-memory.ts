@@ -14,6 +14,16 @@
 // champion-specific mistakes, farming consistency, vision (only when genuine).
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput, MatchCoachingAnalysis } from "./coaching-engine";
+import {
+  detectHabits,
+  buildCoachingPriority,
+  type DetectedHabit,
+  type CoachingPriority,
+} from "./coaching/habit-engine";
+import {
+  buildLayeredPlayerMemory,
+  type LayeredPlayerMemory,
+} from "./coaching/player-memory-model";
 
 export const PLAYER_MEMORY_VERSION = 1;
 
@@ -135,6 +145,14 @@ export interface CoachDossier {
 
   trends: CoachTrend[];
   quickPrompts: QuickPrompt[];
+
+  // --- Coach IQ (habit intelligence) ---------------------------------------
+  /** Evidence-rich recurring habits detected across the match window. */
+  habits: DetectedHabit[];
+  /** The five ranked coaching priorities, each with a reason. */
+  coachingPriority: CoachingPriority;
+  /** Layered memory: universal / role / champion. */
+  layeredMemory: LayeredPlayerMemory;
 }
 
 // --- helpers ---------------------------------------------------------------
@@ -624,6 +642,9 @@ export function buildCoachDossier(
   const futureGoal = `Over the next 10 games, ${topWeakness ? `cut "${topWeakness.title.toLowerCase()}" out of your play` : "hold your consistency above 80"} and aim to lift your win rate from ${pct(agg.winRate)} toward 55%+.`;
   const weeklySummary = buildWeeklySummary(inputs, trends, agg);
 
+  const habits = detectHabits(inputs);
+  const coachingPriority = buildCoachingPriority(inputs, habits, trends);
+
   return {
     isDemo,
     matchesAnalyzed: inputs.length,
@@ -657,6 +678,19 @@ export function buildCoachDossier(
     futureGoal,
     trends,
     quickPrompts: buildQuickPrompts(inputs, championAdvice, topWeakness?.title ?? "consistency", potential),
+    habits,
+    coachingPriority,
+    layeredMemory: buildLayeredPlayerMemory(
+      {
+        // layered memory only reads already-computed dossier fields
+        consistency,
+        mentalNotes,
+        weeklySummary,
+        improvementPlan,
+        championAdvice,
+      } as CoachDossier,
+      inputs,
+    ),
   };
 }
 

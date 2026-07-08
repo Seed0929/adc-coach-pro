@@ -28,6 +28,8 @@ export * from "./master-prompt";
 export * from "./champion-knowledge";
 export * from "./match-plan";
 export * from "./practice-program";
+export * from "./role-intelligence";
+export * from "./habit-engine";
 
 export interface CoachAnswer {
   answer: string;
