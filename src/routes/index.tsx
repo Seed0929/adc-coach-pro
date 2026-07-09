@@ -612,7 +612,7 @@ function DashboardInner() {
       </section>
 
       {/* ---------------- GOALS + PROGRESS ---------------- */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8">
         <section className="rise">
           <SectionTitle icon={Target} title="Daily Goals" />
           <div className="glass space-y-4 rounded-3xl p-6">
@@ -631,39 +631,6 @@ function DashboardInner() {
                   <div
                     className={`h-full rounded-full ${g.done ? "bg-success" : "bg-primary"}`}
                     style={{ width: `${g.progress}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rise">
-          <SectionTitle
-            icon={TrendingUp}
-            title="Weekly Progress"
-            action={
-              <Link to="/progress" className="text-sm font-medium text-primary hover:underline">
-                Analytics
-              </Link>
-            }
-          />
-          <div className="glass space-y-4 rounded-3xl p-6">
-            {data.skills.map((s) => (
-              <div key={s.label}>
-                <div className="mb-1.5 flex items-center gap-2 text-sm">
-                  <span>{s.label}</span>
-                  <span
-                    className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${s.delta >= 0 ? "text-success" : "text-destructive"}`}
-                  >
-                    {s.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                    {s.delta >= 0 ? "+" : ""}{s.delta}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-full rounded-full ${toneBar[s.tone]}`}
-                    style={{ width: `${s.value}%` }}
                   />
                 </div>
               </div>
