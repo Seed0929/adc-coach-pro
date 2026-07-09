@@ -24,10 +24,11 @@ import {
   Globe,
   RefreshCw,
   Loader2,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
-import { CoachingCard } from "@/components/coaching-card";
+import { CoachingCard, CardField } from "@/components/coaching-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
