@@ -29,6 +29,13 @@ import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
 import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
 import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
+import { Route as AnalysisReplayCoachRouteImport } from './routes/analysis.replay-coach'
+import { Route as AnalysisPracticeHistoryRouteImport } from './routes/analysis.practice-history'
+import { Route as AnalysisHabitAnalysisRouteImport } from './routes/analysis.habit-analysis'
+import { Route as AnalysisDecisionTimelineRouteImport } from './routes/analysis.decision-timeline'
+import { Route as AnalysisCoachMemoryRouteImport } from './routes/analysis.coach-memory'
+import { Route as AnalysisChampionAnalysisRouteImport } from './routes/analysis.champion-analysis'
+import { Route as AnalysisBuildReviewRouteImport } from './routes/analysis.build-review'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -130,6 +137,43 @@ const CoachingHistoryRoute = CoachingHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => CoachingRoute,
 } as any)
+const AnalysisReplayCoachRoute = AnalysisReplayCoachRouteImport.update({
+  id: '/analysis/replay-coach',
+  path: '/analysis/replay-coach',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisPracticeHistoryRoute = AnalysisPracticeHistoryRouteImport.update({
+  id: '/analysis/practice-history',
+  path: '/analysis/practice-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisHabitAnalysisRoute = AnalysisHabitAnalysisRouteImport.update({
+  id: '/analysis/habit-analysis',
+  path: '/analysis/habit-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisDecisionTimelineRoute =
+  AnalysisDecisionTimelineRouteImport.update({
+    id: '/analysis/decision-timeline',
+    path: '/analysis/decision-timeline',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AnalysisCoachMemoryRoute = AnalysisCoachMemoryRouteImport.update({
+  id: '/analysis/coach-memory',
+  path: '/analysis/coach-memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisChampionAnalysisRoute =
+  AnalysisChampionAnalysisRouteImport.update({
+    id: '/analysis/champion-analysis',
+    path: '/analysis/champion-analysis',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AnalysisBuildReviewRoute = AnalysisBuildReviewRouteImport.update({
+  id: '/analysis/build-review',
+  path: '/analysis/build-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +189,13 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/analysis/build-review': typeof AnalysisBuildReviewRoute
+  '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
+  '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
+  '/analysis/decision-timeline': typeof AnalysisDecisionTimelineRoute
+  '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
+  '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
+  '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -164,6 +215,13 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/analysis/build-review': typeof AnalysisBuildReviewRoute
+  '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
+  '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
+  '/analysis/decision-timeline': typeof AnalysisDecisionTimelineRoute
+  '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
+  '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
+  '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -187,6 +245,13 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/analysis/build-review': typeof AnalysisBuildReviewRoute
+  '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
+  '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
+  '/analysis/decision-timeline': typeof AnalysisDecisionTimelineRoute
+  '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
+  '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
+  '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -211,6 +276,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/analysis/build-review'
+    | '/analysis/champion-analysis'
+    | '/analysis/coach-memory'
+    | '/analysis/decision-timeline'
+    | '/analysis/habit-analysis'
+    | '/analysis/practice-history'
+    | '/analysis/replay-coach'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -230,6 +302,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/welcome'
+    | '/analysis/build-review'
+    | '/analysis/champion-analysis'
+    | '/analysis/coach-memory'
+    | '/analysis/decision-timeline'
+    | '/analysis/habit-analysis'
+    | '/analysis/practice-history'
+    | '/analysis/replay-coach'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -252,6 +331,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/analysis/build-review'
+    | '/analysis/champion-analysis'
+    | '/analysis/coach-memory'
+    | '/analysis/decision-timeline'
+    | '/analysis/habit-analysis'
+    | '/analysis/practice-history'
+    | '/analysis/replay-coach'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -275,6 +361,13 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WelcomeRoute: typeof WelcomeRoute
+  AnalysisBuildReviewRoute: typeof AnalysisBuildReviewRoute
+  AnalysisChampionAnalysisRoute: typeof AnalysisChampionAnalysisRoute
+  AnalysisCoachMemoryRoute: typeof AnalysisCoachMemoryRoute
+  AnalysisDecisionTimelineRoute: typeof AnalysisDecisionTimelineRoute
+  AnalysisHabitAnalysisRoute: typeof AnalysisHabitAnalysisRoute
+  AnalysisPracticeHistoryRoute: typeof AnalysisPracticeHistoryRoute
+  AnalysisReplayCoachRoute: typeof AnalysisReplayCoachRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -419,6 +512,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoachingHistoryRouteImport
       parentRoute: typeof CoachingRoute
     }
+    '/analysis/replay-coach': {
+      id: '/analysis/replay-coach'
+      path: '/analysis/replay-coach'
+      fullPath: '/analysis/replay-coach'
+      preLoaderRoute: typeof AnalysisReplayCoachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/practice-history': {
+      id: '/analysis/practice-history'
+      path: '/analysis/practice-history'
+      fullPath: '/analysis/practice-history'
+      preLoaderRoute: typeof AnalysisPracticeHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/habit-analysis': {
+      id: '/analysis/habit-analysis'
+      path: '/analysis/habit-analysis'
+      fullPath: '/analysis/habit-analysis'
+      preLoaderRoute: typeof AnalysisHabitAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/decision-timeline': {
+      id: '/analysis/decision-timeline'
+      path: '/analysis/decision-timeline'
+      fullPath: '/analysis/decision-timeline'
+      preLoaderRoute: typeof AnalysisDecisionTimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/coach-memory': {
+      id: '/analysis/coach-memory'
+      path: '/analysis/coach-memory'
+      fullPath: '/analysis/coach-memory'
+      preLoaderRoute: typeof AnalysisCoachMemoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/champion-analysis': {
+      id: '/analysis/champion-analysis'
+      path: '/analysis/champion-analysis'
+      fullPath: '/analysis/champion-analysis'
+      preLoaderRoute: typeof AnalysisChampionAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/build-review': {
+      id: '/analysis/build-review'
+      path: '/analysis/build-review'
+      fullPath: '/analysis/build-review'
+      preLoaderRoute: typeof AnalysisBuildReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -488,6 +630,13 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   WelcomeRoute: WelcomeRoute,
+  AnalysisBuildReviewRoute: AnalysisBuildReviewRoute,
+  AnalysisChampionAnalysisRoute: AnalysisChampionAnalysisRoute,
+  AnalysisCoachMemoryRoute: AnalysisCoachMemoryRoute,
+  AnalysisDecisionTimelineRoute: AnalysisDecisionTimelineRoute,
+  AnalysisHabitAnalysisRoute: AnalysisHabitAnalysisRoute,
+  AnalysisPracticeHistoryRoute: AnalysisPracticeHistoryRoute,
+  AnalysisReplayCoachRoute: AnalysisReplayCoachRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

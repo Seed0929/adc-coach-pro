@@ -24,9 +24,11 @@ import {
   Globe,
   RefreshCw,
   Loader2,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell, Pill, DemoModeBadge } from "@/components/app-shell";
+import { CoachingCard, CardField } from "@/components/coaching-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useBotDiffData, type Match, type Tone } from "@/lib/player-data";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
@@ -235,6 +237,7 @@ function DashboardInner() {
   const { isDemo, data, identity } = useBotDiffData();
   const { profile, user } = useAuth();
   const { summary, loading: riotLoading, error: riotError, refresh: refreshRiot } = useRiotSummary();
+  const { dossier } = useCoachDossier();
   const greetingName =
     summary?.gameName ?? profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
@@ -350,6 +353,141 @@ function DashboardInner() {
         </div>
       </section>
 
+      {/* ---------------- PROGRESSIVE COACHING HIERARCHY ---------------- */}
+      <div className="mt-6 space-y-4">
+        {/* 1 · Today's Coaching Win */}
+        <CoachingCard
+          icon={ShieldCheck}
+          tone="success"
+          eyebrow="Today's Coaching Win"
+          title={dossier.strengths[0]?.title ?? co.primaryStrength}
+          summary={dossier.strengths[0]?.detail || "Your standout strength from recent games."}
+          readTime="10 sec"
+          fullAnalysisTo="/analysis/coach-memory"
+          fullAnalysisLabel="View coach memory"
+        >
+          <CardField label="Why this is a win">{co.primaryStrength}</CardField>
+          {dossier.strengths.slice(1).map((s) => (
+            <CardField key={s.title} label={s.title}>
+              {s.detail}
+            </CardField>
+          ))}
+        </CoachingCard>
+
+        {/* 2 · Next Habit to Build */}
+        <CoachingCard
+          icon={Target}
+          tone="warning"
+          eyebrow="Next Habit to Build"
+          title={dossier.weaknesses[0]?.title ?? co.primaryWeakness}
+          summary={dossier.weaknesses[0]?.detail || co.primaryWeakness}
+          readTime="20 sec"
+          fullAnalysisTo="/analysis/habit-analysis"
+          fullAnalysisLabel="View habit analysis"
+        >
+          <CardField label="Why this matters">{focus.detail}</CardField>
+          <CardField label="Do this next">{focus.headline}</CardField>
+          {dossier.recurringHabits
+            .filter((h) => h.kind !== "strength")
+            .slice(0, 3)
+            .map((h) => (
+              <CardField key={h.id} label={`${h.title} · ${h.count} games`}>
+                {h.detail}
+              </CardField>
+            ))}
+        </CoachingCard>
+
+        {/* 3 · Progress */}
+        <CoachingCard
+          icon={TrendingUp}
+          tone="primary"
+          eyebrow="Progress"
+          title={`Improvement trend +${co.improvementTrendPct}% this week`}
+          summary={`Consistency ${co.consistencyScore}% — how repeatable your play has been across recent games.`}
+          readTime="20 sec"
+          fullAnalysisTo="/progress"
+          fullAnalysisLabel="Open analytics"
+        >
+          <div className="space-y-4">
+            {data.skills.map((s) => (
+              <div key={s.label}>
+                <div className="mb-1.5 flex items-center gap-2 text-sm">
+                  <span>{s.label}</span>
+                  <span
+                    className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${s.delta >= 0 ? "text-success" : "text-destructive"}`}
+                  >
+                    {s.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                    {s.delta >= 0 ? "+" : ""}
+                    {s.delta}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className={`h-full rounded-full ${toneBar[s.tone]}`}
+                    style={{ width: `${s.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CoachingCard>
+
+        {/* 4 · Recent Matches */}
+        <CoachingCard
+          icon={Activity}
+          tone="neutral"
+          eyebrow="Recent Matches"
+          title={
+            data.matches[0]
+              ? `${data.matches[0].champ} — ${data.matches[0].result} · Grade ${data.matches[0].grade}`
+              : "No recent matches yet"
+          }
+          summary={
+            data.matches[0]
+              ? `${data.matches[0].kda} KDA · ${data.matches[0].cs} CS · ${data.matches[0].when}`
+              : "Play a ranked game to see your latest match review."
+          }
+          readTime="45 sec"
+          fullAnalysisTo="/analysis/replay-coach"
+          fullAnalysisLabel="Open replay coach"
+        >
+          <div className="space-y-3">
+            {data.matches.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </div>
+        </CoachingCard>
+
+        {/* 5 · Coach Memory */}
+        <CoachingCard
+          icon={Brain}
+          tone="primary"
+          eyebrow="Coach Memory"
+          title={dossier.identitySummary}
+          summary={dossier.overallSummary}
+          readTime="1 min"
+          fullAnalysisTo="/analysis/coach-memory"
+          fullAnalysisLabel="View coach memory"
+        >
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {dossier.consistency.dimensions.map((d) => (
+              <div key={d.label} className="rounded-xl bg-white/[0.03] p-3">
+                <div className="text-[11px] text-muted-foreground">{d.label}</div>
+                <div className="mt-0.5 font-display text-lg font-semibold">{d.score}</div>
+              </div>
+            ))}
+          </div>
+        </CoachingCard>
+      </div>
+
+      {/* ---------------- EXPLORE DEEPER ---------------- */}
+      <div className="mt-10 mb-2 flex items-center gap-3">
+        <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Explore deeper
+        </span>
+        <span className="h-px flex-1 bg-white/[0.06]" />
+      </div>
+
       {/* ---------------- COACHING OVERVIEW ---------------- */}
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <OverviewCard
@@ -402,24 +540,6 @@ function DashboardInner() {
 
       {/* ---------------- COACHING ANALYSIS ---------------- */}
       <CoachingAnalysisSection />
-
-      {/* ---------------- RECENT MATCHES ---------------- */}
-      <section className="mt-8 rise">
-        <SectionTitle
-          icon={Activity}
-          title="Recent Matches"
-          action={
-            <Link to="/matches" className="text-sm font-medium text-primary hover:underline">
-              View all
-            </Link>
-          }
-        />
-        <div className="space-y-3">
-          {data.matches.map((m) => (
-            <MatchCard key={m.id} match={m} />
-          ))}
-        </div>
-      </section>
 
       {/* ---------------- CHAMPION PERFORMANCE ---------------- */}
       <section className="mt-8 rise">
@@ -492,7 +612,7 @@ function DashboardInner() {
       </section>
 
       {/* ---------------- GOALS + PROGRESS ---------------- */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8">
         <section className="rise">
           <SectionTitle icon={Target} title="Daily Goals" />
           <div className="glass space-y-4 rounded-3xl p-6">
@@ -511,39 +631,6 @@ function DashboardInner() {
                   <div
                     className={`h-full rounded-full ${g.done ? "bg-success" : "bg-primary"}`}
                     style={{ width: `${g.progress}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rise">
-          <SectionTitle
-            icon={TrendingUp}
-            title="Weekly Progress"
-            action={
-              <Link to="/progress" className="text-sm font-medium text-primary hover:underline">
-                Analytics
-              </Link>
-            }
-          />
-          <div className="glass space-y-4 rounded-3xl p-6">
-            {data.skills.map((s) => (
-              <div key={s.label}>
-                <div className="mb-1.5 flex items-center gap-2 text-sm">
-                  <span>{s.label}</span>
-                  <span
-                    className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${s.delta >= 0 ? "text-success" : "text-destructive"}`}
-                  >
-                    {s.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                    {s.delta >= 0 ? "+" : ""}{s.delta}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-full rounded-full ${toneBar[s.tone]}`}
-                    style={{ width: `${s.value}%` }}
                   />
                 </div>
               </div>
