@@ -541,24 +541,6 @@ function DashboardInner() {
       {/* ---------------- COACHING ANALYSIS ---------------- */}
       <CoachingAnalysisSection />
 
-      {/* ---------------- RECENT MATCHES ---------------- */}
-      <section className="mt-8 rise">
-        <SectionTitle
-          icon={Activity}
-          title="Recent Matches"
-          action={
-            <Link to="/matches" className="text-sm font-medium text-primary hover:underline">
-              View all
-            </Link>
-          }
-        />
-        <div className="space-y-3">
-          {data.matches.map((m) => (
-            <MatchCard key={m.id} match={m} />
-          ))}
-        </div>
-      </section>
-
       {/* ---------------- CHAMPION PERFORMANCE ---------------- */}
       <section className="mt-8 rise">
         <SectionTitle
