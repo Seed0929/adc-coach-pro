@@ -236,6 +236,7 @@ function DashboardInner() {
   const { isDemo, data, identity } = useBotDiffData();
   const { profile, user } = useAuth();
   const { summary, loading: riotLoading, error: riotError, refresh: refreshRiot } = useRiotSummary();
+  const { dossier } = useCoachDossier();
   const greetingName =
     summary?.gameName ?? profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
