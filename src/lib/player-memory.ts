@@ -568,7 +568,7 @@ function buildQuickPrompts(
     { id: "early-game", text: "How can I improve my early game?" },
     { id: "improved", text: `What improved over my last ${inputs.length} games?` },
     { id: "climbing", text: "What is preventing me from climbing?" },
-    { id: "recurring", text: "What is my biggest recurring mistake?" },
+    { id: "recurring", text: "What is my highest-impact habit to build?" },
     { id: "next-game", text: "What should I focus on before my next ranked game?" },
   ];
   const weak = [...champs].sort((a, b) => a.winRate - b.winRate)[0];
