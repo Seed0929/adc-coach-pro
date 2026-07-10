@@ -500,7 +500,7 @@ function DashboardInner() {
         <OverviewCard
           icon={ShieldAlert}
           tone="warning"
-          label="Primary Weakness"
+          label="Primary Growth Opportunity"
           value={co.primaryWeakness}
           delay={180}
         />
@@ -589,7 +589,7 @@ function DashboardInner() {
         <div className="grid gap-4 md:grid-cols-2">
           <InsightCard icon={Lightbulb} tone="primary" title="Biggest Improvement Opportunity" body={data.aiInsight.biggestOpportunity} />
           <InsightCard icon={Dumbbell} tone="success" title="Recommended Practice" body={data.aiInsight.recommendedPractice} />
-          <InsightCard icon={AlertTriangle} tone="warning" title="Common Mistake" body={data.aiInsight.commonMistake} />
+          <InsightCard icon={AlertTriangle} tone="warning" title="Decision Pattern" body={data.aiInsight.commonMistake} />
           <InsightCard icon={CheckCircle2} tone="success" title="Positive Habit" body={data.aiInsight.positiveHabit} />
         </div>
         <div className="glass mt-4 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-3xl p-6">
@@ -744,12 +744,12 @@ function CoachingAnalysisSection() {
           </div>
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-warning">
-              <ShieldAlert className="size-4" /> Weaknesses
+              <ShieldAlert className="size-4" /> Growth Opportunities
             </div>
             <ul className="space-y-2 text-sm text-foreground/90">
               {(dossier.weaknesses.length
                 ? dossier.weaknesses
-                : [{ title: "No major weaknesses detected — keep it up.", detail: "" }]
+                : [{ title: "No major growth opportunities detected — keep it up.", detail: "" }]
               ).map((w) => (
                 <li key={w.title} className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />
@@ -914,7 +914,7 @@ function MatchCard({ match }: { match: Match }) {
             {match.biggestStrength}
           </p>
           <p className="text-warning/90">
-            <span className="font-medium text-warning">Mistake: </span>
+            <span className="font-medium text-warning">Coachable moment: </span>
             {match.biggestMistake}
           </p>
           <p className="text-muted-foreground">
