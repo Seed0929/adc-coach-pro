@@ -130,24 +130,33 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </div>
       </Card>
 
-      {/* Strengths */}
-      <Card icon={ThumbsUp} title="3 Biggest Strengths" accent="text-success">
-        <div className="space-y-3">
-          {report.strengths.map((s, i) => (
-            <div key={i} className="rounded-2xl border border-success/20 bg-success/[0.06] p-4">
-              <div className="mb-1 text-sm font-medium text-success">{s.title}</div>
-              <p className="text-sm text-muted-foreground">{s.why}</p>
+      {/* Today's Coaching Win — every review opens on something done well. */}
+      {report.strengths.length > 0 && (
+        <Card icon={Trophy} title="Today's Coaching Win" accent="text-success">
+          <div className="rounded-2xl border border-success/25 bg-success/[0.08] p-5">
+            <div className="mb-1 text-sm font-semibold text-success">{report.strengths[0].title}</div>
+            <p className="text-sm text-muted-foreground">{report.strengths[0].why}</p>
+          </div>
+          {report.strengths.length > 1 && (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">More you did well</p>
+              {report.strengths.slice(1).map((s, i) => (
+                <div key={i} className="rounded-2xl border border-success/20 bg-success/[0.06] p-4">
+                  <div className="mb-1 text-sm font-medium text-success">{s.title}</div>
+                  <p className="text-sm text-muted-foreground">{s.why}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          )}
+        </Card>
+      )}
 
-      {/* Mistakes */}
-      <Card icon={ShieldAlert} title="3 Biggest Mistakes" accent="text-destructive">
+      {/* Coachable Moments */}
+      <Card icon={ShieldAlert} title="Coachable Moments" accent="text-warning">
         <div className="space-y-3">
           {report.mistakes.map((m, i) => (
-            <div key={i} className="rounded-2xl border border-destructive/20 bg-destructive/[0.06] p-4">
-              <div className="mb-2 text-sm font-medium text-destructive">{m.title}</div>
+            <div key={i} className="rounded-2xl border border-warning/20 bg-warning/[0.06] p-4">
+              <div className="mb-2 text-sm font-medium text-warning">{m.title}</div>
               <dl className="space-y-1.5 text-sm">
                 <div>
                   <dt className="inline font-medium text-foreground/80">What happened: </dt>
@@ -158,7 +167,7 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
                   <dd className="inline text-muted-foreground">{m.why}</dd>
                 </div>
                 <div>
-                  <dt className="inline font-medium text-foreground/80">Do differently: </dt>
+                  <dt className="inline font-medium text-foreground/80">Next time: </dt>
                   <dd className="inline text-muted-foreground">{m.fix}</dd>
                 </div>
               </dl>
@@ -169,7 +178,7 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
 
       <div className="grid gap-5 md:grid-cols-2">
         {/* Priority improvement */}
-        <Card icon={Target} title="Priority Improvement">
+        <Card icon={Target} title="Your Next Habit to Build">
           <div className="rounded-2xl bg-primary/[0.07] p-5">
             <div className="mb-1 flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="size-4" /> {report.priorityImprovement.title}
@@ -207,14 +216,14 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </Card>
       </div>
 
-      {/* Mistake timeline */}
-      <Card icon={Clock} title="Mistake Timeline">
+      {/* Coachable moments timeline */}
+      <Card icon={Clock} title="Coachable Moments Timeline">
         <div className="space-y-3">
           {report.plan.mistakeTimeline.map((t, i) => (
             <div key={i} className="rounded-2xl bg-white/[0.03] p-4">
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.when}</div>
               <div className="text-sm">{t.what}</div>
-              <p className="mt-1 text-sm text-muted-foreground">Fix: {t.fix}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Next time: {t.fix}</p>
             </div>
           ))}
         </div>
