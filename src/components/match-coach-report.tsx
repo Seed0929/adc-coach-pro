@@ -1,6 +1,5 @@
 import {
   Trophy,
-  ThumbsUp,
   ShieldAlert,
   Target,
   Flag,
