@@ -789,7 +789,7 @@ interface Report {
 
 function formatReport(r: Report): string {
   return [
-    `Problem\n${r.problem}`,
+    `Next Habit to Build\n${r.problem}`,
     `Evidence\n${r.evidence}`,
     `Why it matters\n${r.why}`,
     `Practice Goal\n${r.goal}`,
@@ -893,9 +893,9 @@ export function answerQuickAsk(d: CoachDossier, prompt: string): string {
   if (q.includes("recurring") || q.includes("biggest mistake") || q.includes("biggest leak") || q.includes("weakness")) {
     const h = d.recurringHabits.find((x) => x.kind === "weakness");
     return formatReport({
-      problem: h ? `Your biggest recurring mistake is "${h.title.toLowerCase()}".` : "You don't have one dominant recurring mistake right now.",
+      problem: h ? `Your highest-impact habit to build is "${h.title.toLowerCase()}".` : "You don't have one dominant recurring habit to fix right now.",
       evidence: h ? evidence(h) : d.improvementPlan.why,
-      why: h?.detail ?? "Your issue is the gap between your good and bad games, not any single mistake.",
+      why: h?.detail ?? "Your opportunity is the gap between your good and bad games, not any single moment.",
       goal: d.improvementPlan.practiceGoal,
       expected: d.improvementPlan.expectedImprovement,
       challenge: `Next game: keep a mental note every time this happens — awareness alone cuts it in half.`,
