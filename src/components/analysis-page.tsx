@@ -79,7 +79,7 @@ function ReplayCoach() {
             {m.biggestStrength}
           </p>
           <p className="text-warning/90">
-            <span className="font-medium text-warning">Mistake: </span>
+            <span className="font-medium text-warning">Coachable moment: </span>
             {m.biggestMistake}
           </p>
           <p className="text-muted-foreground">
@@ -155,7 +155,7 @@ function CoachMemory() {
     <AnalysisShell
       eyebrow="Full Analysis"
       title="Coach Memory"
-      subtitle="What your coach remembers about how you play — identity, strengths, weaknesses, and consistency."
+      subtitle="What your coach remembers about how you play — identity, strengths, growth opportunities, and consistency."
     >
       <CoachingCard
         tone="primary"
@@ -177,7 +177,7 @@ function CoachMemory() {
             </ul>
           </div>
           <div>
-            <div className="mb-2 text-sm font-medium text-warning">Weaknesses</div>
+            <div className="mb-2 text-sm font-medium text-warning">Growth Opportunities</div>
             <ul className="space-y-1.5 text-muted-foreground">
               {dossier.weaknesses.map((w) => (
                 <li key={w.title}>

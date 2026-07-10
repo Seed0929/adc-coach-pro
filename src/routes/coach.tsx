@@ -173,9 +173,9 @@ function Coach() {
         <div className="grid gap-3 sm:grid-cols-2">
           {[
             { label: "Biggest improvement", value: proactive.biggestImprovement, tone: "text-success" },
-            { label: "Biggest recurring mistake", value: proactive.biggestRecurringMistake, tone: "text-warning" },
+            { label: "Next habit to build", value: proactive.biggestRecurringMistake, tone: "text-warning" },
             { label: "Keep doing this", value: proactive.keepDoing, tone: "text-success" },
-            { label: "Fix this next", value: proactive.fixNext, tone: "text-warning" },
+            { label: "Focus on this next", value: proactive.fixNext, tone: "text-warning" },
           ].map((row) => (
             <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
               <div className={`mb-1 text-xs uppercase tracking-wider ${row.tone}`}>{row.label}</div>
@@ -270,7 +270,7 @@ function Coach() {
           <h3 className="font-display text-base font-semibold text-success">{dossier.primaryStrength.title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{dossier.primaryStrength.detail}</p>
         </Section>
-        <Section icon={ShieldAlert} title="Primary weakness">
+        <Section icon={ShieldAlert} title="Primary growth opportunity">
           <h3 className="font-display text-base font-semibold text-warning">{dossier.primaryWeakness.title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{dossier.primaryWeakness.detail}</p>
         </Section>
@@ -281,9 +281,9 @@ function Coach() {
         <div className="grid gap-3 md:grid-cols-2">
           {[
             { label: "Biggest strength", item: dossier.coachingPriority.biggestStrength, tone: "text-success" },
-            { label: "Biggest weakness", item: dossier.coachingPriority.biggestWeakness, tone: "text-warning" },
+            { label: "Biggest growth opportunity", item: dossier.coachingPriority.biggestWeakness, tone: "text-warning" },
             { label: "Most improved habit", item: dossier.coachingPriority.mostImprovedHabit, tone: "text-success" },
-            { label: "Highest-impact habit to fix", item: dossier.coachingPriority.highestImpactToFix, tone: "text-warning" },
+            { label: "Highest-impact habit to build", item: dossier.coachingPriority.highestImpactToFix, tone: "text-warning" },
           ].map((row) => (
             <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
               <div className={`mb-1 text-xs uppercase tracking-wider ${row.tone}`}>{row.label}</div>
@@ -344,7 +344,7 @@ function Coach() {
       <Section icon={Target} title="Personalized improvement plan" className="mb-6">
         <div className="grid gap-3 sm:grid-cols-2">
           {[
-            { label: "Biggest weakness", value: dossier.improvementPlan.biggestWeakness },
+            { label: "Biggest growth opportunity", value: dossier.improvementPlan.biggestWeakness },
             { label: "Practice goal", value: dossier.improvementPlan.practiceGoal },
             { label: "Expected improvement", value: dossier.improvementPlan.expectedImprovement },
             { label: "Long-term objective", value: dossier.improvementPlan.longTermObjective },
