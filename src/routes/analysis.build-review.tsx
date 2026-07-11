@@ -4,8 +4,8 @@ import { AnalysisPage } from "@/components/analysis-page";
 export const Route = createFileRoute("/analysis/build-review")({
   head: () => ({
     meta: [
-      { title: "Build Review — BotDiff" },
-      { name: "description", content: "Rune, item, and mastery coaching for your games." },
+      { title: "Item Review — BotDiff" },
+      { name: "description", content: "Light itemization coaching — one tradeoff to consider, never a full build guide." },
     ],
   }),
   component: () => <AnalysisPage page="build-review" />,
