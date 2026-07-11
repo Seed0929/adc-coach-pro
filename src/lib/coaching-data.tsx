@@ -18,13 +18,13 @@ export type CoachingCategory =
   | "Farming"
   | "Vision"
   | "Map Awareness"
-  | "Objective Control"
+  | "Dragon & Baron Prep"
   | "Positioning"
   | "Team Fighting"
   | "Champion Mastery"
   | "Macro"
   | "Decision Making"
-  | "Mental / Consistency";
+  | "Reliable Play";
 
 export const COACHING_CATEGORIES: CoachingCategory[] = [
   "Laning",
@@ -33,13 +33,13 @@ export const COACHING_CATEGORIES: CoachingCategory[] = [
   "Farming",
   "Vision",
   "Map Awareness",
-  "Objective Control",
+  "Dragon & Baron Prep",
   "Positioning",
   "Team Fighting",
   "Champion Mastery",
   "Macro",
   "Decision Making",
-  "Mental / Consistency",
+  "Reliable Play",
 ];
 
 export type Severity = "Low" | "Medium" | "High";
@@ -141,7 +141,7 @@ const CATEGORY_MAP: Record<CoachPattern["category"], CoachingCategory> = {
   wave: "Wave Management",
   positioning: "Positioning",
   decision: "Decision Making",
-  objective: "Objective Control",
+  objective: "Dragon & Baron Prep",
   teamfight: "Team Fighting",
   champion: "Champion Mastery",
   farming: "Farming",
@@ -215,7 +215,7 @@ function deriveCoachingData(d: CoachDossier): CoachingEngineData {
     insights.push({
       id: "consistency",
       title: "Consistency is your climb ceiling",
-      category: "Mental / Consistency",
+      category: "Reliable Play",
       severity: "Medium",
       confidence: 70,
       description: d.improvementPlan.why,
@@ -257,7 +257,7 @@ function deriveCoachingData(d: CoachDossier): CoachingEngineData {
       id: "goal-consistency",
       title: "Raise your consistency",
       detail: d.consistency.explanation,
-      category: "Mental / Consistency",
+      category: "Reliable Play",
       current: d.consistency.current,
       target: 85,
       unit: "/100",

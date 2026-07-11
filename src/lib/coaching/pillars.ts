@@ -54,7 +54,7 @@ export const PILLAR_META: Record<Pillar, PillarMeta> = {
   },
   consistency: {
     key: "consistency",
-    label: "Consistency",
+    label: "Reliable Play",
     description: "Repeating your best games and raising the floor of your worst ones.",
   },
   decision: {

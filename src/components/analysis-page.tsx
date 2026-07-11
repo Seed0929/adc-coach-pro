@@ -209,9 +209,21 @@ function BuildReview() {
   return (
     <AnalysisShell
       eyebrow="Full Analysis"
-      title="Build Review"
-      subtitle="Rune, item, and mastery coaching. Per-match recommended builds live inside each match report."
+      title="Item Review"
+      subtitle="Light itemization coaching — one tradeoff to consider, never a full build guide. Per-match item notes live inside each match report."
     >
+      <CoachingCard
+        tone="neutral"
+        eyebrow="How BotDiff coaches items"
+        title="Guidance, not a build guide"
+        summary="BotDiff suggests one itemization tradeoff at a time and respects off-meta choices — it never tells you that you built “wrong.”"
+        readTime="15 sec"
+      >
+        <p className="text-muted-foreground">
+          When BotDiff can't confidently identify your champion's damage profile, it says nothing rather than
+          risk a wrong recommendation. The goal is to make you a better decision maker, not to force one build.
+        </p>
+      </CoachingCard>
       {(relevant.length ? relevant : insights.slice(0, 3)).map((i) => (
         <CoachingCard
           key={i.id}

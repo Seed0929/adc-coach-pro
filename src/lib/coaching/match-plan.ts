@@ -10,7 +10,14 @@
 // PURE + client-safe. Consumed by the match report; later fed to OpenAI as-is.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
-import { buildFor, tagsFor, threatProfile, type ThreatProfile } from "./champion-knowledge";
+import {
+  buildFor,
+  tagsFor,
+  threatProfile,
+  canCoachItemization,
+  healThreatCount,
+  type ThreatProfile,
+} from "./champion-knowledge";
 
 export interface PhaseReview {
   phase: string;
@@ -34,11 +41,6 @@ export interface PlanItem {
 export interface GamePlan {
   matchupSummary: string;
   enemyThreats: string;
-  runes: PlanItem;
-  startItem: PlanItem;
-  coreBuild: PlanItem;
-  situational: PlanItem;
-  boots: PlanItem;
   summonerSpells: PlanItem;
   laneStrategy: PlanItem;
   tradingPattern: PlanItem;
@@ -49,12 +51,20 @@ export interface GamePlan {
   splitVsGroup: PlanItem;
 }
 
+// Item Review — a single, light itemization nudge (never a full build guide).
+export interface ItemReview {
+  hasCoaching: boolean;
+  headline: string; // <= 2 sentences
+  detail: string; // reasoning for "Learn More"
+}
+
 export interface MatchPlan {
   phases: PhaseReview[];
   mistakeTimeline: TimelineMistake[];
   turningPoint: string;
   winCondition: string;
   practiceGoal: string;
+  itemReview: ItemReview;
   gamePlan: GamePlan;
 }
 
@@ -132,13 +142,15 @@ function recallReview(m: MatchAnalysisInput): PhaseReview {
   };
 }
 
-function buildReviewPhase(m: MatchAnalysisInput): PhaseReview {
-  const b = buildFor(m.champion);
+function itemReviewPhase(m: MatchAnalysisInput): PhaseReview {
+  const r = buildItemReview(m);
   return {
-    phase: "Build Review",
+    phase: "Item Review",
     verdict: "mixed",
-    headline: `${m.champion} wants a ${b.archetype} build`,
-    detail: `On ${m.champion} the reliable path is ${b.startItem} into ${b.core.slice(0, 2).join(" → ")}. ${b.playstyle} Check that your item order matched the game's needs — see the Build & Game Plan below for the matchup-specific tweaks.`,
+    headline: r.hasCoaching ? r.headline : "No itemization notes",
+    detail: r.hasCoaching
+      ? r.detail
+      : "No significant itemization coaching detected for this match — your item choices fit the game.",
   };
 }
 
@@ -206,7 +218,7 @@ function buildPhases(m: MatchAnalysisInput): PhaseReview[] {
     laneReview(m),
     waveReview(m),
     recallReview(m),
-    buildReviewPhase(m),
+    itemReviewPhase(m),
     objectiveReview(m),
     midReview(m),
     lateReview(m),
@@ -317,32 +329,9 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const opp = m.laneOpponent ?? null;
   const oppTags = opp ? tagsFor(opp) : [];
 
-  const apHeavy = threat.ap >= 3;
   const diveHeavy = threat.dive >= 2;
   const ccHeavy = threat.cc >= 3;
-  const tankHeavy = threat.tank >= 2;
   const pokeLane = oppTags.includes("poke") || oppTags.includes("ad") === false && oppTags.includes("ap");
-
-  // Boots
-  const boots: PlanItem = apHeavy || ccHeavy
-    ? { label: "Boots", value: "Mercury's Treads", why: `The enemy has ${apHeavy ? "heavy AP" : ""}${apHeavy && ccHeavy ? " and " : ""}${ccHeavy ? "a lot of CC" : ""} — tenacity + magic resist keeps you out of chain-CC.` }
-    : { label: "Boots", value: "Berserker's Greaves", why: "No dominant AP/CC threat, so attack speed is the highest-value boot for your damage." };
-
-  // Situational defensive items
-  const situationalBits: string[] = [];
-  if (apHeavy) situationalBits.push("Maw of Malmortius (AP shield + MR)");
-  if (diveHeavy) situationalBits.push("Guardian Angel (survive the first dive)");
-  if (tankHeavy) situationalBits.push("Lord Dominik's Regards (% armor pen vs tanks)");
-  if (!apHeavy && !diveHeavy && !tankHeavy) situationalBits.push("Bloodthirster (lifesteal + shield for sustained fights)");
-  const situational: PlanItem = {
-    label: "Situational Items",
-    value: situationalBits.join(", "),
-    why: diveHeavy
-      ? "They can reach you — a survivability item buys the seconds you need to keep attacking."
-      : tankHeavy
-        ? "Armor stacking on their side means raw crit isn't enough; you need penetration."
-        : "Round the build out for the damage profile you're actually facing.",
-  };
 
   // Summoner spells
   const spells: PlanItem = diveHeavy || ccHeavy
@@ -424,25 +413,6 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
       ? `You played ${m.champion} into ${opp}${enemies.length ? ` on an enemy team of ${enemies.join(", ")}` : ""}.`
       : `You played ${m.champion}${enemies.length ? ` against ${enemies.join(", ")}` : ""}.`,
     enemyThreats: threatSummary(threat),
-    runes: {
-      label: "Rune Page",
-      value: `${b.keystone} (${b.primaryTree}) + ${b.secondaryTree}`,
-      why: `${b.keystone} is the reliable keystone for ${m.champion}'s ${b.archetype} pattern${apHeavy ? "; take Resolve/Second Wind secondary if the AP poke is brutal" : ""}.`,
-    },
-    startItem: {
-      label: "Starting Item",
-      value: b.startItem,
-      why: opp && oppTags.includes("poke")
-        ? "Against poke, Doran's Blade's sustain keeps you healthy through the early harass."
-        : "Standard strong 2v2 start that gives damage, HP and sustain.",
-    },
-    coreBuild: {
-      label: "Core Build Order",
-      value: b.core.join(" → "),
-      why: `${b.playstyle} Build toward your two-item spike, then adapt with the situational items below.`,
-    },
-    situational,
-    boots,
     summonerSpells: spells,
     laneStrategy,
     tradingPattern,
@@ -451,6 +421,64 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
     midGame,
     teamfightRole,
     splitVsGroup,
+  };
+}
+
+// --- Item Review (one light suggestion, never a full build) -----------------
+
+function buildItemReview(m: MatchAnalysisInput): ItemReview {
+  // Part 3 — never fabricate itemization. If we can't confidently identify the
+  // champion, we say nothing rather than risk an impossible recommendation.
+  if (!canCoachItemization(m.champion)) {
+    return {
+      hasCoaching: false,
+      headline: "No significant itemization coaching detected for this match.",
+      detail:
+        "BotDiff only coaches itemization when it can confidently identify your champion's damage profile. It would rather stay quiet than risk pointing you toward the wrong item.",
+    };
+  }
+
+  const enemies = m.enemies ?? [];
+  const threat = threatProfile(enemies);
+  const heals = healThreatCount(enemies);
+  const tankHeavy = threat.tank >= 2;
+  const apHeavy = threat.ap >= 3;
+  const diveHeavy = threat.dive >= 2;
+
+  // One light suggestion, most impactful tradeoff first. Framed as guidance,
+  // never a command, and never a full build.
+  if (heals >= 2) {
+    return {
+      hasCoaching: true,
+      headline: "A healing-reduction item may have created more value against their sustain.",
+      detail: `The enemy team had ${heals} champions with meaningful healing. A Grievous Wounds option (like Mortal Reminder) is worth considering in games like this — it's a tradeoff against raw damage, so only pick it up if their healing is actually keeping targets alive.`,
+    };
+  }
+  if (tankHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "Earlier armor penetration may have helped against the enemy frontline.",
+      detail: `They fielded ${threat.tank} tanky champions. Reaching a percentage armor-pen item a little sooner is one option to keep your damage relevant — it's a tradeoff versus pure crit, so weigh it against how fed their frontline actually was.`,
+    };
+  }
+  if (apHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "A magic-resist option may have created more value against their AP damage.",
+      detail: `Most of their threat was magic damage. A defensive pickup (Mercury's Treads or an MR item) is one way to survive their burst — only reach for it if you were actually getting deleted, since it trades away some of your own damage.`,
+    };
+  }
+  if (diveHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "A survivability item may have bought you time against their dive.",
+      detail: `They had multiple ways to reach you. Something like Guardian Angel is worth considering — a tradeoff that buys seconds to keep attacking rather than dying on contact.`,
+    };
+  }
+  return {
+    hasCoaching: true,
+    headline: "Your item choices fit this game well.",
+    detail: "Nothing about the enemy composition demanded a reactive item this game — sticking to your damage path was a reasonable call.",
   };
 }
 
@@ -469,6 +497,7 @@ export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
     turningPoint: turningPointOf(m),
     winCondition: winConditionOf(m),
     practiceGoal: practiceGoalOf(m),
+    itemReview: buildItemReview(m),
     gamePlan: buildGamePlan(m),
   };
 }
