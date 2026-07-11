@@ -332,29 +332,7 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const apHeavy = threat.ap >= 3;
   const diveHeavy = threat.dive >= 2;
   const ccHeavy = threat.cc >= 3;
-  const tankHeavy = threat.tank >= 2;
   const pokeLane = oppTags.includes("poke") || oppTags.includes("ad") === false && oppTags.includes("ap");
-
-  // Boots
-  const boots: PlanItem = apHeavy || ccHeavy
-    ? { label: "Boots", value: "Mercury's Treads", why: `The enemy has ${apHeavy ? "heavy AP" : ""}${apHeavy && ccHeavy ? " and " : ""}${ccHeavy ? "a lot of CC" : ""} — tenacity + magic resist keeps you out of chain-CC.` }
-    : { label: "Boots", value: "Berserker's Greaves", why: "No dominant AP/CC threat, so attack speed is the highest-value boot for your damage." };
-
-  // Situational defensive items
-  const situationalBits: string[] = [];
-  if (apHeavy) situationalBits.push("Maw of Malmortius (AP shield + MR)");
-  if (diveHeavy) situationalBits.push("Guardian Angel (survive the first dive)");
-  if (tankHeavy) situationalBits.push("Lord Dominik's Regards (% armor pen vs tanks)");
-  if (!apHeavy && !diveHeavy && !tankHeavy) situationalBits.push("Bloodthirster (lifesteal + shield for sustained fights)");
-  const situational: PlanItem = {
-    label: "Situational Items",
-    value: situationalBits.join(", "),
-    why: diveHeavy
-      ? "They can reach you — a survivability item buys the seconds you need to keep attacking."
-      : tankHeavy
-        ? "Armor stacking on their side means raw crit isn't enough; you need penetration."
-        : "Round the build out for the damage profile you're actually facing.",
-  };
 
   // Summoner spells
   const spells: PlanItem = diveHeavy || ccHeavy
