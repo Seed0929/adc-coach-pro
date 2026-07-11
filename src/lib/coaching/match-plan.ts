@@ -414,25 +414,6 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
       ? `You played ${m.champion} into ${opp}${enemies.length ? ` on an enemy team of ${enemies.join(", ")}` : ""}.`
       : `You played ${m.champion}${enemies.length ? ` against ${enemies.join(", ")}` : ""}.`,
     enemyThreats: threatSummary(threat),
-    runes: {
-      label: "Rune Page",
-      value: `${b.keystone} (${b.primaryTree}) + ${b.secondaryTree}`,
-      why: `${b.keystone} is the reliable keystone for ${m.champion}'s ${b.archetype} pattern${apHeavy ? "; take Resolve/Second Wind secondary if the AP poke is brutal" : ""}.`,
-    },
-    startItem: {
-      label: "Starting Item",
-      value: b.startItem,
-      why: opp && oppTags.includes("poke")
-        ? "Against poke, Doran's Blade's sustain keeps you healthy through the early harass."
-        : "Standard strong 2v2 start that gives damage, HP and sustain.",
-    },
-    coreBuild: {
-      label: "Core Build Order",
-      value: b.core.join(" → "),
-      why: `${b.playstyle} Build toward your two-item spike, then adapt with the situational items below.`,
-    },
-    situational,
-    boots,
     summonerSpells: spells,
     laneStrategy,
     tradingPattern,
@@ -441,6 +422,64 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
     midGame,
     teamfightRole,
     splitVsGroup,
+  };
+}
+
+// --- Item Review (one light suggestion, never a full build) -----------------
+
+function buildItemReview(m: MatchAnalysisInput): ItemReview {
+  // Part 3 — never fabricate itemization. If we can't confidently identify the
+  // champion, we say nothing rather than risk an impossible recommendation.
+  if (!canCoachItemization(m.champion)) {
+    return {
+      hasCoaching: false,
+      headline: "No significant itemization coaching detected for this match.",
+      detail:
+        "BotDiff only coaches itemization when it can confidently identify your champion's damage profile. It would rather stay quiet than risk pointing you toward the wrong item.",
+    };
+  }
+
+  const enemies = m.enemies ?? [];
+  const threat = threatProfile(enemies);
+  const heals = healThreatCount(enemies);
+  const tankHeavy = threat.tank >= 2;
+  const apHeavy = threat.ap >= 3;
+  const diveHeavy = threat.dive >= 2;
+
+  // One light suggestion, most impactful tradeoff first. Framed as guidance,
+  // never a command, and never a full build.
+  if (heals >= 2) {
+    return {
+      hasCoaching: true,
+      headline: "A healing-reduction item may have created more value against their sustain.",
+      detail: `The enemy team had ${heals} champions with meaningful healing. A Grievous Wounds option (like Mortal Reminder) is worth considering in games like this — it's a tradeoff against raw damage, so only pick it up if their healing is actually keeping targets alive.`,
+    };
+  }
+  if (tankHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "Earlier armor penetration may have helped against the enemy frontline.",
+      detail: `They fielded ${threat.tank} tanky champions. Reaching a percentage armor-pen item a little sooner is one option to keep your damage relevant — it's a tradeoff versus pure crit, so weigh it against how fed their frontline actually was.`,
+    };
+  }
+  if (apHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "A magic-resist option may have created more value against their AP damage.",
+      detail: `Most of their threat was magic damage. A defensive pickup (Mercury's Treads or an MR item) is one way to survive their burst — only reach for it if you were actually getting deleted, since it trades away some of your own damage.`,
+    };
+  }
+  if (diveHeavy) {
+    return {
+      hasCoaching: true,
+      headline: "A survivability item may have bought you time against their dive.",
+      detail: `They had multiple ways to reach you. Something like Guardian Angel is worth considering — a tradeoff that buys seconds to keep attacking rather than dying on contact.`,
+    };
+  }
+  return {
+    hasCoaching: true,
+    headline: "Your item choices fit this game well.",
+    detail: "Nothing about the enemy composition demanded a reactive item this game — sticking to your damage path was a reasonable call.",
   };
 }
 
