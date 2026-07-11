@@ -142,13 +142,15 @@ function recallReview(m: MatchAnalysisInput): PhaseReview {
   };
 }
 
-function buildReviewPhase(m: MatchAnalysisInput): PhaseReview {
-  const b = buildFor(m.champion);
+function itemReviewPhase(m: MatchAnalysisInput): PhaseReview {
+  const r = buildItemReview(m);
   return {
-    phase: "Build Review",
+    phase: "Item Review",
     verdict: "mixed",
-    headline: `${m.champion} wants a ${b.archetype} build`,
-    detail: `On ${m.champion} the reliable path is ${b.startItem} into ${b.core.slice(0, 2).join(" → ")}. ${b.playstyle} Check that your item order matched the game's needs — see the Build & Game Plan below for the matchup-specific tweaks.`,
+    headline: r.hasCoaching ? r.headline : "No itemization notes",
+    detail: r.hasCoaching
+      ? r.detail
+      : "No significant itemization coaching detected for this match — your item choices fit the game.",
   };
 }
 
@@ -216,7 +218,7 @@ function buildPhases(m: MatchAnalysisInput): PhaseReview[] {
     laneReview(m),
     waveReview(m),
     recallReview(m),
-    buildReviewPhase(m),
+    itemReviewPhase(m),
     objectiveReview(m),
     midReview(m),
     lateReview(m),
