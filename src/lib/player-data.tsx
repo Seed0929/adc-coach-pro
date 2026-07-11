@@ -357,7 +357,7 @@ export const SAMPLE_PLAYER: PlayerData = {
     { label: "Team Fighting", value: 68, tone: "warning", delta: -4 },
     { label: "CS", value: 79, tone: "success", delta: 6 },
     { label: "Vision", value: 74, tone: "success", delta: 3 },
-    { label: "Objective Control", value: 63, tone: "warning", delta: -2 },
+    { label: "Dragon & Baron Prep", value: 63, tone: "warning", delta: -2 },
   ],
   trend: [
     { week: "W1", score: 62 },
