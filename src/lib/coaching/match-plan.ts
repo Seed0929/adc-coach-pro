@@ -498,6 +498,7 @@ export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
     turningPoint: turningPointOf(m),
     winCondition: winConditionOf(m),
     practiceGoal: practiceGoalOf(m),
+    itemReview: buildItemReview(m),
     gamePlan: buildGamePlan(m),
   };
 }
