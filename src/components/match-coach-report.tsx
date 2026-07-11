@@ -228,19 +228,28 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </div>
       </Card>
 
-      {/* Build & Matchup coach */}
-      <Card icon={Wrench} title="Recommended Build & Game Plan">
+      {/* Item Review — one light itemization nudge, never a full build guide. */}
+      <Card icon={Wrench} title="Item Review">
+        {report.plan.itemReview.hasCoaching ? (
+          <>
+            <p className="text-sm font-medium">{report.plan.itemReview.headline}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{report.plan.itemReview.detail}</p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No significant itemization coaching detected for this match.
+          </p>
+        )}
+      </Card>
+
+      {/* Game plan — strategy for the matchup (not a build guide) */}
+      <Card icon={Compass} title="Game Plan">
         <div className="mb-4 rounded-2xl bg-primary/[0.07] p-4">
           <p className="text-sm font-medium">{report.plan.gamePlan.matchupSummary}</p>
           <p className="mt-1 text-sm text-muted-foreground">{report.plan.gamePlan.enemyThreats}</p>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          <PlanRow item={report.plan.gamePlan.runes} />
           <PlanRow item={report.plan.gamePlan.summonerSpells} />
-          <PlanRow item={report.plan.gamePlan.startItem} />
-          <PlanRow item={report.plan.gamePlan.boots} />
-          <PlanRow item={report.plan.gamePlan.coreBuild} />
-          <PlanRow item={report.plan.gamePlan.situational} />
           <PlanRow item={report.plan.gamePlan.laneStrategy} />
           <PlanRow item={report.plan.gamePlan.tradingPattern} />
           <PlanRow item={report.plan.gamePlan.waveStrategy} />
