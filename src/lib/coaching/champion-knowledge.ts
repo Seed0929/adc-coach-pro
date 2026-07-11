@@ -194,3 +194,46 @@ export const ADC_BUILDS: Record<string, AdcBuild> = {
 export function buildFor(champion: string): AdcBuild {
   return ADC_BUILDS[champion] ?? GENERIC_CRIT;
 }
+
+// --- damage profile + itemization validation -------------------------------
+// Used by Item Review so BotDiff NEVER recommends impossible items (e.g. AD
+// items for an AP champion). When we can't confidently identify the champion's
+// damage profile, callers should say nothing rather than guess.
+
+export type DamageProfile = "AD" | "AP" | "hybrid" | "unknown";
+
+export function damageProfileFor(champion: string): DamageProfile {
+  const b = ADC_BUILDS[champion];
+  if (!b) return "unknown";
+  if (b.archetype === "hybrid") return "hybrid";
+  return "AD";
+}
+
+/** Do we confidently know this champion well enough to coach itemization? */
+export function canCoachItemization(champion: string): boolean {
+  return Boolean(ADC_BUILDS[champion]);
+}
+
+/** Enemy champions with meaningful healing/sustain — cue for grievous wounds. */
+const HEAL_THREATS = new Set<string>([
+  "Soraka",
+  "Yuumi",
+  "Nami",
+  "Milio",
+  "Vayne",
+  "Aatrox",
+  "Sylas",
+  "Vladimir",
+  "Warwick",
+  "Dr. Mundo",
+  "Swain",
+  "Zac",
+  "Fiora",
+  "Sett",
+  "Nilah",
+  "Senna",
+]);
+
+export function healThreatCount(champions: string[]): number {
+  return champions.filter((c) => HEAL_THREATS.has(c)).length;
+}
