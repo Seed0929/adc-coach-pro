@@ -10,7 +10,14 @@
 // PURE + client-safe. Consumed by the match report; later fed to OpenAI as-is.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
-import { buildFor, tagsFor, threatProfile, type ThreatProfile } from "./champion-knowledge";
+import {
+  buildFor,
+  tagsFor,
+  threatProfile,
+  canCoachItemization,
+  healThreatCount,
+  type ThreatProfile,
+} from "./champion-knowledge";
 
 export interface PhaseReview {
   phase: string;
@@ -34,11 +41,6 @@ export interface PlanItem {
 export interface GamePlan {
   matchupSummary: string;
   enemyThreats: string;
-  runes: PlanItem;
-  startItem: PlanItem;
-  coreBuild: PlanItem;
-  situational: PlanItem;
-  boots: PlanItem;
   summonerSpells: PlanItem;
   laneStrategy: PlanItem;
   tradingPattern: PlanItem;
@@ -49,12 +51,20 @@ export interface GamePlan {
   splitVsGroup: PlanItem;
 }
 
+// Item Review — a single, light itemization nudge (never a full build guide).
+export interface ItemReview {
+  hasCoaching: boolean;
+  headline: string; // <= 2 sentences
+  detail: string; // reasoning for "Learn More"
+}
+
 export interface MatchPlan {
   phases: PhaseReview[];
   mistakeTimeline: TimelineMistake[];
   turningPoint: string;
   winCondition: string;
   practiceGoal: string;
+  itemReview: ItemReview;
   gamePlan: GamePlan;
 }
 
