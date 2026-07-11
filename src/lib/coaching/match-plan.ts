@@ -329,7 +329,6 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const opp = m.laneOpponent ?? null;
   const oppTags = opp ? tagsFor(opp) : [];
 
-  const apHeavy = threat.ap >= 3;
   const diveHeavy = threat.dive >= 2;
   const ccHeavy = threat.cc >= 3;
   const pokeLane = oppTags.includes("poke") || oppTags.includes("ad") === false && oppTags.includes("ap");
