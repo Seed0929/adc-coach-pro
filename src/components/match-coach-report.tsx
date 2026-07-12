@@ -272,15 +272,14 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </Card>
       </div>
 
-      {/* Coachable moments timeline */}
-      <Card icon={Clock} title="Coachable Moments Timeline">
+      {/* Decision Chain timeline — how one decision influences the next. */}
+      <Card icon={Clock} title="Match Timeline">
+        <p className="mb-4 text-xs text-muted-foreground">
+          How one decision led to the next. Times are approximate until interactive replay is connected.
+        </p>
         <div className="space-y-3">
-          {report.plan.mistakeTimeline.map((t, i) => (
-            <div key={i} className="rounded-2xl bg-white/[0.03] p-4">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.when}</div>
-              <div className="text-sm">{t.what}</div>
-              <p className="mt-1 text-sm text-muted-foreground">Next time: {t.fix}</p>
-            </div>
+          {report.plan.timeline.events.map((e) => (
+            <TimelineEvent key={e.id} e={e} />
           ))}
         </div>
       </Card>
