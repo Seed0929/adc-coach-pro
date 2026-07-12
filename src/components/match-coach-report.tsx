@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -19,6 +20,7 @@ import type {
   TrendItem,
 } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
+import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
@@ -26,6 +28,61 @@ function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
 
 function verdictTone(v: PhaseReview["verdict"]): string {
   return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
+}
+
+function impactTone(i: ImpactLevel): "danger" | "warning" | "success" {
+  return i === "high" ? "danger" : i === "medium" ? "warning" : "success";
+}
+
+function impactLabel(i: ImpactLevel): string {
+  return i === "high" ? "High impact" : i === "medium" ? "Medium impact" : "Low impact";
+}
+
+// One coachable moment as a decision chain, ready for the future Replay Coach.
+function TimelineEvent({ e }: { e: CoachableEvent }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="font-display text-sm font-semibold text-primary tabular-nums">{e.gameTime}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{e.category}</span>
+        <Pill tone={impactTone(e.impact)}>{impactLabel(e.impact)}</Pill>
+      </div>
+      <div className="mb-2 text-sm font-medium">{e.decision}</div>
+
+      {/* Decision → immediate → later → outcome */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        {e.chain.map((link, i) => (
+          <span key={i} className="flex items-center gap-2">
+            <span className="rounded-lg bg-white/[0.04] px-2 py-1">{link}</span>
+            {i < e.chain.length - 1 && <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />}
+          </span>
+        ))}
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        <span className="font-medium text-foreground/80">Evidence: </span>
+        {e.evidence}
+      </p>
+
+      {/* Learn More — detailed reasoning kept collapsed to reduce clutter. */}
+      <details className="group mt-2">
+        <summary className="cursor-pointer list-none text-xs font-medium text-primary">
+          <span className="group-open:hidden">Learn more ▾</span>
+          <span className="hidden group-open:inline">Show less ▴</span>
+        </summary>
+        <p className="mt-2 text-sm text-muted-foreground">{e.explanation}</p>
+        <p className="mt-2 text-sm">
+          <span className="font-medium text-foreground/80">Practice takeaway: </span>
+          <span className="text-muted-foreground">{e.practiceTakeaway}</span>
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground/70">
+          {e.replayAnchor.anchorReady
+            ? "Replay anchor ready — jump to this moment."
+            : "Replay anchor prepared — interactive replay navigation coming soon."}
+        </p>
+      </details>
+    </div>
+  );
 }
 
 function PhaseRow({ p }: { p: PhaseReview }) {
@@ -215,15 +272,14 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </Card>
       </div>
 
-      {/* Coachable moments timeline */}
-      <Card icon={Clock} title="Coachable Moments Timeline">
+      {/* Decision Chain timeline — how one decision influences the next. */}
+      <Card icon={Clock} title="Match Timeline">
+        <p className="mb-4 text-xs text-muted-foreground">
+          How one decision led to the next. Times are approximate until interactive replay is connected.
+        </p>
         <div className="space-y-3">
-          {report.plan.mistakeTimeline.map((t, i) => (
-            <div key={i} className="rounded-2xl bg-white/[0.03] p-4">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.when}</div>
-              <div className="text-sm">{t.what}</div>
-              <p className="mt-1 text-sm text-muted-foreground">Next time: {t.fix}</p>
-            </div>
+          {report.plan.timeline.events.map((e) => (
+            <TimelineEvent key={e.id} e={e} />
           ))}
         </div>
       </Card>

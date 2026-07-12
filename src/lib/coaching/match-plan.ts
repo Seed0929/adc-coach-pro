@@ -18,6 +18,7 @@ import {
   healThreatCount,
   type ThreatProfile,
 } from "./champion-knowledge";
+import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
 
 export interface PhaseReview {
   phase: string;
@@ -66,6 +67,8 @@ export interface MatchPlan {
   practiceGoal: string;
   itemReview: ItemReview;
   gamePlan: GamePlan;
+  /** Decision-chain timeline + Replay Coach anchors (Sprint 1.7). */
+  timeline: MatchTimeline;
 }
 
 const one = (n: number) => n.toFixed(1);
@@ -499,5 +502,6 @@ export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
     practiceGoal: practiceGoalOf(m),
     itemReview: buildItemReview(m),
     gamePlan: buildGamePlan(m),
+    timeline: buildMatchTimeline(m),
   };
 }
