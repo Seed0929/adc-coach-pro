@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
