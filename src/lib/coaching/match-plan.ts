@@ -19,6 +19,12 @@ import {
   type ThreatProfile,
 } from "./champion-knowledge";
 import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
+import {
+  championDamageProfile,
+  isItemCategoryCompatible,
+  type ItemCategory,
+  type DamageProfile,
+} from "./league-knowledge";
 
 export interface PhaseReview {
   phase: string;
@@ -429,10 +435,26 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
 
 // --- Item Review (one light suggestion, never a full build) -----------------
 
+// A single contextual item suggestion, validated against League Knowledge so
+// BotDiff never recommends an impossible item (e.g. an AD item for an AP
+// champion, or a crit item for a poke mage). Defensive categories are valid for
+// any profile; offensive categories must match the champion's damage profile.
+function contextualSuggestion(
+  profile: DamageProfile,
+  category: ItemCategory,
+  headline: string,
+  detail: string,
+): ItemReview | null {
+  if (!isItemCategoryCompatible(category, profile)) return null;
+  return { hasCoaching: true, headline, detail };
+}
+
 function buildItemReview(m: MatchAnalysisInput): ItemReview {
-  // Part 3 — never fabricate itemization. If we can't confidently identify the
-  // champion, we say nothing rather than risk an impossible recommendation.
-  if (!canCoachItemization(m.champion)) {
+  // Part 3 — never fabricate itemization. If League Knowledge can't confidently
+  // identify the champion's class + damage profile, we say nothing rather than
+  // risk an impossible recommendation.
+  const profile = championDamageProfile(m.champion);
+  if (!canCoachItemization(m.champion) || profile === "unknown") {
     return {
       hasCoaching: false,
       headline: "No significant itemization coaching detected for this match.",
@@ -448,36 +470,37 @@ function buildItemReview(m: MatchAnalysisInput): ItemReview {
   const apHeavy = threat.ap >= 3;
   const diveHeavy = threat.dive >= 2;
 
-  // One light suggestion, most impactful tradeoff first. Framed as guidance,
-  // never a command, and never a full build.
+  // One light, contextual suggestion — most impactful tradeoff first. Framed as
+  // guidance, never a command, never a full build, never a win-rate build.
+  // Each candidate is validated against the champion's damage profile; if it
+  // isn't a valid category for this champion, we skip to the next cue.
+  const candidates: ItemReview[] = [];
+  const push = (c: ItemReview | null) => { if (c) candidates.push(c); };
+
   if (heals >= 2) {
-    return {
-      hasCoaching: true,
-      headline: "A healing-reduction item may have created more value against their sustain.",
-      detail: `The enemy team had ${heals} champions with meaningful healing. A Grievous Wounds option (like Mortal Reminder) is worth considering in games like this — it's a tradeoff against raw damage, so only pick it up if their healing is actually keeping targets alive.`,
-    };
+    push(contextualSuggestion(profile, "anti-heal",
+      "A Grievous Wounds pickup may have created more value against their sustain.",
+      `The enemy team had ${heals} champions with meaningful healing. Anti-heal is worth considering here — it's a tradeoff against raw damage, so only reach for it if their healing was actually keeping targets alive.`));
   }
   if (tankHeavy) {
-    return {
-      hasCoaching: true,
-      headline: "Earlier armor penetration may have helped against the enemy frontline.",
-      detail: `They fielded ${threat.tank} tanky champions. Reaching a percentage armor-pen item a little sooner is one option to keep your damage relevant — it's a tradeoff versus pure crit, so weigh it against how fed their frontline actually was.`,
-    };
+    const cat: ItemCategory = profile === "AD" || profile === "hybrid" ? "armor-pen" : "magic-pen";
+    push(contextualSuggestion(profile, cat,
+      "Earlier penetration may have helped against the enemy frontline.",
+      `They fielded ${threat.tank} tanky champions. Reaching a percentage-penetration item a little sooner is one option to keep your damage relevant — it's a tradeoff versus raw scaling, so weigh it against how fed their frontline actually was.`));
   }
   if (apHeavy) {
-    return {
-      hasCoaching: true,
-      headline: "A magic-resist option may have created more value against their AP damage.",
-      detail: `Most of their threat was magic damage. A defensive pickup (Mercury's Treads or an MR item) is one way to survive their burst — only reach for it if you were actually getting deleted, since it trades away some of your own damage.`,
-    };
+    push(contextualSuggestion(profile, "magic-resist",
+      "A magic-resist option may have created more value against their AP damage.",
+      "Most of their threat was magic damage. A defensive pickup (Mercury's Treads or an MR item) is one way to survive their burst — only reach for it if you were actually getting deleted, since it trades away some of your own damage."));
   }
   if (diveHeavy) {
-    return {
-      hasCoaching: true,
-      headline: "A survivability item may have bought you time against their dive.",
-      detail: `They had multiple ways to reach you. Something like Guardian Angel is worth considering — a tradeoff that buys seconds to keep attacking rather than dying on contact.`,
-    };
+    push(contextualSuggestion(profile, "survivability",
+      "A survivability item may have bought you time against their dive.",
+      "They had multiple ways to reach you. An anti-burst or survivability item is worth considering — a tradeoff that buys seconds to keep attacking rather than dying on contact."));
   }
+
+  if (candidates.length > 0) return candidates[0];
+
   return {
     hasCoaching: true,
     headline: "Your item choices fit this game well.",
