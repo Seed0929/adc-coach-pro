@@ -8,6 +8,14 @@
 //
 // PURE + client-safe.
 // ---------------------------------------------------------------------------
+import {
+  championDamageProfile,
+  hasChampionIdentity,
+  isHealSource,
+  type DamageProfile,
+} from "./league-knowledge";
+
+export type { DamageProfile } from "./league-knowledge";
 
 export type ThreatTag =
   | "ap"
