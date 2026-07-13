@@ -19,6 +19,7 @@ import { buildBehaviorObservations, type BehaviorObservation } from "./behavior-
 import { routeQuestion, type AnalysisMode } from "./question-router";
 
 export * from "./pillars";
+export * from "./league-knowledge";
 export * from "./behavior-engine";
 export * from "./player-memory-model";
 export * from "./question-router";
