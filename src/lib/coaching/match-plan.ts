@@ -19,6 +19,12 @@ import {
   type ThreatProfile,
 } from "./champion-knowledge";
 import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
+import {
+  championDamageProfile,
+  isItemCategoryCompatible,
+  type ItemCategory,
+  type DamageProfile,
+} from "./league-knowledge";
 
 export interface PhaseReview {
   phase: string;
