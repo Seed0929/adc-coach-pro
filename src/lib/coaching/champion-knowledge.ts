@@ -209,15 +209,6 @@ export function buildFor(champion: string): AdcBuild {
 // (the single source of truth for champion metadata) instead of re-deriving
 // facts here. When the champion's damage profile can't be confidently
 // identified, callers should say nothing rather than guess.
-import {
-  championDamageProfile,
-  hasChampionIdentity,
-  isHealSource,
-  type DamageProfile,
-} from "./league-knowledge";
-
-export type { DamageProfile } from "./league-knowledge";
-
 export function damageProfileFor(champion: string): DamageProfile {
   return championDamageProfile(champion);
 }
