@@ -10,7 +10,7 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
-import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
+import { Swords, Clock, Compass, Crown } from "lucide-react";
 import { ChevronRight, Zap } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
