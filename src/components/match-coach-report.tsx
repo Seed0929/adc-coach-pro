@@ -334,18 +334,88 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </div>
       </Card>
 
-      {/* Item Review — one light itemization nudge, never a full build guide. */}
-      <Card icon={Wrench} title="Item Review">
-        {report.plan.itemReview.hasCoaching ? (
-          <>
-            <p className="text-sm font-medium">{report.plan.itemReview.headline}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{report.plan.itemReview.detail}</p>
-          </>
+      {/* Power Spike Timing — teaches decisions through item spike tempo (Sprint 1.9). */}
+      <Card icon={Zap} title="Power Spike Timing" accent="text-primary">
+        <p className="mb-3 text-sm font-medium">{report.plan.powerSpike.headline}</p>
+
+        {/* Positive coaching first — celebrate good tempo before growth. */}
+        {report.plan.powerSpike.positive && (
+          <div className="mb-4 rounded-2xl border border-success/25 bg-success/[0.08] p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-success">
+              <Trophy className="size-4" /> Good tempo
+            </div>
+            <p className="text-sm text-muted-foreground">{report.plan.powerSpike.positive}</p>
+          </div>
+        )}
+
+        {/* Power spike timeline */}
+        {report.plan.powerSpike.items.length > 0 ? (
+          <div className="space-y-3">
+            {report.plan.powerSpike.items.map((i) => (
+              <PowerSpikeRow key={i.slot} i={i} />
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No significant itemization coaching detected for this match.
+            The game ended before your first core power spike — the fastest improvement is reaching your first item sooner.
           </p>
         )}
+
+        <p className="mt-3 text-xs text-muted-foreground/70">
+          Timings are coaching baselines estimated from your economy — not rigid requirements. Purchase-accurate timing arrives once the match timeline is connected.
+        </p>
+
+        {/* Practice goal — exactly one habit at a time. */}
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/[0.07] p-4">
+          <Flag className="size-5 shrink-0 text-primary" />
+          <p className="text-sm font-medium">{report.plan.powerSpike.practiceGoal}</p>
+        </div>
+
+        {/* Learn More — tempo, decisions and detailed reasoning kept collapsed. */}
+        <details className="group mt-3">
+          <summary className="cursor-pointer list-none text-xs font-medium text-primary">
+            <span className="group-open:hidden">Learn more ▾</span>
+            <span className="hidden group-open:inline">Show less ▴</span>
+          </summary>
+
+          {report.plan.powerSpike.tempoFactors.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Why your tempo landed here</p>
+              <div className="space-y-2">
+                {report.plan.powerSpike.tempoFactors.map((f, i) => (
+                  <div key={i} className="rounded-2xl bg-white/[0.03] p-3">
+                    <div className="text-sm font-medium">{f.cause}</div>
+                    <p className="text-sm text-muted-foreground">{f.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">How this decision rippled forward</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              {report.plan.powerSpike.decisionChain.map((link, i) => (
+                <span key={i} className="flex items-center gap-2">
+                  <span className="rounded-lg bg-white/[0.04] px-2 py-1">{link}</span>
+                  {i < report.plan.powerSpike.decisionChain.length - 1 && (
+                    <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <dl className="mt-4 space-y-2 text-sm">
+            <div><dt className="inline font-medium text-foreground/80">Tempo: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.tempo}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Economy: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.economy}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Wave management: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.waveManagement}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Recall timing: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.recallTiming}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Objective prep: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.objectivePrep}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Decision relationships: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.decisionRelationships}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Expected impact: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.expectedImpact}</dd></div>
+          </dl>
+        </details>
       </Card>
 
       {/* Game plan — strategy for the matchup (not a build guide) */}
