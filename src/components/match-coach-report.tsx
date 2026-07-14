@@ -10,8 +10,8 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
-import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
-import { ChevronRight } from "lucide-react";
+import { Swords, Clock, Compass, Crown } from "lucide-react";
+import { ChevronRight, Zap } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -21,6 +21,8 @@ import type {
 } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
+import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
+import { formatSpikeTime } from "@/lib/coaching/power-spike";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
@@ -28,6 +30,54 @@ function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
 
 function verdictTone(v: PhaseReview["verdict"]): string {
   return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
+}
+
+function spikeTone(s: SpikeStatus): "success" | "warning" | "danger" {
+  return s === "ahead" ? "success" : s === "onTrack" ? "warning" : "danger";
+}
+
+function spikeStatusLabel(s: SpikeStatus): string {
+  return s === "ahead" ? "Ahead of baseline" : s === "onTrack" ? "On baseline" : "Behind baseline";
+}
+
+function spikeDiffLabel(i: PowerSpikeItem): string {
+  if (i.status === "onTrack") return "on time";
+  const mag = Math.abs(i.differenceMinutes).toFixed(1);
+  return i.differenceMinutes > 0 ? `${mag} min late` : `${mag} min early`;
+}
+
+function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-medium">{i.itemName}</span>
+        <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
+      </div>
+      <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You (est.)</div>
+          <div className="font-display text-sm font-semibold text-foreground tabular-nums">{formatSpikeTime(i.purchaseMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Same rank</div>
+          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.targetMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">High elo</div>
+          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.highEloMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Difference</div>
+          <div className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}>
+            {spikeDiffLabel(i)}
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 text-[11px] text-muted-foreground/70">
+        {i.confidence[0].toUpperCase() + i.confidence.slice(1)} confidence · coaching baseline, not a requirement
+      </div>
+    </div>
+  );
 }
 
 function impactTone(i: ImpactLevel): "danger" | "warning" | "success" {
@@ -284,18 +334,88 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         </div>
       </Card>
 
-      {/* Item Review — one light itemization nudge, never a full build guide. */}
-      <Card icon={Wrench} title="Item Review">
-        {report.plan.itemReview.hasCoaching ? (
-          <>
-            <p className="text-sm font-medium">{report.plan.itemReview.headline}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{report.plan.itemReview.detail}</p>
-          </>
+      {/* Power Spike Timing — teaches decisions through item spike tempo (Sprint 1.9). */}
+      <Card icon={Zap} title="Power Spike Timing" accent="text-primary">
+        <p className="mb-3 text-sm font-medium">{report.plan.powerSpike.headline}</p>
+
+        {/* Positive coaching first — celebrate good tempo before growth. */}
+        {report.plan.powerSpike.positive && (
+          <div className="mb-4 rounded-2xl border border-success/25 bg-success/[0.08] p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-success">
+              <Trophy className="size-4" /> Good tempo
+            </div>
+            <p className="text-sm text-muted-foreground">{report.plan.powerSpike.positive}</p>
+          </div>
+        )}
+
+        {/* Power spike timeline */}
+        {report.plan.powerSpike.items.length > 0 ? (
+          <div className="space-y-3">
+            {report.plan.powerSpike.items.map((i) => (
+              <PowerSpikeRow key={i.slot} i={i} />
+            ))}
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No significant itemization coaching detected for this match.
+            The game ended before your first core power spike — the fastest improvement is reaching your first item sooner.
           </p>
         )}
+
+        <p className="mt-3 text-xs text-muted-foreground/70">
+          Timings are coaching baselines estimated from your economy — not rigid requirements. Purchase-accurate timing arrives once the match timeline is connected.
+        </p>
+
+        {/* Practice goal — exactly one habit at a time. */}
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/[0.07] p-4">
+          <Flag className="size-5 shrink-0 text-primary" />
+          <p className="text-sm font-medium">{report.plan.powerSpike.practiceGoal}</p>
+        </div>
+
+        {/* Learn More — tempo, decisions and detailed reasoning kept collapsed. */}
+        <details className="group mt-3">
+          <summary className="cursor-pointer list-none text-xs font-medium text-primary">
+            <span className="group-open:hidden">Learn more ▾</span>
+            <span className="hidden group-open:inline">Show less ▴</span>
+          </summary>
+
+          {report.plan.powerSpike.tempoFactors.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Why your tempo landed here</p>
+              <div className="space-y-2">
+                {report.plan.powerSpike.tempoFactors.map((f, i) => (
+                  <div key={i} className="rounded-2xl bg-white/[0.03] p-3">
+                    <div className="text-sm font-medium">{f.cause}</div>
+                    <p className="text-sm text-muted-foreground">{f.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">How this decision rippled forward</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              {report.plan.powerSpike.decisionChain.map((link, i) => (
+                <span key={i} className="flex items-center gap-2">
+                  <span className="rounded-lg bg-white/[0.04] px-2 py-1">{link}</span>
+                  {i < report.plan.powerSpike.decisionChain.length - 1 && (
+                    <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <dl className="mt-4 space-y-2 text-sm">
+            <div><dt className="inline font-medium text-foreground/80">Tempo: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.tempo}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Economy: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.economy}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Wave management: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.waveManagement}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Recall timing: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.recallTiming}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Objective prep: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.objectivePrep}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Decision relationships: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.decisionRelationships}</dd></div>
+            <div><dt className="inline font-medium text-foreground/80">Expected impact: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.expectedImpact}</dd></div>
+          </dl>
+        </details>
       </Card>
 
       {/* Game plan — strategy for the matchup (not a build guide) */}

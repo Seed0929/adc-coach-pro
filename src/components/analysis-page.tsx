@@ -204,24 +204,25 @@ function CoachMemory() {
 function BuildReview() {
   const { insights } = useCoachingData();
   const relevant = insights.filter(
-    (i) => i.category === "Champion Mastery" || i.category === "Macro" || i.category === "Farming",
+    (i) => i.category === "Macro" || i.category === "Farming" || i.category === "Champion Mastery",
   );
   return (
     <AnalysisShell
       eyebrow="Full Analysis"
-      title="Item Review"
-      subtitle="Light itemization coaching — one tradeoff to consider, never a full build guide. Per-match item notes live inside each match report."
+      title="Power Spike Timing"
+      subtitle="When you reach your power spikes — and the habits that decide those timings. BotDiff coaches decisions, not builds. Per-match spike timing lives inside each match report."
     >
       <CoachingCard
         tone="neutral"
-        eyebrow="How BotDiff coaches items"
-        title="Guidance, not a build guide"
-        summary="BotDiff suggests one itemization tradeoff at a time and respects off-meta choices — it never tells you that you built “wrong.”"
-        readTime="15 sec"
+        eyebrow="How BotDiff coaches power spikes"
+        title="Habits → Tempo → Power Spikes → Wins"
+        summary="BotDiff doesn't tell you what to build. It teaches when you reached your spikes, how that compares to strong players at your rank, and which habits caused the timing."
+        readTime="20 sec"
       >
         <p className="text-muted-foreground">
-          When BotDiff can't confidently identify your champion's damage profile, it says nothing rather than
-          risk a wrong recommendation. The goal is to make you a better decision maker, not to force one build.
+          Spike timings are coaching baselines estimated from your economy — never rigid requirements. The goal is
+          to make you a better decision maker: earlier, more consistent spikes come from better recalls, cleaner
+          farm, and smarter rotations, not from copying a build.
         </p>
       </CoachingCard>
       {(relevant.length ? relevant : insights.slice(0, 3)).map((i) => (
