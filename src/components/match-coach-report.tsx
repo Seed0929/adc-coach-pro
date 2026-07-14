@@ -11,7 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Swords, Clock, Compass, Wrench, Crown } from "lucide-react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Zap } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -21,6 +21,8 @@ import type {
 } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
+import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
+import { formatSpikeTime } from "@/lib/coaching/power-spike";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
@@ -28,6 +30,54 @@ function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
 
 function verdictTone(v: PhaseReview["verdict"]): string {
   return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
+}
+
+function spikeTone(s: SpikeStatus): "success" | "warning" | "danger" {
+  return s === "ahead" ? "success" : s === "onTrack" ? "warning" : "danger";
+}
+
+function spikeStatusLabel(s: SpikeStatus): string {
+  return s === "ahead" ? "Ahead of baseline" : s === "onTrack" ? "On baseline" : "Behind baseline";
+}
+
+function spikeDiffLabel(i: PowerSpikeItem): string {
+  if (i.status === "onTrack") return "on time";
+  const mag = Math.abs(i.differenceMinutes).toFixed(1);
+  return i.differenceMinutes > 0 ? `${mag} min late` : `${mag} min early`;
+}
+
+function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.03] p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-medium">{i.itemName}</span>
+        <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
+      </div>
+      <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You (est.)</div>
+          <div className="font-display text-sm font-semibold text-foreground tabular-nums">{formatSpikeTime(i.purchaseMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Same rank</div>
+          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.targetMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">High elo</div>
+          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.highEloMinute)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Difference</div>
+          <div className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}>
+            {spikeDiffLabel(i)}
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 text-[11px] text-muted-foreground/70">
+        {i.confidence[0].toUpperCase() + i.confidence.slice(1)} confidence · coaching baseline, not a requirement
+      </div>
+    </div>
+  );
 }
 
 function impactTone(i: ImpactLevel): "danger" | "warning" | "success" {
