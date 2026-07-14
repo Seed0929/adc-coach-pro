@@ -19,6 +19,7 @@ import {
   type ThreatProfile,
 } from "./champion-knowledge";
 import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
+import { buildPowerSpikeReview, type PowerSpikeReview } from "./power-spike";
 import {
   championDamageProfile,
   isItemCategoryCompatible,
@@ -72,6 +73,8 @@ export interface MatchPlan {
   winCondition: string;
   practiceGoal: string;
   itemReview: ItemReview;
+  /** Power Spike Timing — decision-first replacement for Build Review (Sprint 1.9). */
+  powerSpike: PowerSpikeReview;
   gamePlan: GamePlan;
   /** Decision-chain timeline + Replay Coach anchors (Sprint 1.7). */
   timeline: MatchTimeline;
@@ -524,6 +527,7 @@ export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
     winCondition: winConditionOf(m),
     practiceGoal: practiceGoalOf(m),
     itemReview: buildItemReview(m),
+    powerSpike: buildPowerSpikeReview(m),
     gamePlan: buildGamePlan(m),
     timeline: buildMatchTimeline(m),
   };
