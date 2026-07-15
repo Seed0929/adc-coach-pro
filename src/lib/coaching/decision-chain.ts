@@ -263,7 +263,7 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       impact: m.deaths >= 7 ? "high" : "medium",
       evidence: `${m.deaths} deaths and only ${pct(m.damageShare)} of team damage.`,
       explanation:
-        "As the ADC your damage only matters if you're alive when the fight peaks. Standing a screen behind your frontline lets the enemy waste their engage first — then you walk up and deal uninterrupted damage instead of dying on contact.",
+        `${championRoleLabel(m.champion)} your damage only matters if you're alive when the fight peaks. Standing a screen behind your frontline lets the enemy waste their engage first — then you walk up and deal uninterrupted damage instead of dying on contact.`,
       practiceTakeaway: "Hold your step-up until the enemy's engage is spent, then attack the closest safe target.",
       replayAnchor: anchor(m, t.seconds),
     });
