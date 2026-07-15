@@ -346,7 +346,8 @@ function threatSummary(p: ThreatProfile): string {
 }
 
 function buildGamePlan(m: MatchAnalysisInput): GamePlan {
-  const b = buildFor(m.champion);
+  const profile = getChampionProfile(m.champion);
+  const b = buildFor(m.champion); // curated ADC build (marksman-only, safe fallback for others)
   const enemies = m.enemies ?? [];
   const allies = m.allies ?? [];
   const threat = threatProfile(enemies);
@@ -379,13 +380,10 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
         why: "No lane-opponent data for this game — this is the fundamentals-first plan for your champion.",
       };
 
-  const tradingPattern: PlanItem = {
-    label: "Trading Pattern",
-    value: b.archetype === "crit" || b.archetype === "onhit"
-      ? "Auto-attack windows: step up, land 2–3 autos when their engage/poke is on cooldown, then reset spacing."
-      : "Poke-and-retreat: chunk with your ability, then back out before they can answer.",
-    why: `${m.champion} deals its damage through ${b.archetype === "crit" || b.archetype === "onhit" ? "sustained autos, so you want short auto-trades" : "ability windows, so trade in bursts and disengage"}.`,
-  };
+  // Trading pattern is archetype-aware: mages/artillery poke, sustained-DPS
+  // marksmen use auto windows, assassins look for all-ins, tanks/enchanters
+  // trade around cooldowns rather than raw damage.
+  const tradingPattern: PlanItem = tradingPatternFor(profile);
 
   const waveStrategy: PlanItem = {
     label: "Wave Strategy",
@@ -416,21 +414,9 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   };
 
   const frontlineAllies = allies.filter((a) => tagsFor(a).includes("tank") || tagsFor(a).includes("engage")).length;
-  const teamfightRole: PlanItem = {
-    label: "Teamfight Role",
-    value: frontlineAllies >= 1
-      ? "Stay behind your frontline, attack the closest safe target, and let your engage go in first."
-      : "No hard frontline — play very reactive: never step up first, kite backward, and only commit once the enemy over-extends.",
-    why: frontlineAllies >= 1
-      ? `You have ${frontlineAllies} engage/tank ally to peel and create space, so your job is uninterrupted damage from the back.`
-      : "Without a frontline you can't take aggressive angles — patience and spacing are your only protection.",
-  };
+  const teamfightRole: PlanItem = teamfightRoleFor(profile, frontlineAllies);
 
-  const splitVsGroup: PlanItem = {
-    label: "Split vs Group",
-    value: "Group",
-    why: `As an immobile-ish carry ${m.champion} wants to teamfight with the team; only take a safe side wave when the map allows, then rotate back before objectives.`,
-  };
+  const splitVsGroup: PlanItem = splitVsGroupFor(profile);
 
   return {
     matchupSummary: opp
