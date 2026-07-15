@@ -205,12 +205,21 @@ function midReview(m: MatchAnalysisInput): PhaseReview {
 
 function lateReview(m: MatchAnalysisInput): PhaseReview {
   const scaled = m.durationMin >= 30;
+  const profile = getChampionProfile(m.champion);
+  const roleLabel = championRoleLabel(m.champion);
+  const positioningLine = profile.isMarksman || profile.isMage
+    ? "In 5v5s, never take the first fight; let the enemy commit, then clean up from the back."
+    : profile.isAssassin
+      ? "Wait for the enemy to commit their engage, then flank onto the priority target once cooldowns are down."
+      : profile.isTank || profile.isSupport
+        ? "Your job is to enable the carry — start the fight only when you can survive it, and peel until their damage decides it."
+        : "Pick the fights your kit is designed for and avoid the ones it isn't.";
   return {
     phase: "Late Game Review",
     verdict: m.damageShare >= 0.28 ? "good" : "mixed",
     headline: scaled ? "This went to the late game" : "Game ended before full scaling",
     detail: scaled
-      ? `As the ADC you're the primary damage source late — you dealt ${pct(m.damageShare)} of your team's damage. In 5v5s, never take the first fight; let the enemy commit, then clean up from the back.`
+      ? `${roleLabel} in the late game you dealt ${pct(m.damageShare)} of your team's damage. ${positioningLine}`
       : `The game ended around ${Math.round(m.durationMin)} minutes, so scaling never fully mattered. Your ${pct(m.damageShare)} damage share is what you brought — earlier games reward tempo over scaling.`,
   };
 }
