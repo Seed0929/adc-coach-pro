@@ -19,6 +19,7 @@
 // PURE + client-safe. Grounded entirely in real MatchAnalysisInput stats.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
+import { championRoleLabel } from "./champion-intelligence";
 
 export type ImpactLevel = "high" | "medium" | "low";
 
