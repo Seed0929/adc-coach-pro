@@ -509,6 +509,126 @@ function buildItemReview(m: MatchAnalysisInput): ItemReview {
   };
 }
 
+// --- archetype-aware game-plan pieces --------------------------------------
+
+function tradingPatternFor(profile: ChampionProfile): PlanItem {
+  if (profile.isMarksman) {
+    const isPoke = profile.archetype === "lethality-marksman";
+    return {
+      label: "Trading Pattern",
+      value: isPoke
+        ? "Poke windows: chunk with your ability when they walk up for CS, then reset spacing before they can answer."
+        : "Auto-attack windows: step up, land 2–3 autos when their engage/poke is on cooldown, then reset spacing.",
+      why: isPoke
+        ? `${profile.name} trades through ability windows, so short bursts of damage into a disengage keep you safe.`
+        : `${profile.name} deals sustained auto damage, so short auto-trades on their cooldowns is your best tool.`,
+    };
+  }
+  if (profile.isMage || profile.archetype === "artillery-mage") {
+    return {
+      label: "Trading Pattern",
+      value: "Ability windows: land your key skillshot, then step back before autos and cooldowns come back up.",
+      why: `${profile.name} deals its damage through abilities, so trade in bursts and disengage instead of extending.`,
+    };
+  }
+  if (profile.isAssassin) {
+    return {
+      label: "Trading Pattern",
+      value: "All-in windows: wait for a mispositioned target, then commit your full combo — never poke a fight you can't finish.",
+      why: `${profile.name} needs a clean kill, not chip damage — a half-committed trade wastes cooldowns and health.`,
+    };
+  }
+  if (profile.isTank || profile.isSupport) {
+    return {
+      label: "Trading Pattern",
+      value: "Cooldown trades: engage/peel when your CC is up and back off while it resets — don't try to out-damage.",
+      why: `${profile.name}'s value is CC and utility on cooldown, not raw damage.`,
+    };
+  }
+  if (profile.isBruiser) {
+    return {
+      label: "Trading Pattern",
+      value: "Extended trades: close the gap, stick to the target, and out-sustain them through the trade.",
+      why: `${profile.name} wins the longer the trade goes, so pick fights you can commit to.`,
+    };
+  }
+  return {
+    label: "Trading Pattern",
+    value: "Trade on your strongest cooldowns and disengage when they come off.",
+    why: `Match your trade windows to what ${profile.name} is best at, not to what the enemy wants.`,
+  };
+}
+
+function teamfightRoleFor(profile: ChampionProfile, frontlineAllies: number): PlanItem {
+  if (profile.isMarksman || profile.isMage) {
+    return {
+      label: "Teamfight Role",
+      value: frontlineAllies >= 1
+        ? "Stay behind your frontline, attack the closest safe target, and let your engage go in first."
+        : "No hard frontline — never step up first, kite backward, and only commit once the enemy over-extends.",
+      why: frontlineAllies >= 1
+        ? `You have ${frontlineAllies} engage/tank ally to peel and create space, so your job is uninterrupted damage from the back.`
+        : "Without a frontline you can't take aggressive angles — patience and spacing are your only protection.",
+    };
+  }
+  if (profile.isAssassin) {
+    return {
+      label: "Teamfight Role",
+      value: "Flank: wait for the enemy engage, then dive the priority target from an unwarded angle.",
+      why: `${profile.name} wins fights by removing a carry, not by front-lining.`,
+    };
+  }
+  if (profile.isTank || profile.archetype === "vanguard-tank") {
+    return {
+      label: "Teamfight Role",
+      value: "Frontline engage: pick the fight your team wins on and start it with your CC.",
+      why: `${profile.name}'s job is to create the fight, not to deal damage.`,
+    };
+  }
+  if (profile.isSupport) {
+    return {
+      label: "Teamfight Role",
+      value: "Peel and utility: keep your carry alive, land CC on their divers, and hold cooldowns for the moment that decides the fight.",
+      why: `${profile.name}'s value is amplifying your carry, not personal damage.`,
+    };
+  }
+  if (profile.isBruiser) {
+    return {
+      label: "Teamfight Role",
+      value: "Bruiser bridge: engage onto whichever target your team can collapse on, then survive the counter-engage.",
+      why: `${profile.name} lives in the middle of the fight — pick a target and stay on it.`,
+    };
+  }
+  return {
+    label: "Teamfight Role",
+    value: "Play the role your kit is designed for and don't force uncharacteristic fights.",
+    why: "Champion identity decides how you should show up in fights.",
+  };
+}
+
+function splitVsGroupFor(profile: ChampionProfile): PlanItem {
+  const canSplit = profile.isBruiser || profile.archetype === "skirmisher" || profile.archetype === "juggernaut";
+  if (canSplit) {
+    return {
+      label: "Split vs Group",
+      value: "Split when the map allows",
+      why: `${profile.name} wins side-lane 1v1s — apply pressure on the opposite side of the map, then rotate before objectives.`,
+    };
+  }
+  if (profile.isTank || profile.isSupport) {
+    return {
+      label: "Split vs Group",
+      value: "Group with the team",
+      why: `${profile.name}'s value shows up in 5v5s and around objectives, not in a side lane alone.`,
+    };
+  }
+  return {
+    label: "Split vs Group",
+    value: "Group",
+    why: `As a teamfight-oriented ${profile.name} you want to be with the team; only take a safe side wave when the map allows, then rotate back before objectives.`,
+  };
+}
+
 function practiceGoalOf(m: MatchAnalysisInput): string {
   if (m.deaths >= 6) return "Next game: keep your deaths under 5 and never be the first one to die in a fight.";
   if (m.csPerMin < 7) return `Next game: beat ${one(m.csPerMin + 1)} CS/min by catching side waves between objectives.`;
