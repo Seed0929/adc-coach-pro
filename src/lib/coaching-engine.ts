@@ -694,7 +694,7 @@ function buildMistakes(m: MatchAnalysisInput, g: CoachingGrades): CoachMistake[]
     w.push({
       title: "Low damage share in fights",
       what: `You dealt only ${pct(m.damageShare)}% of your team's champion damage.`,
-      why: "As the ADC you're the team's sustained damage — low output usually means poor positioning or dying early.",
+      why: "As your team's carry you're the sustained damage source — low output usually means poor positioning or dying early.",
       fix: "Attack the closest safe target and keep auto-attacking through the whole fight instead of one burst then backing off.",
       priority: 100 - g.teamfight,
     });
