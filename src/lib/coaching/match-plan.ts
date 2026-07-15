@@ -26,6 +26,11 @@ import {
   type ItemCategory,
   type DamageProfile,
 } from "./league-knowledge";
+import {
+  getChampionProfile,
+  championRoleLabel,
+  type ChampionProfile,
+} from "./champion-intelligence";
 
 export interface PhaseReview {
   phase: string;
