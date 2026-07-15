@@ -27,6 +27,7 @@ export * from "./context-builder";
 export * from "./ai-provider";
 export * from "./master-prompt";
 export * from "./champion-knowledge";
+export * from "./champion-intelligence";
 export * from "./match-plan";
 export * from "./decision-chain";
 export * from "./power-spike";

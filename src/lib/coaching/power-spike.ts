@@ -18,7 +18,7 @@
 // PURE + client-safe. Grounded entirely in real MatchAnalysisInput stats.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
-import { buildFor } from "./champion-knowledge";
+import { coreItemsFor } from "./champion-intelligence";
 
 export type SpikeSource = "estimated" | "curated" | "datadragon" | "statistical";
 export type SpikeStatus = "ahead" | "onTrack" | "behind";
@@ -135,9 +135,10 @@ function estimateSpikeMinute(m: MatchAnalysisInput, cumulativeGold: number): num
 }
 
 function coreItemNames(m: MatchAnalysisInput): string[] {
-  const build = buildFor(m.champion);
-  const nonBoots = build.core.filter((i) => !/greaves|shoes|boots|treads|steelcaps/i.test(i));
-  const names = nonBoots.length >= 3 ? nonBoots : build.core;
+  // Champion Intelligence gate — always archetype-correct (never Kraken Slayer
+  // on a mage, never mage items on a marksman). Falls back to generic labels
+  // for unknown champions rather than guessing.
+  const names = coreItemsFor(m.champion);
   return [names[0] ?? "First core item", names[1] ?? "Second core item", names[2] ?? "Third core item"];
 }
 

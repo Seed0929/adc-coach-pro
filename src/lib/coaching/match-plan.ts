@@ -11,7 +11,6 @@
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
 import {
-  buildFor,
   tagsFor,
   threatProfile,
   canCoachItemization,
@@ -26,6 +25,11 @@ import {
   type ItemCategory,
   type DamageProfile,
 } from "./league-knowledge";
+import {
+  getChampionProfile,
+  championRoleLabel,
+  type ChampionProfile,
+} from "./champion-intelligence";
 
 export interface PhaseReview {
   phase: string;
@@ -200,12 +204,21 @@ function midReview(m: MatchAnalysisInput): PhaseReview {
 
 function lateReview(m: MatchAnalysisInput): PhaseReview {
   const scaled = m.durationMin >= 30;
+  const profile = getChampionProfile(m.champion);
+  const roleLabel = championRoleLabel(m.champion);
+  const positioningLine = profile.isMarksman || profile.isMage
+    ? "In 5v5s, never take the first fight; let the enemy commit, then clean up from the back."
+    : profile.isAssassin
+      ? "Wait for the enemy to commit their engage, then flank onto the priority target once cooldowns are down."
+      : profile.isTank || profile.isSupport
+        ? "Your job is to enable the carry — start the fight only when you can survive it, and peel until their damage decides it."
+        : "Pick the fights your kit is designed for and avoid the ones it isn't.";
   return {
     phase: "Late Game Review",
     verdict: m.damageShare >= 0.28 ? "good" : "mixed",
     headline: scaled ? "This went to the late game" : "Game ended before full scaling",
     detail: scaled
-      ? `As the ADC you're the primary damage source late — you dealt ${pct(m.damageShare)} of your team's damage. In 5v5s, never take the first fight; let the enemy commit, then clean up from the back.`
+      ? `${roleLabel} in the late game you dealt ${pct(m.damageShare)} of your team's damage. ${positioningLine}`
       : `The game ended around ${Math.round(m.durationMin)} minutes, so scaling never fully mattered. Your ${pct(m.damageShare)} damage share is what you brought — earlier games reward tempo over scaling.`,
   };
 }
@@ -310,12 +323,10 @@ function turningPointOf(m: MatchAnalysisInput): string {
 }
 
 function winConditionOf(m: MatchAnalysisInput): string {
-  const b = buildFor(m.champion);
-  if (b.archetype === "lethality")
-    return `As ${m.champion} your win condition is tempo: use your poke/early pressure to take towers and objectives before the enemy scales past you.`;
-  if (b.archetype === "onhit")
-    return `As ${m.champion} your win condition is the extended fight — get peel, reach two items, and shred the enemy frontline in prolonged 5v5s.`;
-  return `As ${m.champion} your win condition is scaling into a positioned crit carry — survive lane, hit your two-item spike, and deal damage from the back of every fight.`;
+  // Champion Intelligence gate — win condition is derived from the champion's
+  // archetype, so Vel'Koz never gets an ADC crit-carry line and Malphite never
+  // gets a mage/marksman line.
+  return getChampionProfile(m.champion).winCondition;
 }
 
 // --- build & matchup plan --------------------------------------------------
@@ -334,7 +345,7 @@ function threatSummary(p: ThreatProfile): string {
 }
 
 function buildGamePlan(m: MatchAnalysisInput): GamePlan {
-  const b = buildFor(m.champion);
+  const profile = getChampionProfile(m.champion);
   const enemies = m.enemies ?? [];
   const allies = m.allies ?? [];
   const threat = threatProfile(enemies);
@@ -367,13 +378,10 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
         why: "No lane-opponent data for this game — this is the fundamentals-first plan for your champion.",
       };
 
-  const tradingPattern: PlanItem = {
-    label: "Trading Pattern",
-    value: b.archetype === "crit" || b.archetype === "onhit"
-      ? "Auto-attack windows: step up, land 2–3 autos when their engage/poke is on cooldown, then reset spacing."
-      : "Poke-and-retreat: chunk with your ability, then back out before they can answer.",
-    why: `${m.champion} deals its damage through ${b.archetype === "crit" || b.archetype === "onhit" ? "sustained autos, so you want short auto-trades" : "ability windows, so trade in bursts and disengage"}.`,
-  };
+  // Trading pattern is archetype-aware: mages/artillery poke, sustained-DPS
+  // marksmen use auto windows, assassins look for all-ins, tanks/enchanters
+  // trade around cooldowns rather than raw damage.
+  const tradingPattern: PlanItem = tradingPatternFor(profile);
 
   const waveStrategy: PlanItem = {
     label: "Wave Strategy",
@@ -404,21 +412,9 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   };
 
   const frontlineAllies = allies.filter((a) => tagsFor(a).includes("tank") || tagsFor(a).includes("engage")).length;
-  const teamfightRole: PlanItem = {
-    label: "Teamfight Role",
-    value: frontlineAllies >= 1
-      ? "Stay behind your frontline, attack the closest safe target, and let your engage go in first."
-      : "No hard frontline — play very reactive: never step up first, kite backward, and only commit once the enemy over-extends.",
-    why: frontlineAllies >= 1
-      ? `You have ${frontlineAllies} engage/tank ally to peel and create space, so your job is uninterrupted damage from the back.`
-      : "Without a frontline you can't take aggressive angles — patience and spacing are your only protection.",
-  };
+  const teamfightRole: PlanItem = teamfightRoleFor(profile, frontlineAllies);
 
-  const splitVsGroup: PlanItem = {
-    label: "Split vs Group",
-    value: "Group",
-    why: `As an immobile-ish carry ${m.champion} wants to teamfight with the team; only take a safe side wave when the map allows, then rotate back before objectives.`,
-  };
+  const splitVsGroup: PlanItem = splitVsGroupFor(profile);
 
   return {
     matchupSummary: opp
@@ -508,6 +504,126 @@ function buildItemReview(m: MatchAnalysisInput): ItemReview {
     hasCoaching: true,
     headline: "Your item choices fit this game well.",
     detail: "Nothing about the enemy composition demanded a reactive item this game — sticking to your damage path was a reasonable call.",
+  };
+}
+
+// --- archetype-aware game-plan pieces --------------------------------------
+
+function tradingPatternFor(profile: ChampionProfile): PlanItem {
+  if (profile.isMarksman) {
+    const isPoke = profile.archetype === "lethality-marksman";
+    return {
+      label: "Trading Pattern",
+      value: isPoke
+        ? "Poke windows: chunk with your ability when they walk up for CS, then reset spacing before they can answer."
+        : "Auto-attack windows: step up, land 2–3 autos when their engage/poke is on cooldown, then reset spacing.",
+      why: isPoke
+        ? `${profile.name} trades through ability windows, so short bursts of damage into a disengage keep you safe.`
+        : `${profile.name} deals sustained auto damage, so short auto-trades on their cooldowns is your best tool.`,
+    };
+  }
+  if (profile.isMage || profile.archetype === "artillery-mage") {
+    return {
+      label: "Trading Pattern",
+      value: "Ability windows: land your key skillshot, then step back before autos and cooldowns come back up.",
+      why: `${profile.name} deals its damage through abilities, so trade in bursts and disengage instead of extending.`,
+    };
+  }
+  if (profile.isAssassin) {
+    return {
+      label: "Trading Pattern",
+      value: "All-in windows: wait for a mispositioned target, then commit your full combo — never poke a fight you can't finish.",
+      why: `${profile.name} needs a clean kill, not chip damage — a half-committed trade wastes cooldowns and health.`,
+    };
+  }
+  if (profile.isTank || profile.isSupport) {
+    return {
+      label: "Trading Pattern",
+      value: "Cooldown trades: engage/peel when your CC is up and back off while it resets — don't try to out-damage.",
+      why: `${profile.name}'s value is CC and utility on cooldown, not raw damage.`,
+    };
+  }
+  if (profile.isBruiser) {
+    return {
+      label: "Trading Pattern",
+      value: "Extended trades: close the gap, stick to the target, and out-sustain them through the trade.",
+      why: `${profile.name} wins the longer the trade goes, so pick fights you can commit to.`,
+    };
+  }
+  return {
+    label: "Trading Pattern",
+    value: "Trade on your strongest cooldowns and disengage when they come off.",
+    why: `Match your trade windows to what ${profile.name} is best at, not to what the enemy wants.`,
+  };
+}
+
+function teamfightRoleFor(profile: ChampionProfile, frontlineAllies: number): PlanItem {
+  if (profile.isMarksman || profile.isMage) {
+    return {
+      label: "Teamfight Role",
+      value: frontlineAllies >= 1
+        ? "Stay behind your frontline, attack the closest safe target, and let your engage go in first."
+        : "No hard frontline — never step up first, kite backward, and only commit once the enemy over-extends.",
+      why: frontlineAllies >= 1
+        ? `You have ${frontlineAllies} engage/tank ally to peel and create space, so your job is uninterrupted damage from the back.`
+        : "Without a frontline you can't take aggressive angles — patience and spacing are your only protection.",
+    };
+  }
+  if (profile.isAssassin) {
+    return {
+      label: "Teamfight Role",
+      value: "Flank: wait for the enemy engage, then dive the priority target from an unwarded angle.",
+      why: `${profile.name} wins fights by removing a carry, not by front-lining.`,
+    };
+  }
+  if (profile.isTank || profile.archetype === "vanguard-tank") {
+    return {
+      label: "Teamfight Role",
+      value: "Frontline engage: pick the fight your team wins on and start it with your CC.",
+      why: `${profile.name}'s job is to create the fight, not to deal damage.`,
+    };
+  }
+  if (profile.isSupport) {
+    return {
+      label: "Teamfight Role",
+      value: "Peel and utility: keep your carry alive, land CC on their divers, and hold cooldowns for the moment that decides the fight.",
+      why: `${profile.name}'s value is amplifying your carry, not personal damage.`,
+    };
+  }
+  if (profile.isBruiser) {
+    return {
+      label: "Teamfight Role",
+      value: "Bruiser bridge: engage onto whichever target your team can collapse on, then survive the counter-engage.",
+      why: `${profile.name} lives in the middle of the fight — pick a target and stay on it.`,
+    };
+  }
+  return {
+    label: "Teamfight Role",
+    value: "Play the role your kit is designed for and don't force uncharacteristic fights.",
+    why: "Champion identity decides how you should show up in fights.",
+  };
+}
+
+function splitVsGroupFor(profile: ChampionProfile): PlanItem {
+  const canSplit = profile.isBruiser || profile.archetype === "skirmisher" || profile.archetype === "juggernaut";
+  if (canSplit) {
+    return {
+      label: "Split vs Group",
+      value: "Split when the map allows",
+      why: `${profile.name} wins side-lane 1v1s — apply pressure on the opposite side of the map, then rotate before objectives.`,
+    };
+  }
+  if (profile.isTank || profile.isSupport) {
+    return {
+      label: "Split vs Group",
+      value: "Group with the team",
+      why: `${profile.name}'s value shows up in 5v5s and around objectives, not in a side lane alone.`,
+    };
+  }
+  return {
+    label: "Split vs Group",
+    value: "Group",
+    why: `As a teamfight-oriented ${profile.name} you want to be with the team; only take a safe side wave when the map allows, then rotate back before objectives.`,
   };
 }
 
