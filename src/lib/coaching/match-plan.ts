@@ -324,12 +324,10 @@ function turningPointOf(m: MatchAnalysisInput): string {
 }
 
 function winConditionOf(m: MatchAnalysisInput): string {
-  const b = buildFor(m.champion);
-  if (b.archetype === "lethality")
-    return `As ${m.champion} your win condition is tempo: use your poke/early pressure to take towers and objectives before the enemy scales past you.`;
-  if (b.archetype === "onhit")
-    return `As ${m.champion} your win condition is the extended fight — get peel, reach two items, and shred the enemy frontline in prolonged 5v5s.`;
-  return `As ${m.champion} your win condition is scaling into a positioned crit carry — survive lane, hit your two-item spike, and deal damage from the back of every fight.`;
+  // Champion Intelligence gate — win condition is derived from the champion's
+  // archetype, so Vel'Koz never gets an ADC crit-carry line and Malphite never
+  // gets a mage/marksman line.
+  return getChampionProfile(m.champion).winCondition;
 }
 
 // --- build & matchup plan --------------------------------------------------
