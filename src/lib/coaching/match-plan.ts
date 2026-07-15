@@ -347,7 +347,6 @@ function threatSummary(p: ThreatProfile): string {
 
 function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const profile = getChampionProfile(m.champion);
-  const b = buildFor(m.champion); // curated ADC build (marksman-only, safe fallback for others)
   const enemies = m.enemies ?? [];
   const allies = m.allies ?? [];
   const threat = threatProfile(enemies);
