@@ -34,6 +34,11 @@ export * from "./power-spike";
 export * from "./practice-program";
 export * from "./role-intelligence";
 export * from "./habit-engine";
+export {
+  LeagueIntelligence,
+  hydrateLeagueIntelligence,
+  type LeagueIntelligenceFacade,
+} from "./league-intelligence";
 
 export interface CoachAnswer {
   answer: string;
