@@ -45,14 +45,20 @@ export interface SpikeBaseline {
 export interface PowerSpikeItem {
   slot: number; // 1 = first core item, 2 = second, ...
   itemName: string;
-  /** Estimated purchase (completion) time in minutes. */
-  purchaseMinute: number;
-  /** Same-rank coaching baseline. */
-  targetMinute: number;
-  /** High-elo coaching baseline. */
-  highEloMinute: number;
-  /** purchaseMinute - targetMinute (positive = later than baseline). */
-  differenceMinutes: number;
+  /**
+   * True once Riot timeline data is connected and we can honestly measure
+   * this spike. Until then BotDiff shows the item as an upcoming spike
+   * without fabricating a minute value.
+   */
+  timingAvailable: boolean;
+  /** Human-readable purchase time. Only present when timingAvailable. */
+  purchaseTime?: string;
+  /** Human-readable same-rank coaching baseline. Only when timingAvailable. */
+  targetTime?: string;
+  /** Human-readable high-elo coaching baseline. Only when timingAvailable. */
+  highEloTime?: string;
+  /** e.g. "0.8 min late" — only when timingAvailable. */
+  differenceLabel?: string;
   status: SpikeStatus;
   confidence: SpikeConfidence;
   baselineSource: SpikeSource;
@@ -66,6 +72,10 @@ export interface TempoFactor {
 
 export interface PowerSpikeReview {
   hasData: boolean;
+  /** True once Riot timeline data is connected. Today: always false. */
+  timelineAvailable: boolean;
+  /** Shown when timing is unavailable so the UI never fabricates minutes. */
+  timelineUnavailableMessage: string;
   /** Extremely short visible summary (one line). */
   headline: string;
   /** Celebrate good tempo first — null when there's nothing to praise. */
@@ -87,8 +97,8 @@ export interface PowerSpikeReview {
   };
   /** Exactly ONE practice goal — one habit at a time. */
   practiceGoal: string;
-  /** True while spike timings are estimated (no Riot purchase timeline yet). */
-  baselinesApproximate: boolean;
+  /** Single actionable tempo takeaway to close the section. */
+  tempoTakeaway: string;
 }
 
 // --- provider-agnostic baselines -------------------------------------------
@@ -121,6 +131,8 @@ const mmss = (minutes: number) => {
   return `${m}:${(s % 60).toString().padStart(2, "0")}`;
 };
 export const formatSpikeTime = mmss;
+const TIMELINE_UNAVAILABLE =
+  "Power spike timing unavailable until Riot timeline data is connected.";
 
 // Cumulative gold to complete each core spike (first legendary, then +boots,
 // then +legendary). Kept broad — a Data Dragon hook can refine these later.
@@ -155,27 +167,30 @@ function statusFor(diff: number): SpikeStatus {
 function buildItems(m: MatchAnalysisInput): PowerSpikeItem[] {
   const names = coreItemNames(m);
   const items: PowerSpikeItem[] = [];
+  // We do NOT have Riot timeline data yet, so we never fabricate a purchase
+  // minute. Instead we list the champion's core spikes and let the UI show
+  // the timeline-unavailable message. We still expose the roughly-reachable
+  // slot count based on economy so we don't advertise spikes the player was
+  // nowhere near reaching this game.
+  const gpm = m.goldPerMin > 0 ? m.goldPerMin : 350;
+  const roughReach = (gold: number) => gold / (gpm * 0.82) + 3;
   for (let slot = 0; slot < 3; slot++) {
-    const purchaseMinute = estimateSpikeMinute(m, CUMULATIVE_GOLD[slot]);
-    // Only include spikes the player realistically reached this game.
-    if (purchaseMinute > m.durationMin + 1.5) break;
+    if (roughReach(CUMULATIVE_GOLD[slot]) > m.durationMin + 1.5) break;
     const base = ACTIVE_BASELINES[slot] ?? CURATED_BASELINES[slot];
-    const diff = round1(purchaseMinute - base.sameRankMinute);
     items.push({
       slot: slot + 1,
       itemName: names[slot],
-      purchaseMinute,
-      targetMinute: base.sameRankMinute,
-      highEloMinute: base.highEloMinute,
-      differenceMinutes: diff,
-      status: statusFor(diff),
-      // Estimated from economy only — earlier spikes are more reliable to infer.
-      confidence: slot === 0 ? "medium" : slot === 1 ? "medium" : "low",
+      timingAvailable: false,
+      status: "onTrack",
+      confidence: "low",
       baselineSource: base.source,
     });
   }
   return items;
 }
+// Silence unused-var lint for helpers we keep for the future timeline hook.
+void estimateSpikeMinute;
+void statusFor;
 
 // --- tempo analysis (WHY a spike was delayed) ------------------------------
 
@@ -223,18 +238,15 @@ function tempoFactors(m: MatchAnalysisInput): TempoFactor[] {
 // --- positive coaching (celebrate good tempo first) ------------------------
 
 function positiveNote(m: MatchAnalysisInput, items: PowerSpikeItem[]): string | null {
-  const first = items[0];
-  if (first && first.status === "ahead") {
-    return `You reached your ${first.itemName} around ${mmss(first.purchaseMinute)} — earlier than most players at your rank. That's strong tempo.`;
-  }
   if (m.deaths <= 3 && m.earlyGoldExpAdvantage >= 0) {
     return "Clean early recall timing and a healthy laning phase kept your economy on schedule — good tempo habits.";
   }
   if (m.csPerMin >= 8) {
-    return `Strong farming (${round1(m.csPerMin)} CS/min) kept your gold curve climbing between objectives — that's what accelerates each spike.`;
+    return "You kept catching waves between plays, so your gold curve never stalled — that's the habit that pulls every item earlier.";
   }
-  if (first && first.status === "onTrack") {
-    return `Your first power spike landed right around the coaching baseline — a solid, on-time tempo foundation to build on.`;
+  const first = items[0];
+  if (first) {
+    return `You reached your ${first.itemName} in this game — replicate the recall that got you there and the next spike arrives sooner too.`;
   }
   return null;
 }
@@ -242,31 +254,31 @@ function positiveNote(m: MatchAnalysisInput, items: PowerSpikeItem[]): string | 
 // --- decision relationships ------------------------------------------------
 
 function decisionChain(m: MatchAnalysisInput, items: PowerSpikeItem[]): string[] {
-  const delayed = items.find((i) => i.status === "behind");
-  if (delayed) {
+  const overstay = m.csPerMin < 7 && m.deaths >= 4;
+  const clean = m.deaths <= 3 && m.csPerMin >= 7.5;
+  if (overstay) {
     return [
-      "Stayed one extra wave",
-      "Late recall — lost tempo",
-      `${delayed.itemName} delayed ~${Math.abs(delayed.differenceMinutes)} min`,
-      "Next objective fought without your spike",
-      "Enemy gained a tempo advantage",
+      "Stayed for one extra wave after the crash",
+      "Recalled late — lost tempo",
+      "Next item delayed",
+      "Arrived at the next objective without your spike",
+      "Enemy took the fight with more power",
     ];
   }
-  const early = items.find((i) => i.status === "ahead");
-  if (early) {
+  if (clean) {
     return [
-      "Crashed the wave and recalled on time",
-      "Early recall — kept tempo",
-      `${early.itemName} completed ahead of baseline`,
-      "Reached the next objective with your power spike",
-      "Turned tempo into an advantage",
+      "Crashed the wave and recalled immediately",
+      "Kept tempo",
+      "Next item came online sooner",
+      "Reached the next objective with your spike ready",
+      "Turned tempo into map pressure",
     ];
   }
   return [
-    "Steady recall and farm decisions",
-    "On-schedule tempo",
-    "Core spikes near the coaching baseline",
-    "Arrived at objectives roughly on time",
+    "Recall and farm decisions were steady",
+    "Tempo stayed even",
+    "Spikes arrived roughly on time",
+    "Arrived at objectives with the team",
     "No tempo given away",
   ];
 }
@@ -296,12 +308,12 @@ function practiceGoal(m: MatchAnalysisInput, factors: TempoFactor[]): string {
 // --- learn more copy -------------------------------------------------------
 
 function learnMore(m: MatchAnalysisInput, items: PowerSpikeItem[]) {
-  const behind = items.filter((i) => i.status === "behind").length;
+  void items;
   return {
     tempo:
       "Tempo is how fast you convert time into gold and pressure. Every recall, wave crash, and rotation either builds tempo or gives it away — and tempo is what decides when your power spikes arrive.",
     economy:
-      `Your gold income this game averaged ${round1(m.goldPerMin)} gold/min. Item spikes are just gold thresholds, so a higher, steadier income moves every spike earlier — the numbers here are coaching baselines, not rigid requirements.`,
+      "Every item is just a gold threshold. Every recall you take on the crash, every side wave you catch, and every death you avoid moves that threshold closer — the item follows the decision, not the other way around.",
     waveManagement:
       "Crashing the wave before you recall lets you leave for base without losing CS or XP. Overstaying for one more minion is the most common reason a first item arrives late.",
     recallTiming:
@@ -309,12 +321,34 @@ function learnMore(m: MatchAnalysisInput, items: PowerSpikeItem[]) {
     objectivePrep:
       "Power spikes matter most around objectives. Reaching a spike a minute before Dragon or Baron lets you contest it with a real advantage instead of fighting into a stronger enemy.",
     decisionRelationships:
-      behind > 0
-        ? "A single late recall this game rippled forward: a delayed item meant the next objective was contested without your spike, which handed the enemy tempo. That's why we coach the decision, not the item."
-        : "Your on-time spikes let you arrive at objectives with your power ready — proof that good recall and farm decisions compound into map advantages.",
+      m.deaths >= 4 || m.csPerMin < 7
+        ? "A late recall doesn't just cost gold — it ripples forward. The item arrives late, so the next objective is contested without your spike, so the enemy takes the fight, so they get the tempo lead. One decision decides the next three."
+        : "Clean recall and farm decisions compound: item on time → objective contested with your spike → won fight → more map pressure. That's the whole game in one chain.",
     expectedImpact:
-      "Reaching your first two spikes one minute earlier, consistently, is worth more over 100 games than any single build change — it means winning more of the fights that were previously coin-flips.",
+      "Fixing the recall habit is worth more over 100 games than any build change. It turns coin-flip fights into fights you were already ahead in before they started.",
   };
+}
+
+// --- one-line tempo takeaway (closes the section) --------------------------
+
+function tempoTakeaway(factors: TempoFactor[]): string {
+  const primary = factors[0]?.cause;
+  switch (primary) {
+    case "Late recalls":
+      return "Crash the wave, recall immediately, and arrive at the next objective with your completed item.";
+    case "Missed early farm":
+      return "Give up positioning for a trade before you give up last-hits — CS is the item.";
+    case "Lost side-lane farm":
+      return "Catch one side wave between every objective so your gold curve never stalls.";
+    case "Deaths before the spike":
+      return "Give up one ranged minion instead of dying with 900 gold on you.";
+    case "Missed plate gold":
+      return "Shove for one plate before it falls — plate gold is the fastest way to pull your first item earlier.";
+    case "Poor rotations":
+      return "After every wave crash, ask where the next play is — being on the map is how you keep tempo.";
+    default:
+      return "Recall on the crash, farm between objectives, arrive with your spike.";
+  }
 }
 
 // --- entry point -----------------------------------------------------------
@@ -325,6 +359,8 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
   if (!profile.canCoachItems) {
     return {
       hasData: false,
+      timelineAvailable: false,
+      timelineUnavailableMessage: TIMELINE_UNAVAILABLE,
       headline: "No meaningful power-spike timing was identified for this match.",
       positive: null,
       items: [],
@@ -341,7 +377,7 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
         expectedImpact: "",
       },
       practiceGoal: "Keep replicating clean recall + farm decisions — that's what accelerates every spike.",
-      baselinesApproximate: true,
+      tempoTakeaway: "Recall on the crash, farm between objectives, arrive with your spike.",
     };
   }
 
@@ -349,18 +385,17 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
   const factors = tempoFactors(m);
   const positive = positiveNote(m, items);
 
-  const behind = items.filter((i) => i.status === "behind").length;
-  const ahead = items.filter((i) => i.status === "ahead").length;
-  const headline = items.length === 0
-    ? "The game ended before your first power spike — focus on reaching your first item faster."
-    : behind > 0
-      ? `Your power spikes came ${behind === 1 ? "a spike" : `${behind} spikes`} later than baseline — the habits below are why.`
-      : ahead > 0
-        ? "Great tempo — your power spikes were ahead of the coaching baseline."
-        : "Your power spikes landed right on the coaching baseline this game.";
+  const headline =
+    items.length === 0
+      ? "The game ended before your first power spike — the fastest improvement is reaching your first item sooner."
+      : factors.length > 0
+        ? "Your tempo decisions this game shaped when your spikes came online — the habits below are why."
+        : "Steady tempo decisions this game — keep replicating them so every spike stays on schedule.";
 
   return {
     hasData: items.length > 0,
+    timelineAvailable: false,
+    timelineUnavailableMessage: TIMELINE_UNAVAILABLE,
     headline,
     positive,
     items,
@@ -368,6 +403,6 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
     decisionChain: decisionChain(m, items),
     learnMore: learnMore(m, items),
     practiceGoal: practiceGoal(m, factors),
-    baselinesApproximate: true,
+    tempoTakeaway: tempoTakeaway(factors),
   };
 }

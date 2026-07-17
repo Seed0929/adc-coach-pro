@@ -22,7 +22,6 @@ import type {
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
 import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
-import { formatSpikeTime } from "@/lib/coaching/power-spike";
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
@@ -40,42 +39,45 @@ function spikeStatusLabel(s: SpikeStatus): string {
   return s === "ahead" ? "Ahead of baseline" : s === "onTrack" ? "On baseline" : "Behind baseline";
 }
 
-function spikeDiffLabel(i: PowerSpikeItem): string {
-  if (i.status === "onTrack") return "on time";
-  const mag = Math.abs(i.differenceMinutes).toFixed(1);
-  return i.differenceMinutes > 0 ? `${mag} min late` : `${mag} min early`;
-}
-
 function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-medium">{i.itemName}</span>
-        <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
+        {i.timingAvailable ? (
+          <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
+        ) : (
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            Core spike
+          </span>
+        )}
       </div>
-      <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You (est.)</div>
-          <div className="font-display text-sm font-semibold text-foreground tabular-nums">{formatSpikeTime(i.purchaseMinute)}</div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Same rank</div>
-          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.targetMinute)}</div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">High elo</div>
-          <div className="font-display text-sm font-semibold tabular-nums">{formatSpikeTime(i.highEloMinute)}</div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Difference</div>
-          <div className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}>
-            {spikeDiffLabel(i)}
+      {i.timingAvailable ? (
+        <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You</div>
+            <div className="font-display text-sm font-semibold text-foreground tabular-nums">{i.purchaseTime}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Same rank</div>
+            <div className="font-display text-sm font-semibold tabular-nums">{i.targetTime}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">High elo</div>
+            <div className="font-display text-sm font-semibold tabular-nums">{i.highEloTime}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Difference</div>
+            <div className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}>
+              {i.differenceLabel}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="mt-2 text-[11px] text-muted-foreground/70">
-        {i.confidence[0].toUpperCase() + i.confidence.slice(1)} confidence · coaching baseline, not a requirement
-      </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Power spike timing unavailable until Riot timeline data is connected.
+        </p>
+      )}
     </div>
   );
 }
@@ -361,14 +363,22 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
           </p>
         )}
 
-        <p className="mt-3 text-xs text-muted-foreground/70">
-          Timings are coaching baselines estimated from your economy — not rigid requirements. Purchase-accurate timing arrives once the match timeline is connected.
-        </p>
+        {!report.plan.powerSpike.timelineAvailable && (
+          <p className="mt-3 text-xs text-muted-foreground/70">
+            {report.plan.powerSpike.timelineUnavailableMessage} Until then, BotDiff coaches the recall, farm, and rotation decisions that decide when your spikes come online — not fabricated timestamps.
+          </p>
+        )}
 
         {/* Practice goal — exactly one habit at a time. */}
         <div className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/[0.07] p-4">
           <Flag className="size-5 shrink-0 text-primary" />
           <p className="text-sm font-medium">{report.plan.powerSpike.practiceGoal}</p>
+        </div>
+
+        {/* One-line tempo takeaway to close the section. */}
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <ArrowRight className="size-3.5 shrink-0 text-primary" />
+          <span>{report.plan.powerSpike.tempoTakeaway}</span>
         </div>
 
         {/* Learn More — tempo, decisions and detailed reasoning kept collapsed. */}
