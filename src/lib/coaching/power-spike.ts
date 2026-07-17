@@ -18,7 +18,11 @@
 // PURE + client-safe. Grounded entirely in real MatchAnalysisInput stats.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
-import { coreItemsFor } from "./champion-intelligence";
+// Sprint 2.1 — go through the League Intelligence facade so every coaching
+// module consumes the same validated champion identity + item ecosystem.
+import { LeagueIntelligence } from "./league-intelligence";
+const { Champion: ChampionIntel } = LeagueIntelligence;
+const coreItemsFor = ChampionIntel.coreItemsFor;
 
 export type SpikeSource = "estimated" | "curated" | "datadragon" | "statistical";
 export type SpikeStatus = "ahead" | "onTrack" | "behind";
@@ -135,9 +139,9 @@ function estimateSpikeMinute(m: MatchAnalysisInput, cumulativeGold: number): num
 }
 
 function coreItemNames(m: MatchAnalysisInput): string[] {
-  // Champion Intelligence gate — always archetype-correct (never Kraken Slayer
-  // on a mage, never mage items on a marksman). Falls back to generic labels
-  // for unknown champions rather than guessing.
+  // League Intelligence gate — archetype-correct core items only (never
+  // Kraken Slayer on a mage, never mage items on a marksman). Callers should
+  // already have suppressed the section for unknown champions.
   const names = coreItemsFor(m.champion);
   return [names[0] ?? "First core item", names[1] ?? "Second core item", names[2] ?? "Third core item"];
 }
@@ -316,6 +320,31 @@ function learnMore(m: MatchAnalysisInput, items: PowerSpikeItem[]) {
 // --- entry point -----------------------------------------------------------
 
 export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
+  // Failsafe — suppress rather than compare against impossible item paths.
+  const profile = ChampionIntel.getChampionProfile(m.champion);
+  if (!profile.canCoachItems) {
+    return {
+      hasData: false,
+      headline: "No meaningful power-spike timing was identified for this match.",
+      positive: null,
+      items: [],
+      tempoFactors: [],
+      decisionChain: [],
+      learnMore: {
+        tempo: "",
+        economy: "",
+        waveManagement: "",
+        recallTiming: "",
+        objectivePrep: "",
+        decisionRelationships:
+          "BotDiff only compares power-spike timings when League Intelligence can validate the champion's item ecosystem. It would rather stay quiet than compare you against impossible items.",
+        expectedImpact: "",
+      },
+      practiceGoal: "Keep replicating clean recall + farm decisions — that's what accelerates every spike.",
+      baselinesApproximate: true,
+    };
+  }
+
   const items = buildItems(m);
   const factors = tempoFactors(m);
   const positive = positiveNote(m, items);
