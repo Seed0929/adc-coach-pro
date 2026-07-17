@@ -16,6 +16,26 @@ export const COACHING_ENGINE_VERSION = 1;
 
 import { buildMatchPlan, type MatchPlan } from "./coaching/match-plan";
 export type { MatchPlan } from "./coaching/match-plan";
+import { LeagueIntelligence } from "./coaching/league-intelligence";
+
+/**
+ * Role-safe language shim — every ADC-worded coaching string routes through
+ * the League Intelligence Champion facade so the phrasing adapts to the actual
+ * champion's role (mage, tank, assassin, etc.).
+ */
+function roleLabel(champion: string): string {
+  return LeagueIntelligence.Champion.championRoleLabel(champion);
+}
+function carryNoun(champion: string): string {
+  const p = LeagueIntelligence.Champion.getChampionProfile(champion);
+  if (p.isMarksman) return "an ADC";
+  if (p.isMage) return "a mage";
+  if (p.isAssassin) return "an assassin";
+  if (p.isTank) return "a frontliner";
+  if (p.isSupport) return "a support";
+  if (p.isBruiser) return "a bruiser";
+  return "a carry";
+}
 
 export type Grade = "S" | "A" | "B" | "C" | "D";
 
@@ -247,7 +267,7 @@ function collectTips(m: MatchAnalysisInput, g: CoachingGrades): string[] {
 
   if (m.csPerMin < 7.5) {
     t.push({
-      text: `You averaged ${m.csPerMin.toFixed(1)} CS/min — below the ~8.0/min ADC benchmark. Catch side waves before grouping to close the gap.`,
+      text: `You averaged ${m.csPerMin.toFixed(1)} CS/min — below the ~8.0/min coaching benchmark for your role. Catch side waves before grouping to close the gap.`,
       priority: 100 - g.farming,
     });
   }
@@ -555,7 +575,7 @@ function buildStrengths(m: MatchAnalysisInput, g: CoachingGrades): CoachStrength
   if (m.csPerMin >= 8) {
     s.push({
       title: "Excellent CSing",
-      why: `You farmed ${fix1(m.csPerMin)} CS/min (${m.cs} total), at or above the strong-ADC benchmark of ~8.0/min — that's a steady item lead.`,
+      why: `You farmed ${fix1(m.csPerMin)} CS/min (${m.cs} total), at or above the strong ~8.0/min benchmark for ${roleLabel(m.champion).toLowerCase()} — that's a steady item lead.`,
       priority: g.farming + 5,
     });
   }
@@ -640,7 +660,7 @@ function buildMistakes(m: MatchAnalysisInput, g: CoachingGrades): CoachMistake[]
     w.push({
       title: "Too many deaths",
       what: `You died ${m.deaths} times over ${Math.round(m.durationMin)} minutes.`,
-      why: "Every death gives the enemy gold and free map control, and an ADC that's dead deals zero damage in the fight that decides the game.",
+      why: `Every death gives the enemy gold and free map control, and ${carryNoun(m.champion)} that's dead deals zero damage in the fight that decides the game.`,
       fix: "Fight one screen behind your frontline and only step up after the enemy's engage is used. Treat each death as a lost teamfight.",
       priority: 100 - g.consistency + 10,
     });
@@ -713,7 +733,7 @@ function buildMistakes(m: MatchAnalysisInput, g: CoachingGrades): CoachMistake[]
       {
         title: "Hold your mid-game farm",
         what: `You farmed ${fix1(m.csPerMin)} CS/min overall.`,
-        why: "ADCs commonly stall out on CS after 15 minutes once fights start.",
+        why: `${roleLabel(m.champion)} commonly stalls out on CS after 15 minutes once fights start.`,
         fix: "Keep clearing side waves between objectives so your gold curve never flattens.",
         priority: 25,
       },
