@@ -19,17 +19,19 @@ import {
 } from "./champion-knowledge";
 import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
 import { buildPowerSpikeReview, type PowerSpikeReview } from "./power-spike";
-import {
-  championDamageProfile,
-  isItemCategoryCompatible,
-  type ItemCategory,
-  type DamageProfile,
-} from "./league-knowledge";
-import {
-  getChampionProfile,
-  championRoleLabel,
-  type ChampionProfile,
-} from "./champion-intelligence";
+// Sprint 2.1 — every coaching module MUST consume the League Intelligence
+// Foundation before generating advice. We route champion / item / matchup
+// facts through the facade so any future Data Dragon hydration flows through
+// one seam.
+import { LeagueIntelligence } from "./league-intelligence";
+import type { ItemCategory, DamageProfile } from "./league-knowledge";
+import type { ChampionProfile } from "./champion-intelligence";
+
+const { Champion: ChampionIntel, Item: ItemIntel, Matchup: MatchupIntel } = LeagueIntelligence;
+const getChampionProfile = ChampionIntel.getChampionProfile;
+const championRoleLabel = ChampionIntel.championRoleLabel;
+const championDamageProfile = ChampionIntel.championDamageProfile;
+const isItemCategoryCompatible = ItemIntel.isItemCategoryCompatible;
 
 export interface PhaseReview {
   phase: string;
@@ -323,10 +325,14 @@ function turningPointOf(m: MatchAnalysisInput): string {
 }
 
 function winConditionOf(m: MatchAnalysisInput): string {
-  // Champion Intelligence gate — win condition is derived from the champion's
-  // archetype, so Vel'Koz never gets an ADC crit-carry line and Malphite never
-  // gets a mage/marksman line.
-  return getChampionProfile(m.champion).winCondition;
+  // League Intelligence gate — win condition is derived from the champion's
+  // archetype via the Champion facade. Suppress instead of guessing when the
+  // champion isn't in our knowledge base.
+  const profile = getChampionProfile(m.champion);
+  if (!profile.isKnown) {
+    return `No confident win condition identified for ${m.champion} — playing the fundamentals (survive early, hit your key spikes, take the fights your kit is designed for) is the safe default.`;
+  }
+  return profile.winCondition;
 }
 
 // --- build & matchup plan --------------------------------------------------
@@ -408,7 +414,7 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
       : "Group with your support after the first drake, take mid tower, and use the lane priority to set up objectives.",
     why: threat.poke >= 2
       ? "Poke comps beat you in a straight siege, so you need a pick or a flank angle to start fights."
-      : "Once laning ends, your ADC value is grouping for objectives with vision, not farming a solo side lane.",
+      : `Once laning ends, ${championRoleLabel(m.champion).toLowerCase()} your value is grouping for objectives with vision, not farming a solo side lane.`,
   };
 
   const frontlineAllies = allies.filter((a) => tagsFor(a).includes("tank") || tagsFor(a).includes("engage")).length;
@@ -417,9 +423,7 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const splitVsGroup: PlanItem = splitVsGroupFor(profile);
 
   return {
-    matchupSummary: opp
-      ? `You played ${m.champion} into ${opp}${enemies.length ? ` on an enemy team of ${enemies.join(", ")}` : ""}.`
-      : `You played ${m.champion}${enemies.length ? ` against ${enemies.join(", ")}` : ""}.`,
+    matchupSummary: matchupSummaryFor(m, opp, enemies),
     enemyThreats: threatSummary(threat),
     summonerSpells: spells,
     laneStrategy,
@@ -430,6 +434,25 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
     teamfightRole,
     splitVsGroup,
   };
+}
+
+/**
+ * Matchup line grounded in the League Intelligence Matchup module — pairs the
+ * player's archetype against the lane opponent's archetype and surfaces the
+ * expected tendency ("favored / even / unfavored"). Falls back to a neutral
+ * description when the opponent isn't known.
+ */
+function matchupSummaryFor(
+  m: MatchAnalysisInput,
+  opp: string | null,
+  enemies: string[],
+): string {
+  if (!opp) {
+    return `You played ${m.champion}${enemies.length ? ` against ${enemies.join(", ")}` : ""}.`;
+  }
+  const summary = MatchupIntel.summarizeMatchup(m.champion, opp);
+  const enemyList = enemies.length ? ` on an enemy team of ${enemies.join(", ")}` : "";
+  return `You played ${m.champion} into ${opp}${enemyList}. ${summary.reason}`;
 }
 
 // --- Item Review (one light suggestion, never a full build) -----------------
@@ -449,16 +472,17 @@ function contextualSuggestion(
 }
 
 function buildItemReview(m: MatchAnalysisInput): ItemReview {
-  // Part 3 — never fabricate itemization. If League Knowledge can't confidently
-  // identify the champion's class + damage profile, we say nothing rather than
-  // risk an impossible recommendation.
+  // Sprint 2.1 — never fabricate itemization. The Champion facade tells us
+  // whether we know the champion well enough to reason about items; if not,
+  // we say nothing rather than risk an impossible recommendation.
+  const champProfile = getChampionProfile(m.champion);
   const profile = championDamageProfile(m.champion);
-  if (!canCoachItemization(m.champion) || profile === "unknown") {
+  if (!champProfile.canCoachItems || !canCoachItemization(m.champion) || profile === "unknown") {
     return {
       hasCoaching: false,
-      headline: "No significant itemization coaching detected for this match.",
+      headline: "No meaningful item optimization was identified for this match.",
       detail:
-        "BotDiff only coaches itemization when it can confidently identify your champion's damage profile. It would rather stay quiet than risk pointing you toward the wrong item.",
+        "BotDiff only coaches itemization when League Intelligence can confidently identify your champion's damage profile and item ecosystem. It would rather stay quiet than risk pointing you toward the wrong item.",
     };
   }
 
