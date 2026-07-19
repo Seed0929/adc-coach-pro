@@ -275,3 +275,36 @@
   --glass-highlight: oklch(1 0 0 / 0.12);
   --glass-border-strong: oklch(0.72 0.11 220 / 0.5);
 }
+
+/* Tron — jet-black grid with electric cyan light-cycle glow. */
+[data-theme="tron"] {
+  --background: oklch(0.11 0.015 230);
+  --foreground: oklch(0.97 0.02 210);
+  --card: oklch(0.14 0.02 230);
+  --card-foreground: oklch(0.97 0.02 210);
+  --popover: oklch(0.15 0.022 230);
+  --popover-foreground: oklch(0.97 0.02 210);
+  --primary: oklch(0.82 0.16 210);
+  --primary-foreground: oklch(0.1 0.02 230);
+  --primary-dim: oklch(0.68 0.14 210);
+  --secondary: oklch(0.18 0.025 230);
+  --secondary-foreground: oklch(0.97 0.02 210);
+  --muted: oklch(0.18 0.025 230);
+  --muted-foreground: oklch(0.75 0.05 210);
+  --accent: oklch(0.28 0.08 210);
+  --accent-foreground: oklch(0.97 0.02 210);
+  --destructive: oklch(0.7 0.22 30);
+  --success: oklch(0.82 0.16 195);
+  --warning: oklch(0.85 0.18 90);
+  --gold: oklch(0.88 0.17 92);
+  --border: oklch(0.58 0.15 210 / 0.35);
+  --input: oklch(0.58 0.15 210 / 0.35);
+  --ring: oklch(0.82 0.16 210);
+  --surface: oklch(0.14 0.02 230);
+  --surface-bright: oklch(0.19 0.03 220);
+  --glass-bg: oklch(0.82 0.16 210 / 0.05);
+  --glass-bg-strong: oklch(0.82 0.16 210 / 0.1);
+  --glass-border: oklch(0.82 0.16 210 / 0.28);
+  --glass-border-strong: oklch(0.82 0.16 210 / 0.65);
+  --glass-highlight: oklch(0.82 0.16 210 / 0.15);
+}
