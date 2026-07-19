@@ -881,6 +881,7 @@ function buildHistory(
 export function buildMatchReport(
   m: MatchAnalysisInput,
   prev: MatchAnalysisInput | null = null,
+  history: MatchAnalysisInput[] = [],
 ): MatchCoachingReport {
   const analysis = analyzeMatch(m);
   const prevAnalysis = prev ? analyzeMatch(prev) : null;
@@ -907,7 +908,7 @@ export function buildMatchReport(
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
-    plan: buildMatchPlan(m),
+    plan: buildMatchPlan(m, history),
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
