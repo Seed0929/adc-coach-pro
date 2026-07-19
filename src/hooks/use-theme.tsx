@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type ThemeId = "classic" | "challenger" | "neon" | "frost";
+export type ThemeId = "classic" | "challenger" | "neon" | "frost" | "tron";
 
 export interface ThemeOption {
   id: ThemeId;
@@ -35,12 +35,24 @@ export const THEMES: ThemeOption[] = [
     description: "Cool, airy, high-clarity glass.",
     swatch: { primary: "oklch(0.72 0.11 220)", background: "oklch(0.22 0.02 235)" },
   },
+  {
+    id: "tron",
+    name: "Tron Grid",
+    description: "Jet-black grid lit by electric cyan.",
+    swatch: { primary: "oklch(0.82 0.16 210)", background: "oklch(0.11 0.015 230)" },
+  },
 ];
 
 export const THEME_STORAGE_KEY = "botdiff-theme";
 
 function isThemeId(v: string | null): v is ThemeId {
-  return v === "classic" || v === "challenger" || v === "neon" || v === "frost";
+  return (
+    v === "classic" ||
+    v === "challenger" ||
+    v === "neon" ||
+    v === "frost" ||
+    v === "tron"
+  );
 }
 
 /**
