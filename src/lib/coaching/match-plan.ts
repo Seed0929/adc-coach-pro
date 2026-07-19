@@ -17,7 +17,7 @@ import {
   healThreatCount,
   type ThreatProfile,
 } from "./champion-knowledge";
-import { buildMatchTimeline, type MatchTimeline } from "./decision-chain";
+import { buildMatchTimelineWithHistory, type MatchTimeline } from "./decision-chain";
 import { buildPowerSpikeReview, type PowerSpikeReview } from "./power-spike";
 // Sprint 2.1 — every coaching module MUST consume the League Intelligence
 // Foundation before generating advice. We route champion / item / matchup
@@ -652,14 +652,21 @@ function splitVsGroupFor(profile: ChampionProfile): PlanItem {
 }
 
 function practiceGoalOf(m: MatchAnalysisInput): string {
-  if (m.deaths >= 6) return "Next game: keep your deaths under 5 and never be the first one to die in a fight.";
-  if (m.csPerMin < 7) return `Next game: beat ${one(m.csPerMin + 1)} CS/min by catching side waves between objectives.`;
-  if (m.killParticipation < 0.5) return "Next game: hold kill participation above 60% by rotating to objectives after wave crashes.";
-  if (objectivesOf(m) <= 1) return "Next game: be alive and in position for the first two dragons.";
-  return `Next game: replicate this game's discipline and push your damage share past ${pct(Math.min(0.35, m.damageShare + 0.03))}.`;
+  // ONE measurable goal per match (Sprint 2.2). Every option specifies a
+  // number, a timing, or a repeatable behaviour the player can verify.
+  if (m.deaths >= 6) return `Next game: keep total deaths under 5 (you had ${m.deaths}).`;
+  if (m.laneMinions10 > 0 && m.laneMinions10 < 65) return `Next game: reach 75 CS by 10:00 (you had ${Math.round(m.laneMinions10)}).`;
+  if (m.csPerMin < 7) return `Next game: crash before your first recall — target ${one(m.csPerMin + 1)}+ CS/min by catching one side wave between every objective.`;
+  if (m.controlWardsPlaced < 2) return `Next game: buy a control ward every recall — place at least 4 across the game (you placed ${m.controlWardsPlaced}).`;
+  if (m.killParticipation < 0.5) return `Next game: arrive 30 seconds before every dragon spawn — target 60%+ kill participation (you had ${pct(m.killParticipation)}).`;
+  if (objectivesOf(m) <= 1 && m.durationMin >= 22) return "Next game: be at the pit with vision 60 seconds before the first two dragons spawn.";
+  return `Next game: never recall with more than 1200 gold — spend before every back to keep item spikes on tempo.`;
 }
 
-export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
+export function buildMatchPlan(
+  m: MatchAnalysisInput,
+  history: MatchAnalysisInput[] = [],
+): MatchPlan {
   return {
     phases: buildPhases(m),
     mistakeTimeline: buildTimeline(m),
@@ -669,6 +676,6 @@ export function buildMatchPlan(m: MatchAnalysisInput): MatchPlan {
     itemReview: buildItemReview(m),
     powerSpike: buildPowerSpikeReview(m),
     gamePlan: buildGamePlan(m),
-    timeline: buildMatchTimeline(m),
+    timeline: buildMatchTimelineWithHistory(m, history),
   };
 }

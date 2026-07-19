@@ -111,7 +111,10 @@ export const getMatchReport = createServerFn({ method: "GET" })
         return { ok: false, code: "not_found", message: "That match hasn't been analyzed yet." };
       }
       const prev = inputs[idx + 1] ?? null;
-      return { ok: true, report: buildMatchReport(inputs[idx], prev) };
+      // Sprint 2.2 — pass the older-match window so the decision-chain can
+      // recognise recurring wave / objective habits across recent games.
+      const history = inputs.slice(idx + 1);
+      return { ok: true, report: buildMatchReport(inputs[idx], prev, history) };
     } catch {
       return { ok: false, code: "unknown", message: "Couldn't build this match's report right now." };
     }

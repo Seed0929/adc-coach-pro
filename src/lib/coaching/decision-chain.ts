@@ -78,6 +78,60 @@ export interface MatchTimeline {
   anchorsApproximate: boolean;
 }
 
+// --- history-aware recurring-habit detection --------------------------------
+// Each event has a detector-id. When the same detector fires across the
+// player's recent history, the outcome line is rewritten to name it as a
+// recurring habit ("This is becoming one of your recurring habits.") instead
+// of a one-off mistake. Grounded entirely in real per-match stats.
+
+type DetectorId =
+  | "lane-cs-10"
+  | "lane-early-deficit"
+  | "wave-overstay"
+  | "wave-side-neglect"
+  | "wave-fight-first"
+  | "vision-no-control"
+  | "objective-absent"
+  | "objective-recall-mismatch"
+  | "teamfight-positioning"
+  | "tempo-absent";
+
+const DETECTORS: Record<DetectorId, (m: MatchAnalysisInput) => boolean> = {
+  "lane-cs-10": (m) => m.laneMinions10 > 0 && m.laneMinions10 < 65,
+  "lane-early-deficit": (m) => m.earlyGoldExpAdvantage <= -600,
+  "wave-overstay": (m) => m.csPerMin < 7 && m.deaths >= 4,
+  "wave-side-neglect": (m) => m.csPerMin < 6.5 && m.durationMin >= 22,
+  "wave-fight-first": (m) => m.deaths >= 5 && m.csPerMin < 7.5,
+  "vision-no-control": (m) => m.controlWardsPlaced < 1,
+  "objective-absent": (m) =>
+    m.dragonTakedowns + m.baronTakedowns + m.riftHeraldTakedowns <= 1 &&
+    m.durationMin >= 22,
+  "objective-recall-mismatch": (m) =>
+    m.dragonTakedowns <= 1 && m.deaths >= 4 && m.durationMin >= 20,
+  "teamfight-positioning": (m) =>
+    m.deaths >= 6 || (m.deaths >= 4 && m.damageShare < 0.24),
+  "tempo-absent": (m) => m.killParticipation < 0.45,
+};
+
+function recurrenceOf(id: DetectorId, history: MatchAnalysisInput[]): number {
+  if (!history.length) return 0;
+  const fn = DETECTORS[id];
+  return history.filter(fn).length;
+}
+
+function habitTag(id: DetectorId, history: MatchAnalysisInput[]): string | null {
+  const n = recurrenceOf(id, history);
+  if (n >= 2) return `This is becoming one of your recurring habits — it also showed up in ${n} of your last ${history.length} games.`;
+  if (n === 1) return `It also happened in 1 of your last ${history.length} games — worth watching before it becomes a habit.`;
+  return null;
+}
+
+function withHabit(ev: CoachableEvent, history: MatchAnalysisInput[]): CoachableEvent {
+  const tag = habitTag(ev.id as DetectorId, history);
+  if (!tag) return ev;
+  return { ...ev, outcome: `${ev.outcome} ${tag}` };
+}
+
 // --- helpers ---------------------------------------------------------------
 
 const mmss = (seconds: number) => {
@@ -186,8 +240,54 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       impact: "high",
       evidence: `${m.csPerMin.toFixed(1)} CS/min with ${m.deaths} deaths — the classic overstay pattern.`,
       explanation:
-        "Backing on a wave crash lets you return with an item and full resources. Staying for one more caster means you recall late, arrive at the next Dragon late, and hand the enemy a free setup. One recall decision quietly decides a whole objective.",
+        "Backing on a wave crash lets you return with an item and full resources. Staying for one more caster means you recall late, arrive at the next Dragon late, and hand the enemy a free setup. One recall decision quietly decides a whole objective — that's the Wave → Tempo → Objective chain in action.",
       practiceTakeaway: "Crash the wave, then reset immediately — don't hover for one more minion.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  // Side-wave neglect — catching side waves too late (Sprint 2.2 wave habit).
+  if (DETECTORS["wave-side-neglect"](m) && !DETECTORS["wave-overstay"](m)) {
+    const t = approxTime(m, 22 * 60);
+    out.push({
+      id: "wave-side-neglect",
+      gameTime: t.label,
+      category: "Wave Management",
+      decision: "Grouped without catching a crashing side wave",
+      chain: [
+        "Left a side wave uncollected",
+        "Enemy laner farmed uncontested",
+        "You fell one item behind by mid-game",
+        "Team fought objectives without a scaling carry",
+      ],
+      outcome: "Free gold sat in a side lane while your team grouped.",
+      impact: "medium",
+      evidence: `${m.csPerMin.toFixed(1)} CS/min over ${Math.round(m.durationMin)} minutes — the mid-game side-lane leak.`,
+      explanation:
+        "After you crash a wave, the next side wave is usually free — but only if you rotate to it before it crashes into your tower. Missing it costs 6–8 CS and a small tempo edge that compounds across the mid game.",
+      practiceTakeaway: "Catch one side wave between every objective reset — never leave gold on the map.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  // Fought without fixing the wave first — a very common tempo mistake.
+  if (DETECTORS["wave-fight-first"](m)) {
+    const t = approxTime(m, 14 * 60);
+    out.push({
+      id: "wave-fight-first",
+      gameTime: t.label,
+      category: "Wave Management",
+      decision: "Rotated to a fight before resetting your wave",
+      chain: [
+        "Left a bouncing wave behind you",
+        "Fought without lane priority",
+        "Enemy answered with a fresh wave/plate",
+        "Fight won or lost, you still gave up tempo",
+      ],
+      outcome: "Every skirmish cost you a wave you hadn't fixed first.",
+      impact: "medium",
+      evidence: `${m.deaths} deaths at only ${m.csPerMin.toFixed(1)} CS/min — fights are pulling you off the wave.`,
+      explanation:
+        "Fighting without first fixing the wave means you win the fight and still lose gold, or lose the fight and lose both. Slow-push or crash before you rotate so the wave works for you while you're gone.",
+      practiceTakeaway: "Before rotating to a fight, ask: is this wave crashing, freezing, or bouncing to them? Fix it first.",
       replayAnchor: anchor(m, t.seconds),
     });
   }
@@ -225,19 +325,45 @@ function objectiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "objective-absent",
       gameTime: t.label,
       category: "Dragon & Baron Preparation",
-      decision: "Farmed a side wave as the objective spawned",
+      decision: "Arrived at the objective without a setup",
       chain: [
-        "Kept farming instead of rotating",
-        "Arrived at the pit late without priority",
-        "Team contested 4v5",
-        "Enemy secured Dragon/Baron",
+        "No lane priority before spawn",
+        "No control ward around the pit",
+        "Team walked in without vision",
+        "Enemy secured Dragon/Baron uncontested",
       ],
       outcome: `Present for only ${objectives} major objective all game.`,
       impact: "high",
       evidence: `${objectives} dragon/baron/herald takedown(s) over ${Math.round(m.durationMin)} minutes.`,
       explanation:
-        "Objective control is how leads become wins. Arriving as the objective spawns is already too late — the setup (vision, wave state, positioning) happens 45–60 seconds earlier. Missing that window is why the enemy kept taking neutral objectives uncontested.",
+        "Objectives are decided in the 60 seconds BEFORE they spawn, not at the pit. Priority (from a shoved lane), vision (control ward + sweeper), a completed recall, and a grouped team have to line up. Missing any one of these is why you arrived and it was already lost.",
       practiceTakeaway: "Start moving toward the pit 45–60s before spawn, even if it costs a side wave.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  // Recall/objective mismatch — bad recall right before an objective spawn.
+  if (
+    DETECTORS["objective-recall-mismatch"](m) &&
+    !DETECTORS["objective-absent"](m)
+  ) {
+    const t = approxTime(m, 19 * 60);
+    out.push({
+      id: "objective-recall-mismatch",
+      gameTime: t.label,
+      category: "Recall Timing",
+      decision: "Recalled inside the objective window",
+      chain: [
+        "Recalled with < 60s to spawn",
+        "Rejoined the map after the fight started",
+        "Team engaged 4v5 or gave up the pit",
+        "Enemy converted the objective into a lead",
+      ],
+      outcome: `Only ${m.dragonTakedowns} dragon takedown(s) with ${m.deaths} deaths — a recall-timing tell.`,
+      impact: "medium",
+      evidence: `${m.deaths} deaths and ${m.dragonTakedowns} dragon takedown(s) over ${Math.round(m.durationMin)} minutes.`,
+      explanation:
+        "Recalling in the last minute before an objective is the same as not being there. Either back much earlier and rotate with vision, or hold the recall and defend the wave — never split the difference.",
+      practiceTakeaway: "Recall with 2:00+ to spawn, or hold until after the objective — no recalls inside the last minute.",
       replayAnchor: anchor(m, t.seconds),
     });
   }
@@ -301,12 +427,27 @@ const IMPACT_RANK: Record<ImpactLevel, number> = { high: 3, medium: 2, low: 1 };
  * so the timeline is never blamefully empty.
  */
 export function buildMatchTimeline(m: MatchAnalysisInput): MatchTimeline {
+  return buildMatchTimelineWithHistory(m, []);
+}
+
+/**
+ * Same as `buildMatchTimeline`, but enriches each event with recurring-habit
+ * language when the same detector fires across the player's recent history.
+ * History = older matches (chronologically previous to `m`), most-recent first.
+ */
+export function buildMatchTimelineWithHistory(
+  m: MatchAnalysisInput,
+  history: MatchAnalysisInput[],
+): MatchTimeline {
+  const window = history.slice(0, 9); // last 9 previous games (10-game view w/ current)
   const events = [
     ...laneEvents(m),
     ...recallAndWaveEvents(m),
     ...objectiveEvents(m),
     ...teamfightEvents(m),
-  ].sort((a, b) => {
+  ]
+    .map((ev) => withHabit(ev, window))
+    .sort((a, b) => {
     const ta = a.replayAnchor.approxTimeSeconds ?? 0;
     const tb = b.replayAnchor.approxTimeSeconds ?? 0;
     if (ta !== tb) return ta - tb;
