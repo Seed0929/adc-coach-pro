@@ -614,6 +614,7 @@ export function buildMatchTimelineWithHistory(
     ...recallAndWaveEvents(m),
     ...objectiveEvents(m),
     ...teamfightEvents(m),
+    ...positiveEvents(m),
   ]
     .map((ev) => withHabit(ev, window))
     .sort((a, b) => {
