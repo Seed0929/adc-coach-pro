@@ -276,7 +276,7 @@
   --glass-border-strong: oklch(0.72 0.11 220 / 0.5);
 }
 
-/* Tron — jet-black grid with electric cyan light-cycle glow. */
+/* Light Cycle — jet-black grid with electric cyan light-cycle glow. */
 [data-theme="tron"] {
   --background: oklch(0.11 0.015 230);
   --foreground: oklch(0.97 0.02 210);
