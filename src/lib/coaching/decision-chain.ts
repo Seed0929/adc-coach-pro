@@ -36,6 +36,29 @@ export type EventCategory =
 export type GamePhase = "early" | "mid" | "late";
 
 /**
+ * League fundamental this coaching point teaches. Sprint 2.3 — every event is
+ * tagged with one fundamental so habit tracking can group across matches.
+ */
+export type Fundamental =
+  | "Wave Management"
+  | "Tempo"
+  | "Vision"
+  | "Trading"
+  | "Recall Timing"
+  | "Objective Setup"
+  | "Positioning"
+  | "Power Spikes"
+  | "Economy"
+  | "Map Movement"
+  | "Teamfighting"
+  | "Spacing"
+  | "Resource Management"
+  | "Champion Identity";
+
+/** Sprint 2.3 — a coaching event may celebrate a good decision, not only flag a bad one. */
+export type EventTone = "negative" | "positive";
+
+/**
  * Everything a future interactive Replay Coach needs to jump to this moment.
  * `anchorReady` stays false until the Riot match timeline is wired in — the UI
  * can render the moment now and light up "Jump to replay" later without any
@@ -59,7 +82,13 @@ export interface CoachableEvent {
   /** Display game time, e.g. "08:20" or "~ Mid game". */
   gameTime: string;
   category: EventCategory;
+  /** League fundamental this coaching point teaches (Sprint 2.3). */
+  fundamental: Fundamental;
+  /** Whether this event teaches a mistake or a good decision (Sprint 2.3). */
+  tone: EventTone;
   decision: string;
+  /** Why the decision was good/bad — the second of the four coaching questions. */
+  why: string;
   /** Decision → immediate → later → outcome, each a short link. */
   chain: string[];
   outcome: string;
