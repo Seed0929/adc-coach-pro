@@ -37,8 +37,8 @@ export const THEMES: ThemeOption[] = [
   },
   {
     id: "tron",
-    name: "Tron Grid",
-    description: "Jet-black grid lit by electric cyan.",
+    name: "Light Cycle",
+    description: "Jet-black arena traced by electric cyan light-cycle glow.",
     swatch: { primary: "oklch(0.82 0.16 210)", background: "oklch(0.11 0.015 230)" },
   },
 ];
