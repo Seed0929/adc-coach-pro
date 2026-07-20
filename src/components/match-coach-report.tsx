@@ -92,14 +92,26 @@ function impactLabel(i: ImpactLevel): string {
 
 // One coachable moment as a decision chain, ready for the future Replay Coach.
 function TimelineEvent({ e }: { e: CoachableEvent }) {
+  const isPositive = e.tone === "positive";
   return (
-    <div className="rounded-2xl bg-white/[0.03] p-4">
+    <div className={`rounded-2xl p-4 ${isPositive ? "bg-success/[0.06] ring-1 ring-success/20" : "bg-white/[0.03]"}`}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="font-display text-sm font-semibold text-primary tabular-nums">{e.gameTime}</span>
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{e.category}</span>
-        <Pill tone={impactTone(e.impact)}>{impactLabel(e.impact)}</Pill>
+        <Pill tone={isPositive ? "success" : impactTone(e.impact)}>
+          {isPositive ? "What went right" : impactLabel(e.impact)}
+        </Pill>
+        <span className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+          {e.fundamental}
+        </span>
       </div>
       <div className="mb-2 text-sm font-medium">{e.decision}</div>
+
+      {/* Why this decision was good/bad — the second of the four coaching questions. */}
+      <p className="mb-3 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground/80">Why it {isPositive ? "worked" : "matters"}: </span>
+        {e.why}
+      </p>
 
       {/* Decision → immediate → later → outcome */}
       <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

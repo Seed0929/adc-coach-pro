@@ -36,6 +36,29 @@ export type EventCategory =
 export type GamePhase = "early" | "mid" | "late";
 
 /**
+ * League fundamental this coaching point teaches. Sprint 2.3 — every event is
+ * tagged with one fundamental so habit tracking can group across matches.
+ */
+export type Fundamental =
+  | "Wave Management"
+  | "Tempo"
+  | "Vision"
+  | "Trading"
+  | "Recall Timing"
+  | "Objective Setup"
+  | "Positioning"
+  | "Power Spikes"
+  | "Economy"
+  | "Map Movement"
+  | "Teamfighting"
+  | "Spacing"
+  | "Resource Management"
+  | "Champion Identity";
+
+/** Sprint 2.3 — a coaching event may celebrate a good decision, not only flag a bad one. */
+export type EventTone = "negative" | "positive";
+
+/**
  * Everything a future interactive Replay Coach needs to jump to this moment.
  * `anchorReady` stays false until the Riot match timeline is wired in — the UI
  * can render the moment now and light up "Jump to replay" later without any
@@ -59,7 +82,13 @@ export interface CoachableEvent {
   /** Display game time, e.g. "08:20" or "~ Mid game". */
   gameTime: string;
   category: EventCategory;
+  /** League fundamental this coaching point teaches (Sprint 2.3). */
+  fundamental: Fundamental;
+  /** Whether this event teaches a mistake or a good decision (Sprint 2.3). */
+  tone: EventTone;
   decision: string;
+  /** Why the decision was good/bad — the second of the four coaching questions. */
+  why: string;
   /** Decision → immediate → later → outcome, each a short link. */
   chain: string[];
   outcome: string;
@@ -180,7 +209,10 @@ function laneEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "lane-cs-10",
       gameTime: t.label,
       category: "Laning",
+      fundamental: "Economy",
+      tone: "negative",
       decision: "Dropped last-hits in the opening waves",
+      why: "Every missed minion is 15–20 gold you won't have on your first back — the enemy laner walks out with a component you don't, and the trade math flips against you at level 6.",
       chain: [
         "Missed early last-hits",
         "Behind on first-item gold",
@@ -202,7 +234,10 @@ function laneEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "lane-early-deficit",
       gameTime: t.label,
       category: "Laning",
+      fundamental: "Trading",
+      tone: "negative",
       decision: "Took losing trades in the level 1–3 window",
+      why: "Trading into a stronger early-level matchup burns your health for nothing — they walk you under tower, deny CS, and force a bad first back that snowballs the lane.",
       chain: [
         "Traded into an unfavourable matchup",
         "Fell behind in gold/xp early",
@@ -229,7 +264,10 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "wave-overstay",
       gameTime: t.label,
       category: "Recall Timing",
+      fundamental: "Recall Timing",
+      tone: "negative",
       decision: "Stayed for one extra wave instead of recalling",
+      why: "Backing on the crash means you return with an item, full HP/mana, and a control ward. Backing one wave later means you return without the spike AND miss the setup for the next objective — one decision loses a whole map cycle.",
       chain: [
         "Overstayed on the wave",
         "Late recall on low HP",
@@ -252,7 +290,10 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "wave-side-neglect",
       gameTime: t.label,
       category: "Wave Management",
+      fundamental: "Wave Management",
+      tone: "negative",
       decision: "Grouped without catching a crashing side wave",
+      why: "Free side waves are the highest gold-per-second on the map after 15 minutes. Ignoring them means the enemy laner scales past you while your team fights 4v5 without a carry.",
       chain: [
         "Left a side wave uncollected",
         "Enemy laner farmed uncontested",
@@ -275,7 +316,10 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "wave-fight-first",
       gameTime: t.label,
       category: "Wave Management",
+      fundamental: "Wave Management",
+      tone: "negative",
       decision: "Rotated to a fight before resetting your wave",
+      why: "Fighting with an unresolved wave means you win the skirmish and still lose gold to a wave crashing under enemy tower — or lose the skirmish and lose both. The wave has to work for you while you're gone.",
       chain: [
         "Left a bouncing wave behind you",
         "Fought without lane priority",
@@ -297,7 +341,10 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "vision-no-control",
       gameTime: t.label,
       category: "Vision Setup",
+      fundamental: "Vision",
+      tone: "negative",
       decision: "Skipped a control ward on your recall",
+      why: "A control ward is 75g for information that decides where fights start. Skipping it means every objective is a coin-flip — you're guessing where the enemy is instead of seeing it.",
       chain: [
         "Backed without a control ward",
         "No vision around the river/objective",
@@ -325,7 +372,10 @@ function objectiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "objective-absent",
       gameTime: t.label,
       category: "Dragon & Baron Preparation",
+      fundamental: "Objective Setup",
+      tone: "negative",
       decision: "Arrived at the objective without a setup",
+      why: "Objectives are decided by the 60 seconds BEFORE spawn: lane priority, control ward, cooldowns up, team grouped. Arriving on time without those means walking into a fight the enemy has already won.",
       chain: [
         "No lane priority before spawn",
         "No control ward around the pit",
@@ -351,7 +401,10 @@ function objectiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "objective-recall-mismatch",
       gameTime: t.label,
       category: "Recall Timing",
+      fundamental: "Recall Timing",
+      tone: "negative",
       decision: "Recalled inside the objective window",
+      why: "A recall inside the last 60 seconds is the same as not being there — your team either engages a member down or gives up the pit for free. Back much earlier, or hold and defend.",
       chain: [
         "Recalled with < 60s to spawn",
         "Rejoined the map after the fight started",
@@ -378,7 +431,10 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "teamfight-positioning",
       gameTime: t.label,
       category: "Teamfight Positioning",
+      fundamental: "Positioning",
+      tone: "negative",
       decision: "Stepped up before the enemy engage was used",
+      why: "Your damage only matters if you're alive when the fight peaks. Stepping up before their engage is spent means you die on contact and your team fights the rest of it a carry down.",
       chain: [
         "Positioned too far forward",
         "Caught by the enemy's engage",
@@ -400,7 +456,10 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       id: "tempo-absent",
       gameTime: t.label,
       category: "Objective Tempo",
+      fundamental: "Tempo",
+      tone: "negative",
       decision: "Kept farming while your team grouped",
+      why: "After lane ends, side-lane farm at the cost of objective presence is negative EV — you gain 200g and your team loses a drake plus the map control that comes with it.",
       chain: [
         "Stayed in a solo side lane",
         "Team fought without you",
@@ -413,6 +472,116 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       explanation:
         "After you crash a wave, the next play is usually a group or an objective, not a fourth wave alone. Being absent means your team takes fights a member down, which quietly loses the mid game.",
       practiceTakeaway: "Rotate to the next play after every wave crash — keep kill participation above 55%.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  return out;
+}
+
+// --- positive coaching chains (Sprint 2.3) ---------------------------------
+// Same four-question structure applied to good decisions, so players
+// understand WHY they won — not only WHY they lost.
+
+function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
+  const out: CoachableEvent[] = [];
+  if (m.laneMinions10 >= 80) {
+    const t = approxTime(m, 10 * 60);
+    out.push({
+      id: "pos-clean-laning",
+      gameTime: t.label,
+      category: "Laning",
+      fundamental: "Economy",
+      tone: "positive",
+      decision: "Prioritised last-hits over trades in the opening waves",
+      why: "Every clean CS you take is gold the enemy laner doesn't have. Winning the CS race means you back with a component they can't match — the lane starts snowballing before either summoner is used.",
+      chain: [
+        "Clean last-hits",
+        "Ahead on first-item gold",
+        "Earlier power spike",
+        "Owned lane priority",
+      ],
+      outcome: `Reached ${Math.round(m.laneMinions10)} CS at 10:00 — ahead of curve.`,
+      impact: "medium",
+      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes (target 75+).`,
+      explanation:
+        "This is the fundamental every carry role is built on. Repeating this CS number is what turns a lane win into a game win — keep pairing it with a wave-crash recall.",
+      practiceTakeaway: "Bank this: same opening pattern next game — trades only when they miss a cooldown.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  if (m.controlWardsPlaced >= 4) {
+    const t = approxTime(m, 15 * 60);
+    out.push({
+      id: "pos-vision-control",
+      gameTime: t.label,
+      category: "Vision Setup",
+      fundamental: "Vision",
+      tone: "positive",
+      decision: "Bought a control ward every back",
+      why: "Vision is the cheapest tempo in the game — 75g for information that decides where fights start. Buying every back means every objective was contested on your terms.",
+      chain: [
+        "Control ward every recall",
+        "River / pit vision denied to enemy",
+        "Fights started on your read",
+        "Objectives contested with info",
+      ],
+      outcome: `${m.controlWardsPlaced} control wards placed — Challenger-tier habit.`,
+      impact: "medium",
+      evidence: `${m.controlWardsPlaced} control wards purchased.`,
+      explanation:
+        "This is the habit that separates gold-tier players from plat/emerald. Keep it going regardless of how the game is trending — vision compounds even when behind.",
+      practiceTakeaway: "Never let a back go by without a control ward in your inventory.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  const objectives = m.dragonTakedowns + m.baronTakedowns + m.riftHeraldTakedowns;
+  if (objectives >= 4) {
+    const t = approxTime(m, 22 * 60);
+    out.push({
+      id: "pos-objective-presence",
+      gameTime: t.label,
+      category: "Dragon & Baron Preparation",
+      fundamental: "Objective Setup",
+      tone: "positive",
+      decision: "Arrived at every objective with a setup",
+      why: "You crashed the wave, moved to the pit early, and let your team fight with priority. That's the full chain: wave → tempo → objective → advantage.",
+      chain: [
+        "Wave crashed before spawn",
+        "Rotated 45–60s early",
+        "Team fought with priority",
+        "Secured the objective",
+      ],
+      outcome: `Present for ${objectives} major objectives.`,
+      impact: "high",
+      evidence: `${objectives} dragon/baron/herald takedowns.`,
+      explanation:
+        "Objective presence is the single strongest predictor of climbing. Whatever your rank, keep replicating this loop — it's the habit that wins games.",
+      practiceTakeaway: "Same rotation timing every game — start moving 60s before spawn, no exceptions.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  if (m.damageShare >= 0.3 && m.deaths <= 4) {
+    const t = approxTime(m, 26 * 60);
+    out.push({
+      id: "pos-teamfight",
+      gameTime: t.label,
+      category: "Teamfight Positioning",
+      fundamental: "Positioning",
+      tone: "positive",
+      decision: "Held your step-up until the enemy engage was spent",
+      why: "Staying behind your frontline let the enemy waste their engage first — then you walked up and dealt uninterrupted damage. That's how a carry role is supposed to look.",
+      chain: [
+        "Patient spacing",
+        "Enemy engage burned",
+        "Uninterrupted damage window",
+        "Fight won on your DPS",
+      ],
+      outcome: `${pct(m.damageShare)} damage share with only ${m.deaths} deaths.`,
+      impact: "high",
+      evidence: `${pct(m.damageShare)} of team damage, ${m.deaths} deaths.`,
+      explanation:
+        "Damage share this high with a low death count is elite carry play. Bank this game as your teamfight template.",
+      practiceTakeaway: "Replicate the spacing: one screen behind frontline, step up only after their engage is used.",
       replayAnchor: anchor(m, t.seconds),
     });
   }
@@ -445,6 +614,7 @@ export function buildMatchTimelineWithHistory(
     ...recallAndWaveEvents(m),
     ...objectiveEvents(m),
     ...teamfightEvents(m),
+    ...positiveEvents(m),
   ]
     .map((ev) => withHabit(ev, window))
     .sort((a, b) => {
@@ -460,7 +630,10 @@ export function buildMatchTimelineWithHistory(
       id: "clean-game",
       gameTime: t.label,
       category: "Objective Tempo",
+      fundamental: "Tempo",
+      tone: "positive",
       decision: "Made disciplined decisions throughout",
+      why: "No single decision leaked tempo — steady wave management, timely recalls, and objective presence compounded into a controlled game. Repeatability is the next level.",
       chain: [
         "Steady, low-risk decisions",
         "No tempo given away",
