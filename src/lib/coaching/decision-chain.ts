@@ -478,6 +478,116 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
   return out;
 }
 
+// --- positive coaching chains (Sprint 2.3) ---------------------------------
+// Same four-question structure applied to good decisions, so players
+// understand WHY they won — not only WHY they lost.
+
+function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
+  const out: CoachableEvent[] = [];
+  if (m.laneMinions10 >= 80) {
+    const t = approxTime(m, 10 * 60);
+    out.push({
+      id: "pos-clean-laning",
+      gameTime: t.label,
+      category: "Laning",
+      fundamental: "Economy",
+      tone: "positive",
+      decision: "Prioritised last-hits over trades in the opening waves",
+      why: "Every clean CS you take is gold the enemy laner doesn't have. Winning the CS race means you back with a component they can't match — the lane starts snowballing before either summoner is used.",
+      chain: [
+        "Clean last-hits",
+        "Ahead on first-item gold",
+        "Earlier power spike",
+        "Owned lane priority",
+      ],
+      outcome: `Reached ${Math.round(m.laneMinions10)} CS at 10:00 — ahead of curve.`,
+      impact: "medium",
+      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes (target 75+).`,
+      explanation:
+        "This is the fundamental every carry role is built on. Repeating this CS number is what turns a lane win into a game win — keep pairing it with a wave-crash recall.",
+      practiceTakeaway: "Bank this: same opening pattern next game — trades only when they miss a cooldown.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  if (m.controlWardsPlaced >= 4) {
+    const t = approxTime(m, 15 * 60);
+    out.push({
+      id: "pos-vision-control",
+      gameTime: t.label,
+      category: "Vision Setup",
+      fundamental: "Vision",
+      tone: "positive",
+      decision: "Bought a control ward every back",
+      why: "Vision is the cheapest tempo in the game — 75g for information that decides where fights start. Buying every back means every objective was contested on your terms.",
+      chain: [
+        "Control ward every recall",
+        "River / pit vision denied to enemy",
+        "Fights started on your read",
+        "Objectives contested with info",
+      ],
+      outcome: `${m.controlWardsPlaced} control wards placed — Challenger-tier habit.`,
+      impact: "medium",
+      evidence: `${m.controlWardsPlaced} control wards purchased.`,
+      explanation:
+        "This is the habit that separates gold-tier players from plat/emerald. Keep it going regardless of how the game is trending — vision compounds even when behind.",
+      practiceTakeaway: "Never let a back go by without a control ward in your inventory.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  const objectives = m.dragonTakedowns + m.baronTakedowns + m.riftHeraldTakedowns;
+  if (objectives >= 4) {
+    const t = approxTime(m, 22 * 60);
+    out.push({
+      id: "pos-objective-presence",
+      gameTime: t.label,
+      category: "Dragon & Baron Preparation",
+      fundamental: "Objective Setup",
+      tone: "positive",
+      decision: "Arrived at every objective with a setup",
+      why: "You crashed the wave, moved to the pit early, and let your team fight with priority. That's the full chain: wave → tempo → objective → advantage.",
+      chain: [
+        "Wave crashed before spawn",
+        "Rotated 45–60s early",
+        "Team fought with priority",
+        "Secured the objective",
+      ],
+      outcome: `Present for ${objectives} major objectives.`,
+      impact: "high",
+      evidence: `${objectives} dragon/baron/herald takedowns.`,
+      explanation:
+        "Objective presence is the single strongest predictor of climbing. Whatever your rank, keep replicating this loop — it's the habit that wins games.",
+      practiceTakeaway: "Same rotation timing every game — start moving 60s before spawn, no exceptions.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  if (m.damageShare >= 0.3 && m.deaths <= 4) {
+    const t = approxTime(m, 26 * 60);
+    out.push({
+      id: "pos-teamfight",
+      gameTime: t.label,
+      category: "Teamfight Positioning",
+      fundamental: "Positioning",
+      tone: "positive",
+      decision: "Held your step-up until the enemy engage was spent",
+      why: "Staying behind your frontline let the enemy waste their engage first — then you walked up and dealt uninterrupted damage. That's how a carry role is supposed to look.",
+      chain: [
+        "Patient spacing",
+        "Enemy engage burned",
+        "Uninterrupted damage window",
+        "Fight won on your DPS",
+      ],
+      outcome: `${pct(m.damageShare)} damage share with only ${m.deaths} deaths.`,
+      impact: "high",
+      evidence: `${pct(m.damageShare)} of team damage, ${m.deaths} deaths.`,
+      explanation:
+        "Damage share this high with a low death count is elite carry play. Bank this game as your teamfight template.",
+      practiceTakeaway: "Replicate the spacing: one screen behind frontline, step up only after their engage is used.",
+      replayAnchor: anchor(m, t.seconds),
+    });
+  }
+  return out;
+}
+
 const IMPACT_RANK: Record<ImpactLevel, number> = { high: 3, medium: 2, low: 1 };
 
 /**
