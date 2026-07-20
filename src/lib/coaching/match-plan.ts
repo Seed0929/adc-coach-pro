@@ -17,7 +17,7 @@ import {
   healThreatCount,
   type ThreatProfile,
 } from "./champion-knowledge";
-import { buildMatchTimelineWithHistory, type MatchTimeline } from "./decision-chain";
+import { buildMatchTimelineWithHistory, type MatchTimeline, type CoachableEvent, type ImpactLevel } from "./decision-chain";
 import { buildPowerSpikeReview, type PowerSpikeReview } from "./power-spike";
 // Sprint 2.1 — every coaching module MUST consume the League Intelligence
 // Foundation before generating advice. We route champion / item / matchup
@@ -84,6 +84,11 @@ export interface MatchPlan {
   gamePlan: GamePlan;
   /** Decision-chain timeline + Replay Coach anchors (Sprint 1.7). */
   timeline: MatchTimeline;
+  /**
+   * Sprint 2.3 — the single highest-impact habit surfaced this match. One habit
+   * coached deeply beats five coached shallowly. Null on genuinely clean games.
+   */
+  topHabit: CoachableEvent | null;
 }
 
 const one = (n: number) => n.toFixed(1);
@@ -260,42 +265,42 @@ function buildTimeline(m: MatchAnalysisInput): TimelineMistake[] {
   if (m.earlyGoldExpAdvantage <= -250) {
     out.push({
       when: "Laning phase (0–10 min)",
-      what: `Ended the early laning phase down ~${Math.abs(Math.round(m.earlyGoldExpAdvantage))} gold/xp.`,
+      what: `Traded into a losing early matchup — the deficit (~${Math.abs(Math.round(m.earlyGoldExpAdvantage))} gold/xp) is the result, not the mistake. The decision was walking up when their key ability was available.`,
       fix: "Play the level-1/2 timers safer and only trade when the enemy's key spell is down.",
     });
   }
   if (m.laneMinions10 > 0 && m.laneMinions10 < 60) {
     out.push({
       when: "~10 minutes",
-      what: `Only ${Math.round(m.laneMinions10)} CS by 10 minutes.`,
+      what: `Dropped last-hits to watch trades in the opening waves. ${Math.round(m.laneMinions10)} CS at 10 is the symptom — the decision was contesting damage instead of the wave.`,
       fix: "Focus on last-hitting mechanics — aim for 8 CS/min (80 by 10 min).",
     });
   }
   if (m.csPerMin < 7 && m.deaths >= 4) {
     out.push({
       when: "Mid game",
-      what: "Low CS with repeated deaths — the overstaying-instead-of-recalling pattern.",
+      what: "Stayed for one more wave instead of backing on the crash — that late recall is the decision that produced both the low CS and the deaths.",
       fix: "Recall the moment a wave crashes into tower instead of forcing one more wave.",
     });
   }
   if (m.killParticipation < 0.45) {
     out.push({
       when: "Objective windows",
-      what: `Kill participation only ${pct(m.killParticipation)} — the team fought without you.`,
+      what: `Kept farming a side lane while the team grouped. Low KP (${pct(m.killParticipation)}) is the outcome — the decision was skipping the rotation after each wave crash.`,
       fix: "Rotate to the next objective after every wave crash rather than farming alone.",
     });
   }
   if (m.deaths >= 6) {
     out.push({
       when: "Teamfights",
-      what: `${m.deaths} deaths — too many for a carry role.`,
+      what: `Stepped up before the enemy engage was spent — ${m.deaths} deaths is the consequence, not the mistake. The decision was your spacing on contact.`,
       fix: "Position behind your frontline and hold your step-up until the enemy engage is spent.",
     });
   }
   if (objectivesOf(m) <= 1 && m.durationMin >= 22) {
     out.push({
       when: "Dragon/Baron spawns",
-      what: "Absent for almost every major objective.",
+      what: "Recalled or committed a side wave inside the objective window — the absence is the outcome; the decision was where you were 60 seconds before spawn.",
       fix: "Path toward the pit 45–60s before spawn so you arrive with priority.",
     });
   }
@@ -667,6 +672,14 @@ export function buildMatchPlan(
   m: MatchAnalysisInput,
   history: MatchAnalysisInput[] = [],
 ): MatchPlan {
+  const timeline = buildMatchTimelineWithHistory(m, history);
+  // Sprint 2.3 — rank habits by IMPACT, not frequency. The single highest-
+  // win-rate-impact negative decision becomes the "coach deeply" focus.
+  const IMPACT_RANK: Record<ImpactLevel, number> = { high: 3, medium: 2, low: 1 };
+  const topHabit =
+    timeline.events
+      .filter((e) => e.tone === "negative")
+      .sort((a, b) => IMPACT_RANK[b.impact] - IMPACT_RANK[a.impact])[0] ?? null;
   return {
     phases: buildPhases(m),
     mistakeTimeline: buildTimeline(m),
@@ -676,6 +689,7 @@ export function buildMatchPlan(
     itemReview: buildItemReview(m),
     powerSpike: buildPowerSpikeReview(m),
     gamePlan: buildGamePlan(m),
-    timeline: buildMatchTimelineWithHistory(m, history),
+    timeline,
+    topHabit,
   };
 }
