@@ -39,6 +39,11 @@ export {
   hydrateLeagueIntelligence,
   type LeagueIntelligenceFacade,
 } from "./league-intelligence";
+export {
+  LeagueKnowledgeBase,
+  type LeagueKnowledgeBaseFacade,
+} from "./knowledge-base";
+export * as KnowledgeBase from "./knowledge-base";
 
 export interface CoachAnswer {
   answer: string;
