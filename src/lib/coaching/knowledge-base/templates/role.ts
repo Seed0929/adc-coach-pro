@@ -9,11 +9,16 @@ export interface RoleTemplate {
   id: RoleId;
   label: string;
   coreResponsibilities: string[];
+  /** Non-negotiable job of the role (subset of coreResponsibilities). */
+  primaryResponsibilities: string[];
+  /** Secondary duties that matter once primaries are met. */
+  secondaryResponsibilities: string[];
   resourcePriorities: string[];
   objectivePriorities: string[];
   tempoExpectations: string[];
   laneResponsibilities: string[];
   mapResponsibilities: string[];
+  teamfightResponsibilities: string[];
   commonHabits: string[];
   commonDecisionCategories: string[];
   successConditions: string[];
@@ -27,11 +32,14 @@ export function emptyRoleTemplate(id: RoleId, label: string): RoleTemplate {
     id,
     label,
     coreResponsibilities: [],
+    primaryResponsibilities: [],
+    secondaryResponsibilities: [],
     resourcePriorities: [],
     objectivePriorities: [],
     tempoExpectations: [],
     laneResponsibilities: [],
     mapResponsibilities: [],
+    teamfightResponsibilities: [],
     commonHabits: [],
     commonDecisionCategories: [],
     successConditions: [],

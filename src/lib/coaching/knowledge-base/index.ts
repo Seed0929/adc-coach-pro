@@ -13,10 +13,24 @@ export * from "./templates";
 export * from "./roles";
 export * from "./registry";
 export * from "./data-dragon-adapter";
+export * from "./fundamentals";
+export * from "./decision-library";
 
 import * as Registry from "./registry";
 import { ROLE_INTELLIGENCE, getRoleIntelligence } from "./roles";
 import { hydrateFromDataDragon } from "./data-dragon-adapter";
+import {
+  LEAGUE_FUNDAMENTALS,
+  ALL_FUNDAMENTALS,
+  getFundamental,
+  isFundamentalId,
+} from "./fundamentals";
+import {
+  DECISION_LIBRARY,
+  getDecisionPattern,
+  decisionsByFundamental,
+  decisionsForRole,
+} from "./decision-library";
 
 /**
  * Namespaced facade. Coach Engine + intelligence modules should ask through
@@ -49,6 +63,18 @@ export const LeagueKnowledgeBase = {
   Matchup: { get: Registry.getMatchupRecord, register: Registry.registerMatchup },
   Map: { get: Registry.getMapZoneRecord, register: Registry.registerMapZone },
   Vision: { get: Registry.getVisionRecord, register: Registry.registerVision },
+  Fundamental: {
+    get: getFundamental,
+    all: () => ALL_FUNDAMENTALS,
+    is: isFundamentalId,
+    map: () => LEAGUE_FUNDAMENTALS,
+  },
+  Decision: {
+    get: getDecisionPattern,
+    all: () => DECISION_LIBRARY,
+    byFundamental: decisionsByFundamental,
+    byRole: decisionsForRole,
+  },
   hydrateFromDataDragon,
 } as const;
 
