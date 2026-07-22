@@ -14,6 +14,9 @@ export interface RoleIntelligence {
   /** Returns the underlying Role Template record — the single source of truth. */
   template(): RoleTemplate;
   responsibilities(): string[];
+  primaryResponsibilities(): string[];
+  secondaryResponsibilities(): string[];
+  teamfightResponsibilities(): string[];
   objectivePriorities(): string[];
   successConditions(): string[];
   failureConditions(): string[];
@@ -27,6 +30,9 @@ export function roleIntelligenceFromTemplate(t: RoleTemplate): RoleIntelligence 
     label: t.label,
     template: () => t,
     responsibilities: () => t.coreResponsibilities,
+    primaryResponsibilities: () => t.primaryResponsibilities,
+    secondaryResponsibilities: () => t.secondaryResponsibilities,
+    teamfightResponsibilities: () => t.teamfightResponsibilities,
     objectivePriorities: () => t.objectivePriorities,
     successConditions: () => t.successConditions,
     failureConditions: () => t.failureConditions,
