@@ -11,6 +11,9 @@ function seed(id: RoleId, label: string, patch: Partial<RoleTemplate>): RoleTemp
 
 export const TOP_ROLE: RoleTemplate = seed("top", "Top", {
   coreResponsibilities: ["Win / stabilize a solo lane", "Create side-lane pressure", "Flank or front-line in fights"],
+  primaryResponsibilities: ["Win / stabilize solo lane", "Use Teleport for map impact"],
+  secondaryResponsibilities: ["Create side-lane pressure", "Front-line or flank in fights"],
+  teamfightResponsibilities: ["Front-line for carries", "Flank onto backline with TP"],
   resourcePriorities: ["Solo XP", "Wave state", "Teleport timing"],
   objectivePriorities: ["Grubs", "Herald", "Baron"],
   tempoExpectations: ["Freeze when losing", "Slow-push into recall", "Match jungler side"],
@@ -25,6 +28,9 @@ export const TOP_ROLE: RoleTemplate = seed("top", "Top", {
 
 export const JUNGLE_ROLE: RoleTemplate = seed("jungle", "Jungle", {
   coreResponsibilities: ["Path efficiently", "Set up objectives", "Track enemy jungler"],
+  primaryResponsibilities: ["Set up neutral objectives", "Track enemy jungler pathing"],
+  secondaryResponsibilities: ["Gank winning lanes", "Deep vision on lead"],
+  teamfightResponsibilities: ["Peel or engage based on comp", "Frontline pit fights"],
   resourcePriorities: ["Camp respawn timers", "Scuttle crab", "Objective spawns"],
   objectivePriorities: ["Scuttle", "Grubs", "Dragon", "Herald", "Baron"],
   tempoExpectations: ["Full clear vs skirmish path", "Reset before objectives", "Match enemy path"],
@@ -39,6 +45,9 @@ export const JUNGLE_ROLE: RoleTemplate = seed("jungle", "Jungle", {
 
 export const MID_ROLE: RoleTemplate = seed("mid", "Mid", {
   coreResponsibilities: ["Control mid priority", "Roam or match roams", "Set up objectives"],
+  primaryResponsibilities: ["Own mid priority", "Match enemy roams"],
+  secondaryResponsibilities: ["Roam bot with prio", "Set up objective vision"],
+  teamfightResponsibilities: ["Deliver burst on primary target", "Follow up on engage"],
   resourcePriorities: ["Solo XP", "Wave push", "Roam windows"],
   objectivePriorities: ["Prio for scuttle/dragon", "Herald/Baron setup"],
   tempoExpectations: ["Shove before roaming", "Match enemy roam", "Reset with wave crashed"],
@@ -53,6 +62,9 @@ export const MID_ROLE: RoleTemplate = seed("mid", "Mid", {
 
 export const ADC_ROLE: RoleTemplate = seed("adc", "ADC", {
   coreResponsibilities: ["Farm safely", "Deal sustained damage", "Position around peel"],
+  primaryResponsibilities: ["Scale to item spikes safely", "Deal sustained damage in fights"],
+  secondaryResponsibilities: ["Sidelane after 3 items", "Vision around dragon"],
+  teamfightResponsibilities: ["Position behind frontline", "Focus reachable target with peel"],
   resourcePriorities: ["CS", "Item spikes", "Sidelane after items"],
   objectivePriorities: ["Dragon", "Baron", "Sidelane after 3-item"],
   tempoExpectations: ["Recall after wave crash", "Group at 2 items", "Sidelane at 3 items"],
@@ -67,6 +79,9 @@ export const ADC_ROLE: RoleTemplate = seed("adc", "ADC", {
 
 export const SUPPORT_ROLE: RoleTemplate = seed("support", "Support", {
   coreResponsibilities: ["Enable the ADC", "Own vision", "Set up objectives"],
+  primaryResponsibilities: ["Own team vision", "Enable the ADC"],
+  secondaryResponsibilities: ["Roam on wave push", "Set up objectives 60s early"],
+  teamfightResponsibilities: ["Engage or peel on champion identity", "Save carry with utility"],
   resourcePriorities: ["Support quest", "Control wards", "Roam windows"],
   objectivePriorities: ["Dragon vision", "Herald setup", "Baron vision"],
   tempoExpectations: ["Roam on wave push", "Reset with ADC", "Rotate with tempo"],
