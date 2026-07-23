@@ -21,6 +21,17 @@ export interface RoleIntelligence {
   successConditions(): string[];
   failureConditions(): string[];
   winConditionFramework(): string[];
+  primaryWinConditions(): string[];
+  secondaryWinConditions(): string[];
+  lanePriorities(): string[];
+  typicalTempoGoals(): string[];
+  typicalRecallWindows(): string[];
+  powerSpikePhilosophy(): string[];
+  lateGameResponsibilities(): string[];
+  teamfightIdentity(): string;
+  sideLaneResponsibilities(): string[];
+  commonMistakes(): string[];
+  commonGoodHabits(): string[];
 }
 
 /** Wraps a RoleTemplate into a uniform RoleIntelligence interface. */
@@ -37,5 +48,16 @@ export function roleIntelligenceFromTemplate(t: RoleTemplate): RoleIntelligence 
     successConditions: () => t.successConditions,
     failureConditions: () => t.failureConditions,
     winConditionFramework: () => t.winConditionFramework,
+    primaryWinConditions: () => t.primaryWinConditions,
+    secondaryWinConditions: () => t.secondaryWinConditions,
+    lanePriorities: () => t.lanePriorities,
+    typicalTempoGoals: () => t.typicalTempoGoals,
+    typicalRecallWindows: () => t.typicalRecallWindows,
+    powerSpikePhilosophy: () => t.powerSpikePhilosophy,
+    lateGameResponsibilities: () => t.lateGameResponsibilities,
+    teamfightIdentity: () => t.teamfightIdentity,
+    sideLaneResponsibilities: () => t.sideLaneResponsibilities,
+    commonMistakes: () => t.commonMistakes,
+    commonGoodHabits: () => t.commonGoodHabits,
   };
 }
