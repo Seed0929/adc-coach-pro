@@ -24,6 +24,17 @@ export const TOP_ROLE: RoleTemplate = seed("top", "Top", {
   successConditions: ["Win side lane", "Convert TP into map advantage", "Front-line fights on cooldown"],
   failureConditions: ["Die pre-6 without trade", "TP down during objective", "Isolated deaths in side"],
   winConditionFramework: ["Convert lane priority into map pressure", "Trade side lane for team objective"],
+  primaryWinConditions: ["Win the side lane every wave you're alone", "Save TP for a map-swinging play"],
+  secondaryWinConditions: ["Solo-kill lane once ahead", "Push in and free your jungler bot side"],
+  lanePriorities: ["Wave control > CS", "Level 2/3/6 spikes", "Freeze when down, crash when up"],
+  typicalTempoGoals: ["Match jungler side", "Reset before the enemy top", "Be alive at every side-wave arrival"],
+  typicalRecallWindows: ["Before side lane pressure returns", "After crashing a wave into tower", "When TP is up and objective is 60s away"],
+  powerSpikePhilosophy: ["Trade tempo for first-item spike", "Delay group timings until side is safe"],
+  lateGameResponsibilities: ["Hold a side lane", "TP flank onto backline or Baron", "Absorb pressure to free objectives"],
+  teamfightIdentity: "Front-line or flanker — engages or peels based on champion class",
+  sideLaneResponsibilities: ["Push waves in when 4 enemies are elsewhere", "Never die 1v1 without vision", "Recall on crash, not on kill"],
+  commonMistakes: ["Overstaying with low HP", "Wasting TP on a bad wave", "Losing side lane by grouping too early"],
+  commonGoodHabits: ["Crash then recall", "TP saved for objectives", "Ward river before pushing in"],
 });
 
 export const JUNGLE_ROLE: RoleTemplate = seed("jungle", "Jungle", {
@@ -41,6 +52,17 @@ export const JUNGLE_ROLE: RoleTemplate = seed("jungle", "Jungle", {
   successConditions: ["Secure objectives with prio", "Punish enemy jungler pathing"],
   failureConditions: ["Objective taken uncontested", "Repeated failed ganks"],
   winConditionFramework: ["Trade neutrals for tempo", "Fight only with prio + vision"],
+  primaryWinConditions: ["Win the objective on your side of the map every spawn", "Path to where you have lane prio"],
+  secondaryWinConditions: ["Convert a successful gank into an objective", "Invade with numbers when enemy jungler is tracked away"],
+  lanePriorities: ["Gank winning lanes for tempo, not kills", "Counter-gank when lanes are shoved in"],
+  typicalTempoGoals: ["Arrive at objectives with a full camp lead", "Be on the objective side 45s before spawn"],
+  typicalRecallWindows: ["Before objective spawns", "After a successful gank with full inventory", "When enemy jungler is spotted on the far side"],
+  powerSpikePhilosophy: ["Item-2 skirmish spike opens fight windows", "Level 6 unlocks objective attempts"],
+  lateGameResponsibilities: ["Baron control", "Vision around pit", "Peel or engage in pit fights"],
+  teamfightIdentity: "Objective anchor — smites, peels carries, or engages depending on champion",
+  sideLaneResponsibilities: ["Support the side-lane pusher with vision", "Counter-jungle when opposite lane is shoved"],
+  commonMistakes: ["Ganking losing lanes with no setup", "Ignoring scuttle prio", "Farming through an objective timer"],
+  commonGoodHabits: ["Track enemy jungler start", "Reset before objectives", "Ward pit 60s early"],
 });
 
 export const MID_ROLE: RoleTemplate = seed("mid", "Mid", {
@@ -58,6 +80,17 @@ export const MID_ROLE: RoleTemplate = seed("mid", "Mid", {
   successConditions: ["Win prio into objectives", "Impact side lanes with roams"],
   failureConditions: ["Lose prio + objective", "Die roaming into shove"],
   winConditionFramework: ["Convert prio into map presence", "Force fights with tempo"],
+  primaryWinConditions: ["Have mid prio at every objective spawn", "Convert prio into a roam or vision play"],
+  secondaryWinConditions: ["Solo-kill mid into a Herald swing", "Roam bot on a shove for a 3v2"],
+  lanePriorities: ["Prio over CS when objectives are up", "Trade only on cooldown windows"],
+  typicalTempoGoals: ["Crash mid before every objective", "Match the enemy mid's roam every time"],
+  typicalRecallWindows: ["Before a planned roam", "After crashing mid into tower", "Just before objective spawns with prio"],
+  powerSpikePhilosophy: ["Level 6 opens roam windows", "Item-1 defines skirmish tempo"],
+  lateGameResponsibilities: ["Waveclear + prio", "Pick threats around vision", "Follow-up engage with primary damage"],
+  teamfightIdentity: "Primary damage or catch tool — bursts priority target or follow-up on engage",
+  sideLaneResponsibilities: ["Rarely — only when a mid tower is down and prio is safe"],
+  commonMistakes: ["Roaming without prio", "Missing waves for a failed roam", "Failing to match enemy mid's roam"],
+  commonGoodHabits: ["Shove before roaming", "Ward river before pushing in", "Match roams turn for turn"],
 });
 
 export const ADC_ROLE: RoleTemplate = seed("adc", "ADC", {
@@ -75,6 +108,17 @@ export const ADC_ROLE: RoleTemplate = seed("adc", "ADC", {
   successConditions: ["Hit item spikes on time", "Deal team-carrying damage"],
   failureConditions: ["Fall behind two items", "Die before dealing damage"],
   winConditionFramework: ["Scale to items", "Fight only with peel + vision"],
+  primaryWinConditions: ["Hit item spikes on time and turn them into fights", "Deal sustained damage from a safe position"],
+  secondaryWinConditions: ["Sidelane after 3 items to create map pressure", "Trade dragons for lane pressure"],
+  lanePriorities: ["CS > trades pre-6", "Push for dragon prio", "Trade only on support engage"],
+  typicalTempoGoals: ["Reset around every item component", "Be on dragon side by 45s before spawn"],
+  typicalRecallWindows: ["Immediately after crashing a wave", "With enough gold for a component spike", "Before dragon with wave crashed"],
+  powerSpikePhilosophy: ["Rush the core item that unlocks your damage curve", "Never fight a phase behind on items"],
+  lateGameResponsibilities: ["Deal damage from the safest angle", "Sidelane with vision after 3 items", "Anchor pit fights for the team"],
+  teamfightIdentity: "Backline sustained damage — kites, focuses reachable targets, respects engage",
+  sideLaneResponsibilities: ["Push side with a vision-setting support", "Recall the moment a fight starts elsewhere"],
+  commonMistakes: ["Greedy recall for one more wave", "Farming while team fights an objective", "Standing in engage range without vision"],
+  commonGoodHabits: ["Recall on wave crash", "Group for dragon at 2 items", "Vision dragon pit 60s early"],
 });
 
 export const SUPPORT_ROLE: RoleTemplate = seed("support", "Support", {
@@ -92,6 +136,17 @@ export const SUPPORT_ROLE: RoleTemplate = seed("support", "Support", {
   successConditions: ["Vision score keeps team informed", "Engages land on primary target"],
   failureConditions: ["No control wards on objective", "Lane 2v1 without engage"],
   winConditionFramework: ["Convert vision into safe objectives", "Enable ADC to scale"],
+  primaryWinConditions: ["Own the vision map at every objective", "Enable the ADC's scaling"],
+  secondaryWinConditions: ["Roam mid on push for a pick", "Convert a vision denial into a pick"],
+  lanePriorities: ["Ward on wave state, not on cooldown", "Set up trades on ADC's cooldowns"],
+  typicalTempoGoals: ["Have full vision on the next objective 60s early", "Rotate with the ADC every reset"],
+  typicalRecallWindows: ["When Control Ward + component are affordable", "With ADC after crashing a wave", "Before objective vision windows"],
+  powerSpikePhilosophy: ["Support quest completion is your item-1", "Prioritize vision items over combat stats"],
+  lateGameResponsibilities: ["Live to place wards", "Peel the primary carry", "Sweep enemy vision at pits"],
+  teamfightIdentity: "Engage, peel, or catcher — role expressed by champion class",
+  sideLaneResponsibilities: ["Rarely — only to escort a sidelane push with vision"],
+  commonMistakes: ["Weak vision score", "Roaming into a shoved wave", "Engaging without follow-up"],
+  commonGoodHabits: ["Buy Control Wards every reset", "Ward before pushing", "Rotate with ADC as a pair"],
 });
 
 export const ROLE_TEMPLATES: Record<RoleId, RoleTemplate> = {
