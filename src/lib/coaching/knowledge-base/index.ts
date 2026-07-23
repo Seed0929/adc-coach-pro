@@ -15,6 +15,7 @@ export * from "./registry";
 export * from "./data-dragon-adapter";
 export * from "./fundamentals";
 export * from "./decision-library";
+export * from "./role-differentiation";
 
 import * as Registry from "./registry";
 import { ROLE_INTELLIGENCE, getRoleIntelligence } from "./roles";
@@ -31,6 +32,11 @@ import {
   decisionsByFundamental,
   decisionsForRole,
 } from "./decision-library";
+import {
+  ROLE_DIFFERENTIATION,
+  roleExpressionsFor,
+  roleExpressionFor,
+} from "./role-differentiation";
 
 /**
  * Namespaced facade. Coach Engine + intelligence modules should ask through
@@ -74,6 +80,11 @@ export const LeagueKnowledgeBase = {
     all: () => DECISION_LIBRARY,
     byFundamental: decisionsByFundamental,
     byRole: decisionsForRole,
+  },
+  RoleDifferentiation: {
+    all: () => ROLE_DIFFERENTIATION,
+    forFundamental: roleExpressionsFor,
+    forRole: roleExpressionFor,
   },
   hydrateFromDataDragon,
 } as const;
