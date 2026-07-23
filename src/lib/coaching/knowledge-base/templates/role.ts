@@ -24,6 +24,28 @@ export interface RoleTemplate {
   successConditions: string[];
   failureConditions: string[];
   winConditionFramework: string[];
+  /** Primary victory paths this role usually enables. */
+  primaryWinConditions: string[];
+  /** Situational secondary win conditions. */
+  secondaryWinConditions: string[];
+  /** Which lane priorities the role fights for. */
+  lanePriorities: string[];
+  /** Typical tempo goals per phase (what "on tempo" looks like). */
+  typicalTempoGoals: string[];
+  /** When this role usually wants to reset. */
+  typicalRecallWindows: string[];
+  /** How the role treats power spikes (rush, share, deny, delay). */
+  powerSpikePhilosophy: string[];
+  /** Job in the late game specifically. */
+  lateGameResponsibilities: string[];
+  /** One-line teamfight archetype (frontline, backline peel, flank, engage). */
+  teamfightIdentity: string;
+  /** What the role does in the side lane. */
+  sideLaneResponsibilities: string[];
+  /** Recurring negative patterns for the role. */
+  commonMistakes: string[];
+  /** Recurring positive patterns for the role. */
+  commonGoodHabits: string[];
   source: KnowledgeSource;
 }
 
@@ -45,6 +67,17 @@ export function emptyRoleTemplate(id: RoleId, label: string): RoleTemplate {
     successConditions: [],
     failureConditions: [],
     winConditionFramework: [],
+    primaryWinConditions: [],
+    secondaryWinConditions: [],
+    lanePriorities: [],
+    typicalTempoGoals: [],
+    typicalRecallWindows: [],
+    powerSpikePhilosophy: [],
+    lateGameResponsibilities: [],
+    teamfightIdentity: "",
+    sideLaneResponsibilities: [],
+    commonMistakes: [],
+    commonGoodHabits: [],
     source: "curated",
   };
 }
