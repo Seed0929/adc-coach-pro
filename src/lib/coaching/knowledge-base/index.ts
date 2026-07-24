@@ -17,6 +17,7 @@ export * from "./fundamentals";
 export * from "./decision-library";
 export * from "./role-differentiation";
 export * from "./curriculum";
+export * from "./curriculum-routing";
 
 import * as Registry from "./registry";
 import { ROLE_INTELLIGENCE, getRoleIntelligence } from "./roles";
@@ -47,6 +48,17 @@ import {
   roleExpressionForTopic,
   isCurriculumTopicId,
 } from "./curriculum";
+import {
+  CURRICULUM_ROUTING,
+  getCurriculumForHabit,
+  getPracticeTopics,
+  getRecoveryLesson,
+  getSupportingConcepts,
+  routingForRole,
+  routingForTopic,
+  rankRoutesByImportance,
+  isRoutedPatternId,
+} from "./curriculum-routing";
 
 /**
  * Namespaced facade. Coach Engine + intelligence modules should ask through
@@ -104,6 +116,17 @@ export const LeagueKnowledgeBase = {
     byRole: curriculumForRole,
     roleExpression: roleExpressionForTopic,
     is: isCurriculumTopicId,
+  },
+  Routing: {
+    all: () => CURRICULUM_ROUTING,
+    forHabit: getCurriculumForHabit,
+    practiceTopics: getPracticeTopics,
+    recoveryLesson: getRecoveryLesson,
+    supportingConcepts: getSupportingConcepts,
+    forRole: routingForRole,
+    forTopic: routingForTopic,
+    rank: rankRoutesByImportance,
+    isRouted: isRoutedPatternId,
   },
   hydrateFromDataDragon,
 } as const;
