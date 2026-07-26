@@ -14,7 +14,16 @@ import { observationsForPillars, type BehaviorObservation } from "./behavior-eng
 import { routeQuestion, type RoutedQuestion } from "./question-router";
 import type { Pillar } from "./pillars";
 
-export interface CoachingContext {
+import { runCoachingPipeline, type CoachingPipelineResult } from "./coaching-pipeline";
+import { normalizeRole } from "./role-intelligence";
+
+/**
+ * The AI/Quick-Ask payload. Sprint 3.2: it now carries the merged knowledge
+ * produced by the permanent coaching pipeline, so the future AI Coach reads
+ * the same Role Intelligence + Curriculum + League Intelligence the
+ * deterministic engine uses.
+ */
+export interface AICoachingContext {
   question: string;
   routed: RoutedQuestion;
   relevantPillars: Pillar[];
@@ -25,6 +34,8 @@ export interface CoachingContext {
   currentCoachingFocus: string;
   relevantStats: Record<string, string | number>;
   record: { wins: number; losses: number; winRate: number; matchesAnalyzed: number };
+  /** Merged knowledge-base coaching for the player's detected issues. */
+  pipeline: CoachingPipelineResult;
 }
 
 /** Pull just the statistics the routed mode cares about. */
@@ -60,9 +71,34 @@ export function buildCoachingContext(
   d: CoachDossier,
   question: string,
   memory?: PlayerMemory,
-): CoachingContext {
+): AICoachingContext {
   const routed = routeQuestion(question);
   const playerMemory = memory ?? buildPlayerMemory(d);
+  const role = normalizeRole(d.layeredMemory?.role?.role);
+  const pipeline = runCoachingPipeline(
+    [
+      ...d.habits.slice(0, 5).map((h) => ({
+        id: h.id,
+        label: h.label,
+        kind: h.kind,
+        evidence: h.evidence.sentences[0],
+        category: h.category,
+        pillar: h.pillar,
+        impact: (h.impact >= 66 ? "high" : h.impact >= 33 ? "medium" : "low") as
+          | "high"
+          | "medium"
+          | "low",
+      })),
+      ...d.weaknessPatterns.slice(0, 3).map((w) => ({
+        id: w.id,
+        label: w.title,
+        kind: w.kind,
+        evidence: w.detail,
+        category: w.category,
+      })),
+    ],
+    role,
+  );
   return {
     question,
     routed,
@@ -79,5 +115,6 @@ export function buildCoachingContext(
       winRate: d.winRate,
       matchesAnalyzed: d.matchesAnalyzed,
     },
+    pipeline,
   };
 }
