@@ -34,6 +34,7 @@ export * from "./power-spike";
 export * from "./practice-program";
 export * from "./role-intelligence";
 export * from "./habit-engine";
+export * from "./coaching-pipeline";
 export {
   LeagueIntelligence,
   hydrateLeagueIntelligence,

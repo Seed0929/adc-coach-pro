@@ -24,6 +24,15 @@ import { buildPowerSpikeReview, type PowerSpikeReview } from "./power-spike";
 // facts through the facade so any future Data Dragon hydration flows through
 // one seam.
 import { LeagueIntelligence } from "./league-intelligence";
+// Sprint 3.2 — the Coach Engine never invents coaching: every match report
+// pulls Role Intelligence + Curriculum + League Intelligence through the
+// permanent coaching pipeline.
+import {
+  runCoachingPipeline,
+  type CoachingIssue,
+  type CoachingPipelineResult,
+} from "./coaching-pipeline";
+import { normalizeRole } from "./role-intelligence";
 import type { ItemCategory, DamageProfile } from "./league-knowledge";
 import type { ChampionProfile } from "./champion-intelligence";
 
@@ -89,6 +98,12 @@ export interface MatchPlan {
    * coached deeply beats five coached shallowly. Null on genuinely clean games.
    */
   topHabit: CoachableEvent | null;
+  /**
+   * Sprint 3.2 — merged knowledge for every coachable moment in this match:
+   * Role Intelligence + Curriculum + League Intelligence. Consumed by the
+   * match report, Replay Coach, Practice Planner, and the future AI Coach.
+   */
+  coaching: CoachingPipelineResult;
 }
 
 const one = (n: number) => n.toFixed(1);
@@ -680,6 +695,18 @@ export function buildMatchPlan(
     timeline.events
       .filter((e) => e.tone === "negative")
       .sort((a, b) => IMPACT_RANK[b.impact] - IMPACT_RANK[a.impact])[0] ?? null;
+
+  const issues: CoachingIssue[] = timeline.events.map((e) => ({
+    id: e.id,
+    label: e.decision,
+    kind: e.tone === "negative" ? "weakness" : "strength",
+    evidence: e.evidence,
+    fundamentalHint: e.fundamental,
+    category: e.category,
+    impact: e.impact,
+  }));
+  const coaching = runCoachingPipeline(issues, normalizeRole(m.role), m.champion);
+
   return {
     phases: buildPhases(m),
     mistakeTimeline: buildTimeline(m),
@@ -691,5 +718,6 @@ export function buildMatchPlan(
     gamePlan: buildGamePlan(m),
     timeline,
     topHabit,
+    coaching,
   };
 }
