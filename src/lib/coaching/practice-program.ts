@@ -9,6 +9,11 @@
 // PURE + client-safe.
 // ---------------------------------------------------------------------------
 import type { CoachDossier, CoachPattern } from "../player-memory";
+// Sprint 3.2 — the Practice Planner consumes the permanent coaching pipeline
+// (Role Intelligence + Curriculum + League Intelligence) instead of inventing
+// drills. The local DRILLS map stays only as a last-resort fallback.
+import { runCoachingPipeline, type CoachingContext } from "./coaching-pipeline";
+import { normalizeRole } from "./role-intelligence";
 
 export interface PracticePriority {
   title: string;
@@ -25,6 +30,16 @@ export interface PracticeProgram {
   teamfightGoal: string;
   successLooksLike: string;
   timeline: string;
+  /** The single curriculum lesson this program is built around. */
+  focusLesson: string;
+  /** Why the focus lesson matters — straight from the curriculum. */
+  focusWhy: string;
+  /** Measurable goal from Role Intelligence / curriculum decision chain. */
+  measurableGoal: string;
+  /** Supporting curriculum concepts that reinforce the focus lesson. */
+  supportingConcepts: string[];
+  /** Full merged knowledge for the focus lesson (optional consumers). */
+  focusContext: CoachingContext | null;
 }
 
 const DRILLS: Record<string, string> = {
@@ -48,6 +63,30 @@ function laneGoalFor(cat: string | undefined): string {
 export function buildPracticeProgram(d: CoachDossier): PracticeProgram {
   const weaknesses = d.weaknessPatterns.filter((w) => w.kind === "weakness");
   const top = weaknesses.slice(0, 3);
+  const role = normalizeRole(d.layeredMemory?.role?.role);
+  const pipeline = runCoachingPipeline(
+    (d.habits.length
+      ? d.habits
+          .filter((h) => h.kind === "weakness")
+          .slice(0, 4)
+          .map((h) => ({
+            id: h.id,
+            label: h.label,
+            kind: h.kind,
+            evidence: h.evidence.sentences[0],
+            category: h.category,
+            pillar: h.pillar,
+          }))
+      : top.map((w) => ({
+          id: w.id,
+          label: w.title,
+          kind: w.kind,
+          evidence: w.detail,
+          category: w.category,
+        }))),
+    role,
+  );
+  const focus = pipeline.primary;
   const priorities: PracticePriority[] = top.length
     ? top.map((w: CoachPattern) => ({ title: w.title, why: w.detail }))
     : [
@@ -56,11 +95,16 @@ export function buildPracticeProgram(d: CoachDossier): PracticeProgram {
         { title: "Mental resets", why: "A quick reset between games keeps one loss from becoming three." },
       ];
 
+  // Knowledge-base drills first; local fallbacks only when nothing routed.
+  const knowledgeDrills = pipeline.practicePlan?.drills ?? [];
   const drillCats = Array.from(new Set(top.map((w) => w.category)));
-  const drills = drillCats.length
-    ? drillCats.map((c) => DRILLS[c] ?? DRILLS.farming)
-    : [DRILLS.farming, DRILLS.positioning];
-  drills.push("Between games, review your first death and name the information you were missing.");
+  const drills = knowledgeDrills.length
+    ? knowledgeDrills.slice(0, 4)
+    : drillCats.length
+      ? drillCats.map((c) => DRILLS[c] ?? DRILLS.farming)
+      : [DRILLS.farming, DRILLS.positioning];
+  if (focus) drills.push(focus.decisionChain.practiceRecommendation);
+  else drills.push("Between games, review your first death and name the information you were missing.");
 
   const preferred = d.championAdvice[0];
   const championGoal = preferred
@@ -84,5 +128,10 @@ export function buildPracticeProgram(d: CoachDossier): PracticeProgram {
         : "Attack the closest safe target and keep auto-attacking through the whole fight for 30%+ damage share.",
     successLooksLike: d.improvementPlan.expectedImprovement,
     timeline: `Give this ${Math.max(5, Math.min(10, d.matchesAnalyzed >= 20 ? 10 : 5))} games. ${d.improvementPlan.estimatedImpact}`,
+    focusLesson: focus?.curriculumTopic.label ?? "Consistency",
+    focusWhy: focus?.whyItMatters ?? d.consistency.explanation,
+    measurableGoal: pipeline.practicePlan?.measurableGoal ?? d.improvementPlan.practiceGoal,
+    supportingConcepts: pipeline.practicePlan?.supportingConcepts ?? [],
+    focusContext: focus,
   };
 }
