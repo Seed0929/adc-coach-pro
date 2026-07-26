@@ -145,12 +145,14 @@ function leagueKnowledgeFor(f: LeagueFundamental): LeagueKnowledgeSlice {
   }
   if (f.id === "objective-control" || f.id === "vision") {
     for (const o of LeagueIntelligence.Objective.allObjectives()) {
-      references.push(`${o.label}: ${o.why}`);
+      references.push(`${o.label}: ${o.primaryReward}`);
     }
   }
   if (f.id === "map-movement" || f.id === "positioning" || f.id === "vision") {
     for (const z of LeagueIntelligence.Map.allZones()) {
-      references.push(`${z.label}: ${z.purpose}`);
+      references.push(
+        `${z.label} (${z.side} side)${z.adjacentObjectives.length ? ` — near ${z.adjacentObjectives.join(", ")}` : ""}`,
+      );
     }
   }
 
