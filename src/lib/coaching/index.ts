@@ -17,6 +17,8 @@ import { buildCoachingContext, type AICoachingContext } from "./context-builder"
 import { buildPlayerMemory, type PlayerMemory } from "./player-memory-model";
 import { buildBehaviorObservations, type BehaviorObservation } from "./behavior-engine";
 import { routeQuestion, type AnalysisMode } from "./question-router";
+import { runCoachingPipeline, type CoachingIssue, type CoachingPipelineResult } from "./coaching-pipeline";
+import { normalizeRole } from "./role-intelligence";
 
 export * from "./pillars";
 export * from "./league-knowledge";
@@ -141,3 +143,29 @@ export function followUpQuestion(d: CoachDossier, memory?: PlayerMemory): string
 }
 
 export { routeQuestion };
+
+/**
+ * Sprint 3.2 — the Coach Engine entry point for the permanent pipeline.
+ * Detected habits/patterns in, merged knowledge (Role Intelligence +
+ * Curriculum + League Intelligence) out. Champion Intelligence is optional.
+ */
+export function coachingPipelineFor(d: CoachDossier, champion?: string): CoachingPipelineResult {
+  const issues: CoachingIssue[] = d.habits.length
+    ? d.habits.slice(0, 6).map((h) => ({
+        id: h.id,
+        label: h.label,
+        kind: h.kind,
+        evidence: h.evidence.sentences[0],
+        category: h.category,
+        pillar: h.pillar,
+        impact: h.impact >= 66 ? "high" : h.impact >= 33 ? "medium" : "low",
+      }))
+    : [...d.weaknessPatterns, ...d.strengthPatterns].slice(0, 6).map((p) => ({
+        id: p.id,
+        label: p.title,
+        kind: p.kind,
+        evidence: p.detail,
+        category: p.category,
+      }));
+  return runCoachingPipeline(issues, normalizeRole(d.layeredMemory?.role?.role), champion);
+}
