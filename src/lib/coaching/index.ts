@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 import type { CoachDossier } from "../player-memory";
 import { answerQuickAsk } from "../player-memory";
-import { buildCoachingContext, type CoachingContext } from "./context-builder";
+import { buildCoachingContext, type AICoachingContext } from "./context-builder";
 import { buildPlayerMemory, type PlayerMemory } from "./player-memory-model";
 import { buildBehaviorObservations, type BehaviorObservation } from "./behavior-engine";
 import { routeQuestion, type AnalysisMode } from "./question-router";
@@ -49,7 +49,7 @@ export interface CoachAnswer {
   answer: string;
   mode: AnalysisMode;
   source: "deterministic" | "ai";
-  context: CoachingContext;
+  context: AICoachingContext;
 }
 
 /**

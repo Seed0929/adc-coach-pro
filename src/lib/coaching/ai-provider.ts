@@ -6,7 +6,7 @@
 // falls back to the deterministic engine — nothing throws, the whole
 // architecture stays operational.
 // ---------------------------------------------------------------------------
-import type { CoachingContext } from "./context-builder";
+import type { AICoachingContext } from "./context-builder";
 
 export interface CoachAIProvider {
   readonly name: string;
@@ -16,7 +16,7 @@ export interface CoachAIProvider {
    * Generate a coaching answer from the master prompt + context + question.
    * Returns null on any failure so callers can fall back deterministically.
    */
-  generate(context: CoachingContext): Promise<string | null>;
+  generate(context: AICoachingContext): Promise<string | null>;
 }
 
 /** The no-op provider used whenever no real provider is configured. */
