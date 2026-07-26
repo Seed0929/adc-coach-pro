@@ -40,7 +40,12 @@ import {
   type LeagueFundamentalId,
 } from "./knowledge-base";
 import type { RoleId } from "./knowledge-base/templates/champion";
-import { LeagueIntelligence } from "./league-intelligence";
+// League Intelligence modules are imported directly (not through the facade)
+// so the pipeline never participates in the facade's re-export cycle.
+import * as TempoIntel from "./league-intelligence/tempo";
+import * as EconomyIntel from "./league-intelligence/economy";
+import * as ObjectiveIntel from "./league-intelligence/objective";
+import * as MapIntel from "./league-intelligence/map";
 import {
   getRoleProfile,
   inheritableRoleProfile,
@@ -134,22 +139,22 @@ function leagueKnowledgeFor(f: LeagueFundamental): LeagueKnowledgeSlice {
   const references: string[] = [];
 
   if (f.id === "tempo" || f.id === "wave-management" || f.id === "power-spikes") {
-    for (const c of LeagueIntelligence.Tempo.allTempoConcepts()) {
+    for (const c of TempoIntel.allTempoConcepts()) {
       concepts.push({ label: c.label, definition: c.definition });
     }
   }
   if (f.id === "economy" || f.id === "resource-management" || f.id === "power-spikes") {
-    for (const c of LeagueIntelligence.Economy.allEconomyConcepts()) {
+    for (const c of EconomyIntel.allEconomyConcepts()) {
       concepts.push({ label: c.label, definition: c.definition });
     }
   }
   if (f.id === "objective-control" || f.id === "vision") {
-    for (const o of LeagueIntelligence.Objective.allObjectives()) {
+    for (const o of ObjectiveIntel.allObjectives()) {
       references.push(`${o.label}: ${o.primaryReward}`);
     }
   }
   if (f.id === "map-movement" || f.id === "positioning" || f.id === "vision") {
-    for (const z of LeagueIntelligence.Map.allZones()) {
+    for (const z of MapIntel.allZones()) {
       references.push(
         `${z.label} (${z.side} side)${z.adjacentObjectives.length ? ` — near ${z.adjacentObjectives.join(", ")}` : ""}`,
       );
