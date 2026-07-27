@@ -38,6 +38,7 @@ export * from "./role-intelligence";
 export * from "./habit-engine";
 export * from "./coaching-pipeline";
 export * from "./decision-priority-engine";
+export * from "./coaching-narrative-engine";
 export {
   LeagueIntelligence,
   hydrateLeagueIntelligence,
