@@ -29,6 +29,11 @@ import {
   type CoachingIssue,
 } from "./coaching-pipeline";
 import { getDecisionPattern } from "./knowledge-base";
+import {
+  habitContextsFromPriority,
+  type HabitContext,
+  type HabitContextOptions,
+} from "./habit-context";
 import type { RoleId } from "./knowledge-base/templates/champion";
 
 // ---------------------------------------------------------------------------
@@ -64,6 +69,8 @@ export interface DecisionPriorityInput {
   champion?: string;
   /** Optional window size fallback when an issue carries no `total`. */
   gamesAnalyzed?: number;
+  /** Optional match/timestamp placeholders forwarded into HabitContext. */
+  habitOptions?: HabitContextOptions;
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +146,12 @@ export interface DecisionPriorityResult {
   recoveryOpportunity: PrioritizedDecision | null;
   /** True when Champion Intelligence contributed to the ranking. */
   championIntelligenceUsed: boolean;
+  /**
+   * Standardized, aggregation-ready metadata for every ranked decision, in
+   * ranked order. Prepared for a future Habit Intelligence Engine — no
+   * persistence, no cross-game analysis.
+   */
+  habitContexts: HabitContext[];
 }
 
 // ---------------------------------------------------------------------------
@@ -349,7 +362,7 @@ export function prioritizeDecisions(input: DecisionPriorityInput): DecisionPrior
 
   const roleLabel = ranked[0]?.context.roleLabel ?? input.role.toUpperCase();
 
-  return {
+  const result: DecisionPriorityResult = {
     role: input.role,
     roleLabel,
     ranked,
@@ -359,7 +372,13 @@ export function prioritizeDecisions(input: DecisionPriorityInput): DecisionPrior
     goodHabitToContinue,
     recoveryOpportunity,
     championIntelligenceUsed: ranked.some((d) => !!d.context.championIntelligence),
+    habitContexts: [],
   };
+  result.habitContexts = habitContextsFromPriority(result, {
+    champion: input.champion,
+    ...input.habitOptions,
+  });
+  return result;
 }
 
 /** Convenience: only the single decision to improve first. */
@@ -422,12 +441,14 @@ export function prioritizeHabits(
   role: RoleId,
   champion?: string,
   gamesAnalyzed?: number,
+  habitOptions?: HabitContextOptions,
 ): DecisionPriorityResult {
   return prioritizeDecisions({
     issues: habits.map(habitToPriorityIssue),
     role,
     champion,
     gamesAnalyzed: gamesAnalyzed ?? habits[0]?.evidence?.total,
+    habitOptions,
   });
 }
 

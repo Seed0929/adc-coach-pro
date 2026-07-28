@@ -59,6 +59,7 @@ import {
   type RoleProfile,
 } from "./role-intelligence-v1";
 import { getChampionProfile, type ChampionProfile } from "./champion-intelligence";
+import { habitContextsFromContexts, type HabitContext, type HabitContextOptions } from "./habit-context";
 import type { Fundamental as DisplayFundamental } from "./decision-chain";
 import type { Pillar } from "./pillars";
 
@@ -421,6 +422,12 @@ export interface CoachingPipelineResult {
   report: PipelineCoachReport | null;
   practicePlan: PipelinePracticePlan | null;
   replayCoaching: PipelineReplayCoaching | null;
+  /**
+   * Standardized, aggregation-ready metadata for every detected decision.
+   * Emitted for a future Habit Intelligence Engine — nothing consumes it yet
+   * and no persistence or cross-game analysis happens here.
+   */
+  habitContexts: HabitContext[];
 }
 
 const IMPACT_ORDER: Record<string, number> = { high: 3, medium: 2, low: 1 };
@@ -484,6 +491,7 @@ export function runCoachingPipeline(
   issues: CoachingIssue[],
   role: RoleId,
   champion?: string,
+  habitOptions?: HabitContextOptions,
 ): CoachingPipelineResult {
   const contexts = issues
     .map((i) => buildCoachingContextFor(i, role, champion))
@@ -496,5 +504,6 @@ export function runCoachingPipeline(
     report: primary ? coachReport(primary) : null,
     practicePlan: primary ? practicePlan(primary) : null,
     replayCoaching: primary ? replayCoaching(primary) : null,
+    habitContexts: habitContextsFromContexts(contexts, { champion, ...habitOptions }),
   };
 }
