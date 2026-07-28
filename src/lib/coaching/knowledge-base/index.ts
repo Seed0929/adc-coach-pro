@@ -15,6 +15,7 @@ export * from "./registry";
 export * from "./data-dragon-adapter";
 export * from "./fundamentals";
 export * from "./decision-library";
+export * from "./league-decision-library";
 export * from "./role-differentiation";
 export * from "./curriculum";
 export * from "./curriculum-routing";
@@ -34,6 +35,22 @@ import {
   decisionsByFundamental,
   decisionsForRole,
 } from "./decision-library";
+import {
+  LEAGUE_DECISIONS,
+  getLeagueDecision,
+  isLeagueDecisionId,
+  allLeagueDecisions,
+  leagueDecisionsByFundamental,
+  leagueDecisionsByCurriculumTopic,
+  leagueDecisionsForRole,
+  leagueDecisionsByPhase,
+  leagueDecisionsByCategory,
+  relatedLeagueDecisions,
+  prerequisiteLeagueDecisions,
+  leagueDecisionPriorityScore,
+  rankLeagueDecisions,
+  championReferencesFor,
+} from "./league-decision-library";
 import {
   ROLE_DIFFERENTIATION,
   roleExpressionsFor,
@@ -102,6 +119,26 @@ export const LeagueKnowledgeBase = {
     all: () => DECISION_LIBRARY,
     byFundamental: decisionsByFundamental,
     byRole: decisionsForRole,
+  },
+  /**
+   * Permanent source of truth for coachable decisions. Every module should
+   * reference decision IDs and resolve them here.
+   */
+  Decisions: {
+    get: getLeagueDecision,
+    is: isLeagueDecisionId,
+    all: allLeagueDecisions,
+    ids: () => LEAGUE_DECISIONS.map((d) => d.id),
+    byFundamental: leagueDecisionsByFundamental,
+    byCurriculumTopic: leagueDecisionsByCurriculumTopic,
+    byRole: leagueDecisionsForRole,
+    byPhase: leagueDecisionsByPhase,
+    byCategory: leagueDecisionsByCategory,
+    related: relatedLeagueDecisions,
+    prerequisites: prerequisiteLeagueDecisions,
+    score: leagueDecisionPriorityScore,
+    rank: rankLeagueDecisions,
+    championReferences: championReferencesFor,
   },
   RoleDifferentiation: {
     all: () => ROLE_DIFFERENTIATION,
