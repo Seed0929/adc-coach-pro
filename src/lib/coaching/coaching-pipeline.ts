@@ -60,6 +60,10 @@ import {
 } from "./role-intelligence-v1";
 import { getChampionProfile, type ChampionProfile } from "./champion-intelligence";
 import { habitContextsFromContexts, type HabitContext, type HabitContextOptions } from "./habit-context";
+import {
+  buildUnifiedCoachingContexts,
+  type UnifiedCoachingContext,
+} from "./unified-coaching-context";
 import type { Fundamental as DisplayFundamental } from "./decision-chain";
 import type { Pillar } from "./pillars";
 
@@ -428,6 +432,14 @@ export interface CoachingPipelineResult {
    * and no persistence or cross-game analysis happens here.
    */
   habitContexts: HabitContext[];
+  /**
+   * The canonical shared coaching contract, primary first. Match Reports,
+   * Replay Coach, Practice Planner, the future AI Coach and Player Memory all
+   * consume this object instead of re-deriving knowledge.
+   */
+  unifiedContexts: UnifiedCoachingContext[];
+  /** The one canonical context for the primary decision. */
+  unified: UnifiedCoachingContext | null;
 }
 
 const IMPACT_ORDER: Record<string, number> = { high: 3, medium: 2, low: 1 };
@@ -497,6 +509,8 @@ export function runCoachingPipeline(
     .map((i) => buildCoachingContextFor(i, role, champion))
     .sort((a, b) => issueWeight(b) - issueWeight(a));
   const primary = contexts.find((c) => c.issue.kind === "weakness") ?? contexts[0] ?? null;
+  const habitContexts = habitContextsFromContexts(contexts, { champion, ...habitOptions });
+  const unifiedContexts = buildUnifiedCoachingContexts(contexts, habitContexts);
   return {
     role,
     contexts,
@@ -504,6 +518,8 @@ export function runCoachingPipeline(
     report: primary ? coachReport(primary) : null,
     practicePlan: primary ? practicePlan(primary) : null,
     replayCoaching: primary ? replayCoaching(primary) : null,
-    habitContexts: habitContextsFromContexts(contexts, { champion, ...habitOptions }),
+    habitContexts,
+    unifiedContexts,
+    unified: unifiedContexts.find((u) => u.coachingPriority.rank === "primary") ?? null,
   };
 }
