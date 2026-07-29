@@ -297,7 +297,7 @@ export function buildUnifiedCoachingContext(
       example: expression?.example,
     },
     championIntelligence: c.championIntelligence
-      ? { champion: c.championIntelligence.champion, profile: c.championIntelligence }
+      ? { champion: c.championIntelligence.name, profile: c.championIntelligence }
       : undefined,
     habit: options.habitContext ? { habitContext: options.habitContext } : undefined,
     playerMemory: options.playerMemory,
