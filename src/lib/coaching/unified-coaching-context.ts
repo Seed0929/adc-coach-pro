@@ -80,7 +80,7 @@ export interface DecisionPriorityRef {
 }
 
 /** Where this decision sits in the player's coaching queue. */
-export type CoachingPriorityRank =
+export type UnifiedPriorityRank =
   | "primary"
   | "secondary"
   | "recovery"
@@ -88,8 +88,8 @@ export type CoachingPriorityRank =
   | "maintain"
   | "unranked";
 
-export interface CoachingPriority {
-  rank: CoachingPriorityRank;
+export interface UnifiedCoachingPriority {
+  rank: UnifiedPriorityRank;
   /** Position in the ranked list (0-based) when ranked by the engine. */
   order: number;
   impact: NonNullable<CoachingIssue["impact"]>;
@@ -170,7 +170,7 @@ export interface UnifiedCoachingContext {
   roleIntelligence: RoleIntelligenceRef;
   decision: DecisionRef;
   decisionPriority: DecisionPriorityRef;
-  coachingPriority: CoachingPriority;
+  coachingPriority: UnifiedCoachingPriority;
   practiceRecommendation: PracticeRecommendationRef;
   recoveryRecommendation: RecoveryRecommendationRef;
   positiveReinforcement: PositiveReinforcementRef;
@@ -192,7 +192,7 @@ export interface UnifiedCoachingContext {
 // ---------------------------------------------------------------------------
 
 export interface UnifiedContextOptions {
-  rank?: CoachingPriorityRank;
+  rank?: UnifiedPriorityRank;
   order?: number;
   prioritized?: PrioritizedDecision;
   habitContext?: HabitContext;
