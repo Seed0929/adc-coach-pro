@@ -121,15 +121,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           <RiotRefresh />
 
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="size-9 rounded-full object-cover" />
-            ) : (
-              <div className="size-9 rounded-full bg-gradient-to-br from-primary to-primary-dim" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{displayName}</div>
-              <div className="truncate text-xs text-muted-foreground">{secondaryLine}</div>
-            </div>
+            <Link
+              to="/settings"
+              aria-label="Open settings"
+              title="Open settings"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-xl transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="size-9 shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary-dim" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{displayName}</div>
+                <div className="truncate text-xs text-muted-foreground">{secondaryLine}</div>
+              </div>
+            </Link>
             {isAuthenticated ? (
               <button
                 onClick={handleSignOut}
