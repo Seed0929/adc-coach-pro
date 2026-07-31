@@ -35,7 +35,7 @@ import type { UnifiedCoachingContext } from "./unified-coaching-context";
 export type MemoryStanding = "strength" | "weakness" | "neutral";
 
 /** One point on a memory's long-term trend line (one recorded match). */
-export interface MemoryTrendPoint {
+export interface MemoryLedgerTrendPoint {
   sequence: number;
   matchId: string | null;
   timestamp: string | null;
@@ -87,7 +87,7 @@ export interface PlayerMemoryRecord {
   habitRef: string;
   label: string;
   standing: MemoryStanding;
-  trendHistory: MemoryTrendPoint[];
+  trendHistory: MemoryLedgerTrendPoint[];
   /** True when this memory has behaved as a long-term strength. */
   longTermStrength: boolean;
   /** True when this memory has behaved as a long-term weakness. */
@@ -136,12 +136,12 @@ export interface PlayerMemoryTimelineEntry {
   note: string;
 }
 
-export interface PlayerMemoryRecordOptions extends HabitRecordOptions {
+export interface PlayerMemoryLedgerRecordOptions extends HabitRecordOptions {
   /** Scopes to materialize memories for. Defaults to universal + role. */
   scopes?: HabitScope[];
 }
 
-export interface PlayerMemoryOptions {
+export interface PlayerMemoryLedgerOptions {
   playerId?: string;
   /** Bring your own Habit Intelligence engine (shared state) if desired. */
   habitEngine?: HabitEngineInstance;
@@ -215,7 +215,7 @@ export interface PlayerMemoryLedgerInstance {
   /** Record one match worth of Unified Coaching Contexts into long-term memory. */
   record(
     input: UnifiedCoachingContext | UnifiedCoachingContext[],
-    options?: PlayerMemoryRecordOptions,
+    options?: PlayerMemoryLedgerRecordOptions,
   ): PlayerMemoryRecord[];
   /** Re-derive every memory from Habit Intelligence without new observations. */
   update(): PlayerMemoryRecord[];
@@ -236,7 +236,7 @@ export interface PlayerMemoryLedgerInstance {
 }
 
 export function createPlayerMemoryLedger(
-  options: PlayerMemoryOptions = {},
+  options: PlayerMemoryLedgerOptions = {},
 ): PlayerMemoryLedgerInstance {
   const playerId = options.playerId ?? "local";
   const clock = options.now ?? (() => new Date().toISOString());
@@ -297,7 +297,7 @@ export function createPlayerMemoryLedger(
       const previous = memories.get(memoryId);
       const standing = standingFor(habit);
       const priority = habit.practicePriority;
-      const point: MemoryTrendPoint = {
+      const point: MemoryLedgerTrendPoint = {
         sequence: matchMeta.sequence,
         matchId: habit.lastSeen.matchId ?? matchMeta.matchId,
         timestamp: habit.lastSeen.timestamp ?? matchMeta.timestamp,
@@ -574,7 +574,7 @@ export const PlayerMemoryLedger = Object.assign(createPlayerMemoryLedger(), {
   /** One-shot helper: derive long-term memories from a batch of matches. */
   from(
     matches: { contexts: UnifiedCoachingContext[]; matchId?: string; timestamp?: string; champion?: string }[],
-    options: PlayerMemoryOptions = {},
+    options: PlayerMemoryLedgerOptions = {},
   ): PlayerMemoryRecord[] {
     const ledger = createPlayerMemoryLedger(options);
     for (const m of matches) {
