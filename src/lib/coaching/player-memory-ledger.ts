@@ -158,6 +158,11 @@ const WEAKNESS_MIN_OCCURRENCES = 3;
 const WEAKNESS_MIN_RATE = 0.34;
 const DELTA_THRESHOLD = 5;
 
+function practiceKey(ref?: HabitPracticeRef): string | undefined {
+  if (!ref) return undefined;
+  return ref.decisionPatternId ?? ref.leagueDecisionId ?? ref.topic;
+}
+
 function memoryIdFor(habit: Habit): string {
   return `mem:${habit.id}`;
 }
@@ -265,9 +270,9 @@ export function createPlayerMemoryLedger(
     ref: HabitPracticeRef,
     timestamp: string | null,
   ): MemoryPracticeEntry[] {
-    const id = ref?.practiceId ?? ref?.curriculumTopic ?? "practice";
+    const id = practiceKey(ref) ?? "practice";
     const next = existing.map((e) => ({ ...e }));
-    const match = next.find((e) => (e.practiceRef?.practiceId ?? e.practiceRef?.curriculumTopic) === id);
+    const match = next.find((e) => practiceKey(e.practiceRef) === id);
     if (match) {
       match.timesRecommended += 1;
       match.lastRecommended = timestamp;
@@ -435,10 +440,10 @@ export function createPlayerMemoryLedger(
     update() {
       return sync();
     },
-    get(memoryId?: string) {
-      if (memoryId === undefined) return listMemories();
-      return memories.get(memoryId);
-    },
+    get: ((memoryId?: string) =>
+      memoryId === undefined
+        ? listMemories()
+        : memories.get(memoryId)) as PlayerMemoryLedgerInstance["get"],
     getStrengths(q = {}) {
       return query({ ...q, kind: "strength" }).sort(
         (a, b) => b.reinforcementCount - a.reinforcementCount,
@@ -461,7 +466,7 @@ export function createPlayerMemoryLedger(
       const merged = new Map<string, MemoryPracticeEntry>();
       for (const m of query(q)) {
         for (const entry of m.practiceHistory) {
-          const id = entry.practiceRef?.practiceId ?? entry.practiceRef?.curriculumTopic ?? m.memoryId;
+          const id = practiceKey(entry.practiceRef) ?? m.memoryId;
           const existing = merged.get(id);
           if (!existing) {
             merged.set(id, { ...entry });
