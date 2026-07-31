@@ -17,6 +17,8 @@ import { FlaskConical, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { useBotDiffData } from "@/lib/player-data";
+import logoLockup from "@/assets/botdiff-logo.png";
+import logoMark from "@/assets/botdiff-mark.png";
 import { useSync, formatLastSynced } from "@/hooks/use-sync";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
@@ -86,11 +88,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col p-4 lg:flex">
         <div className="glass flex h-full flex-col rounded-3xl p-5">
-          <Link to="/dashboard" className="mb-8 flex items-center gap-2.5 px-2">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--primary)]">
-              <span className="font-display text-lg font-bold">B</span>
-            </span>
-            <span className="font-display text-lg font-semibold tracking-tight">BotDiff</span>
+          <Link to="/dashboard" className="mb-8 flex items-center px-2">
+            <img src={logoLockup} alt="BotDiff" className="h-9 w-auto object-contain object-left" />
           </Link>
 
           <nav className="flex flex-1 flex-col gap-1">
@@ -161,9 +160,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile top bar */}
       <header className="glass sticky top-0 z-40 mx-4 mt-4 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-display font-bold">
-            B
-          </span>
+          <img src={logoMark} alt="BotDiff" className="size-8 object-contain" />
           <span className="font-display font-semibold">BotDiff</span>
         </Link>
         <nav className="flex items-center gap-1">
