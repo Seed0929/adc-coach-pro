@@ -417,12 +417,6 @@ export function createPlayerMemoryLedger(
     return m.trendHistory[m.trendHistory.length - 1]?.trend ?? "unknown";
   }
 
-  function get(memoryId?: string): never {
-    // Implementation provided by the returned object (overload bridge).
-    throw new Error("unreachable");
-  }
-  void get;
-
   const instance: PlayerMemoryLedgerInstance = {
     record(input, opts = {}) {
       const list = Array.isArray(input) ? input : [input];
