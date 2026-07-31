@@ -41,6 +41,7 @@ export * from "./decision-priority-engine";
 export * from "./habit-context";
 export * from "./habit-intelligence";
 export * from "./player-memory-v1";
+export * from "./player-memory-ledger";
 export * from "./unified-coaching-context";
 export * from "./coaching-narrative-engine";
 export {
