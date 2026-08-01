@@ -214,6 +214,12 @@ export interface CoachingContext {
   habitLibrary: RoleHabitEntry[];
   /** Champion Intelligence stays OPTIONAL — undefined is a valid context. */
   championIntelligence?: ChampionProfile;
+  /**
+   * Champion Intelligence Engine V1 identity. Present ONLY when a populated
+   * champion record exists in the registry, so coaching output is byte-for-byte
+   * identical while the registry is empty.
+   */
+  championIdentity?: ChampionIdentityV1;
 
   // --- assembled knowledge every report can read -------------------------
   whyItMatters: string;
@@ -278,6 +284,10 @@ export function buildCoachingContextFor(
     : undefined;
 
   const championIntelligence = champion ? getChampionProfile(champion) : undefined;
+  const championIdentity =
+    champion && championIntelligenceAvailable(champion)
+      ? championIdentityFor(champion, role)
+      : undefined;
 
   const practiceDrills = uniq(
     [
@@ -326,6 +336,7 @@ export function buildCoachingContextFor(
     ),
     habitLibrary: roleHabitLibrary(role).filter((h) => h.fundamental === topic.fundamental),
     championIntelligence,
+    championIdentity,
 
     whyItMatters: topic.whyItMatters,
     commonMistakes: uniq([...topic.negativeDecisions, ...fundamental.poorDecisionExamples], 4),
