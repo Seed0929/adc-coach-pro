@@ -59,6 +59,11 @@ import {
   type RoleProfile,
 } from "./role-intelligence-v1";
 import { getChampionProfile, type ChampionProfile } from "./champion-intelligence";
+import {
+  getIdentity as championIdentityFor,
+  isAvailable as championIntelligenceAvailable,
+  type ChampionIdentityV1,
+} from "./champion-intelligence-v1/engine";
 import { habitContextsFromContexts, type HabitContext, type HabitContextOptions } from "./habit-context";
 import {
   buildUnifiedCoachingContexts,
