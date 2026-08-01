@@ -62,8 +62,8 @@ import { getChampionProfile, type ChampionProfile } from "./champion-intelligenc
 import {
   getIdentity as championIdentityFor,
   isAvailable as championIntelligenceAvailable,
-  type ChampionIdentityV1,
 } from "./champion-intelligence-v1/engine";
+import type { ChampionIdentityV1 } from "./champion-intelligence-v1/identity";
 import { habitContextsFromContexts, type HabitContext, type HabitContextOptions } from "./habit-context";
 import {
   buildUnifiedCoachingContexts,
