@@ -54,6 +54,16 @@ export {
   type LeagueKnowledgeBaseFacade,
 } from "./knowledge-base";
 export * as KnowledgeBase from "./knowledge-base";
+export * as ChampionIntelligenceFramework from "./champion-intelligence-v1";
+export {
+  ChampionIntelligenceV1,
+  registerChampionProfiles,
+  hydrateChampionIntelligence,
+  emptyChampionProfileV1,
+  type ChampionIntelligenceFacade,
+  type ChampionProfileV1,
+  type ChampionResolution,
+} from "./champion-intelligence-v1";
 
 export interface CoachAnswer {
   answer: string;
