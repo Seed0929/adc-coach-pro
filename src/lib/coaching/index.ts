@@ -54,6 +54,21 @@ export {
   type LeagueKnowledgeBaseFacade,
 } from "./knowledge-base";
 export * as KnowledgeBase from "./knowledge-base";
+export * as NarrativeEngineV1 from "./narrative-engine-v1";
+export {
+  NarrativeEngine,
+  type Narrative,
+  type NarrativeEngineFacade,
+  type NarrativeInput,
+  type NarrativeSource,
+  type NarrativeTrace,
+  type NarrativeDifficultyEstimate,
+  type NarrativeMatchReport,
+  type NarrativePracticePlan,
+  type NarrativePracticeItem,
+  type NarrativeReplaySummary,
+  type NarrativeImprovementSummary,
+} from "./narrative-engine-v1";
 export * as ChampionIntelligenceFramework from "./champion-intelligence-v1";
 export {
   ChampionIntelligenceV1,
