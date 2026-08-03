@@ -70,6 +70,25 @@ export {
   type NarrativeImprovementSummary,
 } from "./narrative-engine-v1";
 export * as ChampionIntelligenceFramework from "./champion-intelligence-v1";
+export * as PracticePlanningV1 from "./practice-planning-v1";
+export {
+  PracticePlanner,
+  createPracticePlanner,
+  type PracticePlan,
+  type PracticePlanInput,
+  type PracticePlanUpdate,
+  type PracticePlannerFacade,
+  type PracticePlannerInstance,
+  type PracticeFocus,
+  type PracticeNextFocus,
+  type PracticeChecklistItem,
+  type PracticeSuccessCriterion,
+  type PracticeDifficulty,
+  type PracticeProgress,
+  type PracticeCompletionStatus,
+  type PracticeTrace,
+  type PracticeLayer,
+} from "./practice-planning-v1";
 export {
   ChampionIntelligenceV1,
   registerChampionProfiles,
