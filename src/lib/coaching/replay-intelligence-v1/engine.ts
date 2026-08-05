@@ -12,6 +12,7 @@
 // PURE + client-safe. No AI, no network, no Riot calls, no persistence.
 // ---------------------------------------------------------------------------
 import {
+  curriculumForFundamental,
   getCurriculumTopic,
   getFundamental,
   getLeagueDecision,
@@ -474,7 +475,7 @@ function buildMoment(
   const evidence = [
     ...c.decisionPriority.evidence,
     ...(habit?.evidence ?? []),
-    ...(memory ? [`Tracked in your coaching history since ${memory.firstSeen ?? "your first review"}.`] : []),
+    ...(memory ? [`Tracked in your coaching history since ${memory.createdAt}.`] : []),
   ]
     .filter((e, i, arr) => e && arr.indexOf(e) === i)
     .slice(0, 4);
@@ -674,8 +675,8 @@ export function safeFallback(role: RoleId = "adc", now?: string): ReplayTimeline
   const expression = profile.fundamentalExpression[0];
   const fundamentalId: LeagueFundamentalId = expression?.fundamental ?? "decision-making";
   const fundamental = getFundamental(fundamentalId);
-  const topicId = (fundamental.curriculumTopics?.[0] ?? "decision-quality") as CurriculumTopicId;
-  const topic = getCurriculumTopic(topicId);
+  const topic = curriculumForFundamental(fundamentalId)[0];
+  const topicId: CurriculumTopicId = topic?.id ?? "decision-quality";
   const seconds = 8 * 60;
 
   const base: ReplayMoment = {
@@ -699,7 +700,7 @@ export function safeFallback(role: RoleId = "adc", now?: string): ReplayTimeline
     longTermResult: firstOf(topic?.decisionChain.longTermImpact, "The lead compounds for whoever spends time better."),
     tempoImpact: firstOf(topic?.decisionChain.tempoImpact, profile.tempoPhilosophy?.[0], "Tempo follows the player who resets first."),
     economyImpact: firstOf(profile.economyPhilosophy?.[0], "Lost time in lane becomes lost items later."),
-    objectiveImpact: firstOf(topic?.decisionChain.objectiveImpact, profile.objectivePhilosophy?.[0], "The next objective becomes harder to contest."),
+    objectiveImpact: firstOf(topic?.decisionChain.objectiveImpact, profile.objectiveResponsibilities?.[0], "The next objective becomes harder to contest."),
     teamfightImpact: firstOf(profile.positioningPhilosophy?.[0], "Fights start on worse terms than they should."),
     recoveryOpportunity: firstOf(topic?.recoveryMethods[0], "Reset, catch the next side wave, and re-enter even."),
     practiceReference: firstOf(topic?.practiceConcepts[0], `Play three games focused only on ${fundamental.label.toLowerCase()}.`),
