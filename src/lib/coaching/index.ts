@@ -89,6 +89,22 @@ export {
   type PracticeTrace,
   type PracticeLayer,
 } from "./practice-planning-v1";
+export * as ReplayIntelligenceV1 from "./replay-intelligence-v1";
+export {
+  ReplayEngine,
+  type ReplayEngineFacade,
+  type ReplayInput,
+  type ReplayMoment,
+  type ReplayMomentType,
+  type ReplayTimeline,
+  type ReplayTimestamp,
+  type ReplayPriority,
+  type ReplayPriorityBand,
+  type ReplayConfidence,
+  type ReplayDecisionTimelineEntry,
+  type ReplayTrace,
+  type ReplayLayer,
+} from "./replay-intelligence-v1";
 export {
   ChampionIntelligenceV1,
   registerChampionProfiles,
