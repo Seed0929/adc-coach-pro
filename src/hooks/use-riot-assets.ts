@@ -14,7 +14,13 @@ import {
  */
 export function useRiotAssets(): { assets: RiotAssetService; ready: boolean; version: string } {
   useEffect(() => {
-    void loadRiotAssets();
+    void loadRiotAssets().then(async () => {
+      // Champion Intelligence consumes Riot facts through the provider only.
+      const { hydrateChampionIntelligence } = await import(
+        "@/lib/coaching/champion-intelligence-v1/registry"
+      );
+      await hydrateChampionIntelligence();
+    });
   }, []);
 
   useSyncExternalStore(
