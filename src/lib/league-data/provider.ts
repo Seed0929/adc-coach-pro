@@ -188,7 +188,7 @@ function championAssets(id: string, detail: DDChampionDetail): ChampionAssets {
     square: `${DDRAGON_CDN}/${state.patch}/img/champion/${id}.png`,
     splash: `${DDRAGON_CDN}/img/champion/splash/${id}_0.jpg`,
     loading: `${DDRAGON_CDN}/img/champion/loading/${id}_0.jpg`,
-    centered: `${COMMUNITY_DRAGON}/../../../../../../game/assets/characters/${id.toLowerCase()}/skins/base/images/${id.toLowerCase()}_splash_centered_0.jpg`,
+    centered: `https://cdn.communitydragon.org/latest/champion/${detail.key}/splash-art/centered`,
     passiveIcon: detail.passive?.image?.full
       ? `${DDRAGON_CDN}/${state.patch}/img/passive/${detail.passive.image.full}`
       : "",
