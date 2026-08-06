@@ -9,8 +9,6 @@
 //
 // The Coach Engine will not change. Consumers keep asking the registry.
 // ---------------------------------------------------------------------------
-import { __resetRegistryForHydration } from "./registry";
-
 export interface DataDragonHydrationOptions {
   patch?: string;
   locale?: string;
@@ -24,15 +22,32 @@ export interface DataDragonHydrationResult {
 }
 
 /**
- * Entry point for Riot Data Dragon hydration. Inert today — returns a
- * `hydrated: false` result so callers can safely invoke it without a network.
+ * Entry point for Riot Data Dragon hydration (Sprint 4.4).
+ *
+ * Delegates to the League Data Providers layer, which owns all fetching,
+ * caching, patch detection and fallback. This adapter stays free of Riot
+ * endpoints and of coaching logic: it only routes validated facts into
+ * Champion Intelligence.
  */
 export async function hydrateFromDataDragon(
-  _opts: DataDragonHydrationOptions = {},
+  opts: DataDragonHydrationOptions = {},
 ): Promise<DataDragonHydrationResult> {
-  // Reserved for the future. When implemented:
-  //   __resetRegistryForHydration();
-  //   register* templates mapped from Data Dragon payloads.
-  void __resetRegistryForHydration; // keep import live for future work
-  return { hydrated: false, reason: "Data Dragon integration not yet enabled" };
+  try {
+    const { LeagueDataProviders } = await import("../../league-data");
+    if (opts.locale) LeagueDataProviders.provider.setLocale(opts.locale);
+    const result = await LeagueDataProviders.hydrateChampionIntelligence();
+    if (!result.hydrated) {
+      return { hydrated: false, patch: result.patch, reason: "Riot Data Dragon unavailable" };
+    }
+    return {
+      hydrated: true,
+      patch: result.patch,
+      counts: { champions: result.champions },
+    };
+  } catch (error) {
+    return {
+      hydrated: false,
+      reason: error instanceof Error ? error.message : "Data Dragon hydration failed",
+    };
+  }
 }
