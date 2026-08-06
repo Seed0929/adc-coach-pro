@@ -54,6 +54,16 @@ export {
   type LeagueKnowledgeBaseFacade,
 } from "./knowledge-base";
 export * as KnowledgeBase from "./knowledge-base";
+export {
+  LeagueDataProviders,
+  DataDragonProvider,
+  ChampionRepository,
+  ItemRepository,
+  RuneRepository,
+  AssetRepository,
+  VersionRepository,
+  type LeagueDataProvidersFacade,
+} from "../league-data";
 export * as NarrativeEngineV1 from "./narrative-engine-v1";
 export {
   NarrativeEngine,

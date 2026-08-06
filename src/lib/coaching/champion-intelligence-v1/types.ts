@@ -102,6 +102,59 @@ export interface ChampionPracticeFocus {
   measurable: string | Pending;
 }
 
+/** Official Riot ability metadata (facts only — supplied by Data Dragon). */
+export interface ChampionOfficialAbility {
+  slot: "P" | "Q" | "W" | "E" | "R";
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  maxRank?: number;
+  cooldown?: string;
+  cost?: string;
+  range?: string;
+  resource?: string;
+}
+
+/** Riot-provided visual assets for a champion. */
+export interface ChampionVisualAssets {
+  square: string;
+  splash: string;
+  loading: string;
+  centered: string;
+  passiveIcon: string;
+  abilityIcons: Record<string, string>;
+}
+
+/**
+ * Validated Riot facts attached to a ChampionProfile by the Data Dragon
+ * provider. Present only when the provider has hydrated the champion; the
+ * coaching layers treat it as OPTIONAL enrichment, exactly like the rest of
+ * Champion Intelligence.
+ */
+export interface ChampionOfficialMetadata {
+  /** Data Dragon id, e.g. "Kaisa". */
+  dataDragonId: string;
+  /** Numeric Riot key. */
+  key: string;
+  name: string;
+  title: string;
+  lore: string;
+  officialTags: string[];
+  officialClasses: string[];
+  officialRoles: RoleId[];
+  officialResourceType: ChampionResourceType;
+  officialRangeType: ChampionRangeType;
+  attackRange: number | null;
+  stats: Record<string, number>;
+  info: { attack: number; defense: number; magic: number; difficulty: number } | null;
+  passive: ChampionOfficialAbility | null;
+  abilities: ChampionOfficialAbility[];
+  assets: ChampionVisualAssets;
+  /** Riot patch these facts came from. */
+  patch: string;
+}
+
 /**
  * The permanent ChampionProfile shape. Data Dragon populates it later; until
  * then `emptyChampionProfileV1()` yields a fully valid placeholder record.
@@ -137,6 +190,8 @@ export interface ChampionProfileV1 {
   decisionLibraryReferences: ChampionDecisionReference[];
   roleOverrides: ChampionRoleOverride[];
   practiceFocus: ChampionPracticeFocus[];
+  /** Riot-validated facts from the Data Dragon provider (OPTIONAL). */
+  official?: ChampionOfficialMetadata;
   /** Provenance so `curated` → `datadragon` is a data change, not a code one. */
   source: KnowledgeSource;
   patch?: string;

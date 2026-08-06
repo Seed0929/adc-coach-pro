@@ -37,9 +37,24 @@ export function registeredChampionIds(): string[] {
 }
 
 /**
- * Future Data Dragon entry point. Inert today — kept here so consumers never
- * need to know where champion data comes from.
+ * Data Dragon entry point (Sprint 4.4). Champion Intelligence NEVER touches a
+ * Riot endpoint: it asks the League Data Providers layer, which owns fetching,
+ * caching, patch detection and fallback. Imported lazily so this module stays
+ * pure and free of any network dependency.
  */
-export function hydrateChampionIntelligence(): void {
-  // Intentionally empty. Data Dragon is deferred to a later sprint.
+export async function hydrateChampionIntelligence(): Promise<{
+  hydrated: boolean;
+  patch: string;
+  champions: number;
+}> {
+  try {
+    const { hydrateChampionIntelligenceFromDataDragon } = await import(
+      "../../league-data/champion-intelligence-bridge"
+    );
+    const result = await hydrateChampionIntelligenceFromDataDragon();
+    return { hydrated: result.hydrated, patch: result.patch, champions: result.champions };
+  } catch {
+    // Riot unavailable → coaching continues on Role Intelligence, unchanged.
+    return { hydrated: false, patch: "", champions: 0 };
+  }
 }
