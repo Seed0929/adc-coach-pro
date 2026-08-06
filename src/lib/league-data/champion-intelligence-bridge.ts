@@ -12,14 +12,16 @@
 // ---------------------------------------------------------------------------
 import {
   emptyChampionProfileV1,
-  rawChampionProfile,
-  registerChampionProfiles,
   type ChampionOfficialAbility,
   type ChampionOfficialMetadata,
   type ChampionProfileV1,
   type ChampionRangeType,
   type ChampionResourceType,
 } from "../coaching/champion-intelligence-v1/types";
+import {
+  rawChampionProfile,
+  registerChampionProfiles,
+} from "../coaching/champion-intelligence-v1/registry";
 import type { RoleId } from "../coaching/knowledge-base/templates/champion";
 import { allChampions, currentPatch, loadLeagueData, resolveChampion } from "./provider";
 import type { ChampionAbilityMeta, ChampionData } from "./types";
