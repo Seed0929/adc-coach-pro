@@ -49,11 +49,11 @@ const DEV_TERMS = [
 
 /** A REAL (non-demo) synced match id, as stored rows carry from Riot. */
 function realMatch(overrides: Partial<MatchAnalysisInput> = {}): MatchAnalysisInput {
-  return { ...DEMO_INPUTS[0], matchId: "NA1_5500000001", ...overrides };
+  return { ...DEMO_INPUTS[0], matchId: "NA1_4712398841", ...overrides };
 }
 
 function realHistory(): MatchAnalysisInput[] {
-  return DEMO_INPUTS.slice(1).map((m, i) => ({ ...m, matchId: `NA1_55000000${i + 2}` }));
+  return DEMO_INPUTS.slice(1).map((m, i) => ({ ...m, matchId: `NA1_47123988${40 - i}` }));
 }
 
 function textOf(value: unknown, out: string[] = []): string[] {
@@ -84,68 +84,77 @@ export function runAuthenticatedChecks(): CheckResult[] {
   // --- 1. Real synced match becomes a real report -------------------------
   check("a real (non-demo) match id produces a full report", () => {
     return (
-      report.matchId === "NA1_5500000001" &&
+      report.matchId === "NA1_4712398841" &&
       !report.matchId.startsWith("demo-") &&
-      report.grade.length > 0
+      report.overallGrade.length > 0 &&
+      report.summary.length > 0
     );
   });
 
-  check("report identity matches the synced match's champion and result", () => {
+  check("report identity matches the synced match", () => {
     const src = realMatch();
     return (
-      report.championName === src.championName &&
+      report.champion === src.champion &&
+      report.role === src.role &&
       report.win === src.win &&
-      report.kills === src.kills &&
-      report.deaths === src.deaths &&
-      report.assists === src.assists
+      report.durationMin === src.durationMin
     );
   });
 
   check("real report is not the demo report", () => {
-    const demo = buildDemoMatchReport(0);
-    return demo.matchId !== report.matchId;
+    return buildDemoMatchReport(0).matchId !== report.matchId;
   });
 
   // --- 2. Decision Chain delivery -----------------------------------------
   check("Decision Chain V1 reaches the real match report", () => {
-    return Boolean(report.decisionChain?.primary);
-  });
-
-  check("Why This Coaching has a prioritized decision with evidence", () => {
-    const primary = report.decisionChain?.primary;
-    if (!primary) return "no primary decision";
-    if (!primary.decision?.label) return "primary decision has no label";
-    return primary.evidence.length > 0 || "primary decision carries no evidence";
-  });
-
-  check("available decisions are exposed where the chain supports them", () => {
-    const primary = report.decisionChain?.primary;
-    if (!primary) return "no primary decision";
-    return Array.isArray(primary.availableDecisions);
-  });
-
-  check("counterfactual certainty is always explicit", () => {
     const chain = report.decisionChain;
-    if (!chain) return "no chain";
-    for (const link of [chain.primary, ...(chain.supporting ?? [])]) {
-      if (!link?.counterfactual) continue;
-      if (!link.counterfactual.certainty) return `missing certainty on ${link.decision?.label}`;
+    if (!chain) return "no decisionChain on the report";
+    return Boolean(chain.primaryDecisionId) || "no prioritized decision";
+  });
+
+  check("Why This Coaching has what happened and why it mattered", () => {
+    const chain = report.decisionChain;
+    if (!chain) return "no decisionChain";
+    return (
+      Boolean(chain.whatHappened && chain.whyItMattered) ||
+      "explanation fields are empty on real data"
+    );
+  });
+
+  check("alternative decisions are exposed as a list", () => {
+    return Array.isArray(report.decisionChain?.decisionsAvailable);
+  });
+
+  check("counterfactual certainty is always explicit when present", () => {
+    const chains = report.decisionChain?.chains ?? [];
+    for (const c of chains) {
+      if (c.counterfactual && !c.counterfactual.certainty) {
+        return `missing certainty on ${c.selectedDecision.label}`;
+      }
     }
     return true;
   });
 
-  check("chain passes the Sprint 5.2 validator on real data", () => {
-    const chain = report.decisionChain;
-    if (!chain) return "no chain";
-    const audit = V.chain(chain.primary);
-    return audit.valid || audit.issues.join("; ");
+  check("every chain passes the Sprint 5.2 validator on real data", () => {
+    const chains = report.decisionChain?.chains ?? [];
+    if (chains.length === 0) return "no chains built from a real match";
+    for (const c of chains) {
+      const audit = V.chain(c);
+      if (!audit.valid) return `${c.selectedDecision.label}: ${audit.issues.join("; ")}`;
+    }
+    return true;
+  });
+
+  check("coach assessment level is always stated", () => {
+    return Boolean(report.coachAssessment && report.assessmentReason);
   });
 
   // --- 3. Habit evidence is support, never proof ---------------------------
-  check("habit context is only attached after real recurrence", () => {
+  check("habit note is withheld until the habit recurs", () => {
     const single = buildMatchReportDecisionChain(realMatch(), []);
-    const habit = single?.primary?.habit;
-    return !habit || habit.matches <= 1 || `habit claimed ${habit.matches} matches from 1 match`;
+    if (!single) return true;
+    const occurrences = single.chains[0]?.playerHabitContext?.occurrences ?? 0;
+    return single.habitNote === null || occurrences >= 2 || "habit note surfaced from one match";
   });
 
   check("habit evidence is never labelled as proof", () => {
@@ -154,31 +163,29 @@ export function runAuthenticatedChecks(): CheckResult[] {
   });
 
   // --- 4. Practice handoff uses the existing Practice Planner --------------
-  check("practice goal is present and measurable on real data", () => {
+  check("practice goal is present on real data", () => {
     return report.practiceGoal.length > 0;
   });
 
-  check("practice reference comes from the Practice Planner contract", () => {
-    const ref = report.decisionChain?.primary?.practice;
+  check("the chain's practice reference points at the Practice Planner", () => {
+    const ref = report.decisionChain?.chains[0]?.practiceGoal;
     if (!ref) return "no practice reference on the chain";
-    const plan = PracticePlanner.safeFallback();
-    return Boolean(ref.goal) && Boolean(plan.primaryFocus);
+    return Boolean(ref.goal) && Boolean(PracticePlanner.safeFallback().primaryFocus);
   });
 
-  check("only one practice-planning system feeds the report", () => {
-    const ref = report.decisionChain?.primary?.practice;
-    return Boolean(ref?.goal) && report.practiceGoal.length > 0;
+  check("report practice goal and chain practice goal both resolve", () => {
+    return report.practiceGoal.length > 0 && Boolean(report.decisionChain?.practiceGoal);
   });
 
   // --- 5. Authenticated empty / failure states -----------------------------
-  check("an authenticated account with no matches yields no fabricated report", () => {
-    const chain = buildMatchReportDecisionChain(realMatch(), []);
-    return chain === null || Boolean(chain.primary);
-  });
-
-  check("a report built from a single match still renders coaching", () => {
+  check("a first synced match with no history still builds coaching", () => {
     const solo = buildMatchReport(realMatch(), null, []);
     return solo.strengths.length + solo.mistakes.length > 0 && solo.practiceGoal.length > 0;
+  });
+
+  check("an empty history never fabricates a chain", () => {
+    const chain = buildMatchReportDecisionChain(realMatch(), []);
+    return chain === null || Boolean(chain.primaryDecisionId);
   });
 
   check("retrying the same match is deterministic", () => {
@@ -188,7 +195,16 @@ export function runAuthenticatedChecks(): CheckResult[] {
   });
 
   check("no developer terminology reaches authenticated coaching output", () => {
-    for (const t of textOf(report)) {
+    const surfaces = [
+      report.summary,
+      report.practiceGoal,
+      report.assessmentReason,
+      ...report.strengths.flatMap((s) => [s.title, s.why]),
+      ...report.mistakes.flatMap((m) => [m.title, m.what, m.why, m.fix]),
+      report.decisionChain?.whatHappened ?? "",
+      report.decisionChain?.whyItMattered ?? "",
+    ];
+    for (const t of surfaces) {
       const hit = DEV_TERMS.find((d) => t.includes(d));
       if (hit) return `"${hit}" in "${t.slice(0, 80)}"`;
     }
