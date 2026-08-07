@@ -186,7 +186,7 @@ export function runHardeningChecks(): CheckResult[] {
   check("the practice-plan handoff from the chain is intact and measurable", () => {
     const built = buildMatchDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, undefined)!;
     const plan = PracticePlanner.create({ contexts: built.set.chains.map((c) => c.source) });
-    const goal = built.set.chains[0]?.practiceReference?.goal ?? "";
+    const goal = built.set.chains[0]?.practiceGoal?.goal ?? "";
     return Boolean(plan.primaryFocus && plan.successCriteria.length > 0 && goal.length > 0);
   });
 
