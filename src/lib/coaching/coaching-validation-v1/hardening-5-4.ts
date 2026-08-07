@@ -108,7 +108,13 @@ export function runHardeningChecks(): CheckResult[] {
     const plan = PracticePlanner.create({ contexts: [] });
     const bad = leaks(plan);
     if (bad) return bad;
-    return typeof plan.primaryFocus === "string";
+    // The fallback must be structurally complete AND traceable to role
+    // knowledge — never presented as something observed in a real match.
+    return (
+      plan.primaryFocus.statement.length > 0 &&
+      plan.primaryFocus.decisionId.startsWith("role-fallback") &&
+      plan.decisionIds.every((id) => id.startsWith("role-fallback"))
+    );
   });
 
   // --- Degraded data -----------------------------------------------------
