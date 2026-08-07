@@ -491,6 +491,9 @@ export function runCoachingValidationChecks(): CheckResult[] {
 
   check("missing data is reported explicitly, never invented", () => {
     const v = V.set(DC.build(scenario("top")));
+    if (!v.missing.length) return "no missing states";
+    if (!v.missing.some((m) => m.requiredSource === "player-memory"))
+      return `sources: ${v.missing.map((m) => m.requiredSource).join(",")}`;
     return (
       v.missing.length > 0 &&
       v.missing.some((m) => m.requiredSource === "player-memory") &&
