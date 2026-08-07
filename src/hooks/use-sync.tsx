@@ -45,9 +45,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const linked = isAuthenticated && Boolean(profile?.riot_connected);
 
   const [checking, setChecking] = useState(false);
-  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
-    profile?.last_synced_at ?? null,
-  );
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(profile?.last_synced_at ?? null);
   const [version, setVersion] = useState(0);
   const inFlight = useRef(false);
 

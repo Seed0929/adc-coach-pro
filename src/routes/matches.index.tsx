@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, Loader2, Sparkles } from "lucide-react";
+  ArrowUpRight,
+  Crosshair,
+  Eye,
+  Sword,
+  ShieldAlert,
+  ThumbsUp,
+  RefreshCw,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
@@ -68,7 +71,13 @@ function CurveChart({
               axisLine={false}
               tickFormatter={(m) => `${m}'`}
             />
-            <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={44} />
+            <YAxis
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={44}
+            />
             <Tooltip contentStyle={chartTooltip} />
             <Line
               type="monotone"
@@ -137,11 +146,7 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
           disabled={syncing}
           className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium disabled:opacity-60"
         >
-          {syncing ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="size-4" />
-          )}
+          {syncing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
           {syncing ? "Syncing…" : "Sync Matches"}
         </button>
       </div>
@@ -220,7 +225,8 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
                     <Pill tone={win ? "success" : "danger"}>{win ? "Victory" : "Defeat"}</Pill>
                   </div>
                   <div className="mt-0.5 text-xs text-muted-foreground">
-                    {m.queueLabel ?? "Match"} · {fmtDate(m.gameCreation)} · {fmtDuration(m.gameDuration)}
+                    {m.queueLabel ?? "Match"} · {fmtDate(m.gameCreation)} ·{" "}
+                    {fmtDuration(m.gameDuration)}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-right sm:grid-cols-3">
@@ -284,7 +290,11 @@ function DemoMatches() {
                   selected ? "border-primary/40" : ""
                 }`}
               >
-                <img src={assets.championSquare(m.champ)} alt={m.champ} className="size-11 rounded-xl object-cover" />
+                <img
+                  src={assets.championSquare(m.champ)}
+                  alt={m.champ}
+                  className="size-11 rounded-xl object-cover"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{m.champ}</span>
@@ -296,7 +306,9 @@ function DemoMatches() {
                 </div>
                 <div className="text-right">
                   <div className="font-display text-xl font-semibold text-primary">{m.grade}</div>
-                  <div className={`text-xs ${win ? "text-success" : "text-destructive"}`}>{m.lp} LP</div>
+                  <div className={`text-xs ${win ? "text-success" : "text-destructive"}`}>
+                    {m.lp} LP
+                  </div>
                 </div>
               </button>
             );
@@ -307,13 +319,23 @@ function DemoMatches() {
         <div className="glass rise relative overflow-hidden rounded-3xl p-7" key={active.id}>
           <ChampionBackdrop champions={active.champ} intensity="medium" />
           <div className="relative flex items-center gap-4">
-            <img src={assets.championSquare(active.champ)} alt={active.champ} className="size-14 rounded-2xl object-cover" />
+            <img
+              src={assets.championSquare(active.champ)}
+              alt={active.champ}
+              className="size-14 rounded-2xl object-cover"
+            />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="font-display text-xl font-semibold tracking-tight">{active.champ}</h2>
-                <Pill tone={active.result === "Victory" ? "success" : "danger"}>{active.result}</Pill>
+                <h2 className="font-display text-xl font-semibold tracking-tight">
+                  {active.champ}
+                </h2>
+                <Pill tone={active.result === "Victory" ? "success" : "danger"}>
+                  {active.result}
+                </Pill>
               </div>
-              <div className="text-sm text-muted-foreground">{active.kda} · {active.cs} CS</div>
+              <div className="text-sm text-muted-foreground">
+                {active.kda} · {active.cs} CS
+              </div>
             </div>
             <div className="text-right">
               <div className="font-display text-4xl font-semibold text-primary">{active.grade}</div>
@@ -339,8 +361,18 @@ function DemoMatches() {
           {/* CS & gold curves */}
           <div className="grid gap-3 xl:grid-cols-3">
             <CurveChart match={active} dataKey="cs" benchKey="csBenchmark" label="CS over time" />
-            <CurveChart match={active} dataKey="gold" benchKey="goldBenchmark" label="Gold over time" />
-            <CurveChart match={active} dataKey="damage" benchKey="damageBenchmark" label="Damage over time" />
+            <CurveChart
+              match={active}
+              dataKey="gold"
+              benchKey="goldBenchmark"
+              label="Gold over time"
+            />
+            <CurveChart
+              match={active}
+              dataKey="damage"
+              benchKey="damageBenchmark"
+              label="Damage over time"
+            />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -376,7 +408,9 @@ function DemoMatches() {
       {/* Positioning heatmap */}
       <div className="mt-6 glass rise rounded-3xl p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold tracking-tight">Death & Positioning Heatmap</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            Death & Positioning Heatmap
+          </h2>
           <Pill tone="warning">Mid-game hotspots</Pill>
         </div>
         <div className="grid gap-5 md:grid-cols-[1.2fr_1fr] md:items-center">

@@ -157,19 +157,34 @@ export function runHardeningChecks(): CheckResult[] {
 
   // --- Evidence integrity ------------------------------------------------
   check("coaching never invents evidence — every statement is observed data", () => {
-    const built = buildMatchDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, undefined)!;
+    const built = buildMatchDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      undefined,
+    )!;
     return built.set.chains.every((c) =>
       c.evidence.every((e) => e.statement.trim().length > 0 && Boolean(e.source)),
     );
   });
 
   check("habit evidence stays supporting context, never proof", () => {
-    const built = buildMatchDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, undefined)!;
+    const built = buildMatchDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      undefined,
+    )!;
     return V.set(built.set).chains.every((c) => c.habitIsProof === false);
   });
 
   check("counterfactuals always state their certainty", () => {
-    const built = buildMatchDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, undefined)!;
+    const built = buildMatchDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      undefined,
+    )!;
     return built.set.chains.every((c) => {
       const cf = V.counterfactual(c);
       return ["KNOWN", "INFERRED", "UNKNOWN"].includes(cf.certainty) && cf.uncertainty.length > 0;
@@ -178,8 +193,18 @@ export function runHardeningChecks(): CheckResult[] {
 
   // --- Determinism / retry safety ---------------------------------------
   check("the Decision Chain is deterministic across repeated builds", () => {
-    const a = buildMatchReportDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, "2026-01-01T00:00:00.000Z");
-    const b = buildMatchReportDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, "2026-01-01T00:00:00.000Z");
+    const a = buildMatchReportDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      "2026-01-01T00:00:00.000Z",
+    );
+    const b = buildMatchReportDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      "2026-01-01T00:00:00.000Z",
+    );
     return JSON.stringify(a) === JSON.stringify(b) || "chain output drifted between builds";
   });
 
@@ -190,7 +215,12 @@ export function runHardeningChecks(): CheckResult[] {
   });
 
   check("the practice-plan handoff from the chain is intact and measurable", () => {
-    const built = buildMatchDecisionChain(DEMO_INPUTS[0], DEMO_INPUTS.slice(1), undefined, undefined)!;
+    const built = buildMatchDecisionChain(
+      DEMO_INPUTS[0],
+      DEMO_INPUTS.slice(1),
+      undefined,
+      undefined,
+    )!;
     const plan = PracticePlanner.create({ contexts: built.set.chains.map((c) => c.source) });
     const goal = built.set.chains[0]?.practiceGoal?.goal ?? "";
     return Boolean(plan.primaryFocus && plan.successCriteria.length > 0 && goal.length > 0);

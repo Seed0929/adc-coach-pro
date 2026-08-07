@@ -15,7 +15,10 @@ export const Route = createFileRoute("/matches/$matchId")({
           "A personalized AI coaching report for one match: grade, strengths, mistakes, priority improvement, practice goal, and how you've trended.",
       },
       { property: "og:title", content: "AI Coach — Match Review — BotDiff" },
-      { property: "og:description", content: "Read your match like feedback from a real League coach." },
+      {
+        property: "og:description",
+        content: "Read your match like feedback from a real League coach.",
+      },
     ],
   }),
   component: MatchReportPage,

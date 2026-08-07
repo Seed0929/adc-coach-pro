@@ -17,11 +17,7 @@ import { useEffect } from "react";
 import { Pill } from "@/components/app-shell";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
-import type {
-  MatchCoachingReport,
-  CoachAssessment,
-  TrendItem,
-} from "@/lib/coaching-engine";
+import type { MatchCoachingReport, CoachAssessment, TrendItem } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
 import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
@@ -33,12 +29,13 @@ import { validateCounterfactual } from "@/lib/coaching/coaching-validation-v1";
 // Nothing here is invented: absent sources render as an explicit note.
 // ---------------------------------------------------------------------------
 
-const CHAIN_ASSESSMENT: Record<string, { label: string; tone: "success" | "warning" | "danger" }> = {
-  HIGH: { label: "Reliable read", tone: "success" },
-  MEDIUM: { label: "Solid read", tone: "warning" },
-  LOW: { label: "Early read", tone: "danger" },
-  INSUFFICIENT_DATA: { label: "Not enough data yet", tone: "danger" },
-};
+const CHAIN_ASSESSMENT: Record<string, { label: string; tone: "success" | "warning" | "danger" }> =
+  {
+    HIGH: { label: "Reliable read", tone: "success" },
+    MEDIUM: { label: "Solid read", tone: "warning" },
+    LOW: { label: "Early read", tone: "danger" },
+    INSUFFICIENT_DATA: { label: "Not enough data yet", tone: "danger" },
+  };
 
 function clock(seconds: number | null | undefined): string | null {
   if (typeof seconds !== "number" || seconds < 0) return null;
@@ -145,7 +142,9 @@ function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
         <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
           <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
             The alternative{" "}
-            <span className="text-muted-foreground/70">({counterfactual.certainty.toLowerCase()})</span>
+            <span className="text-muted-foreground/70">
+              ({counterfactual.certainty.toLowerCase()})
+            </span>
           </p>
           <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
           <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
@@ -205,19 +204,29 @@ function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
         <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
           <div>
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You</div>
-            <div className="font-display text-sm font-semibold text-foreground tabular-nums">{i.purchaseTime}</div>
+            <div className="font-display text-sm font-semibold text-foreground tabular-nums">
+              {i.purchaseTime}
+            </div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Same rank</div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              Same rank
+            </div>
             <div className="font-display text-sm font-semibold tabular-nums">{i.targetTime}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">High elo</div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              High elo
+            </div>
             <div className="font-display text-sm font-semibold tabular-nums">{i.highEloTime}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Difference</div>
-            <div className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              Difference
+            </div>
+            <div
+              className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}
+            >
               {i.differenceLabel}
             </div>
           </div>
@@ -243,10 +252,16 @@ function impactLabel(i: ImpactLevel): string {
 function TimelineEvent({ e }: { e: CoachableEvent }) {
   const isPositive = e.tone === "positive";
   return (
-    <div className={`rounded-2xl p-4 ${isPositive ? "bg-success/[0.06] ring-1 ring-success/20" : "bg-white/[0.03]"}`}>
+    <div
+      className={`rounded-2xl p-4 ${isPositive ? "bg-success/[0.06] ring-1 ring-success/20" : "bg-white/[0.03]"}`}
+    >
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="font-display text-sm font-semibold text-primary tabular-nums">{e.gameTime}</span>
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{e.category}</span>
+        <span className="font-display text-sm font-semibold text-primary tabular-nums">
+          {e.gameTime}
+        </span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {e.category}
+        </span>
         <Pill tone={isPositive ? "success" : impactTone(e.impact)}>
           {isPositive ? "What went right" : impactLabel(e.impact)}
         </Pill>
@@ -258,7 +273,9 @@ function TimelineEvent({ e }: { e: CoachableEvent }) {
 
       {/* Why this decision was good/bad — the second of the four coaching questions. */}
       <p className="mb-3 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground/80">Why it {isPositive ? "worked" : "matters"}: </span>
+        <span className="font-medium text-foreground/80">
+          Why it {isPositive ? "worked" : "matters"}:{" "}
+        </span>
         {e.why}
       </p>
 
@@ -267,7 +284,9 @@ function TimelineEvent({ e }: { e: CoachableEvent }) {
         {e.chain.map((link, i) => (
           <span key={i} className="flex items-center gap-2">
             <span className="rounded-lg bg-white/[0.04] px-2 py-1">{link}</span>
-            {i < e.chain.length - 1 && <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />}
+            {i < e.chain.length - 1 && (
+              <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />
+            )}
           </span>
         ))}
       </div>
@@ -302,7 +321,9 @@ function PhaseRow({ p }: { p: PhaseReview }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{p.phase}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {p.phase}
+        </span>
         <span className={`text-xs font-medium ${verdictTone(p.verdict)}`}>{p.headline}</span>
       </div>
       <p className="text-sm text-muted-foreground">{p.detail}</p>
@@ -313,7 +334,9 @@ function PhaseRow({ p }: { p: PhaseReview }) {
 function PlanRow({ item }: { item: PlanItem }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
-      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</div>
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {item.label}
+      </div>
       <div className="text-sm font-medium">{item.value}</div>
       <p className="mt-1 text-sm text-muted-foreground">{item.why}</p>
     </div>
@@ -344,11 +367,12 @@ function Card({
 
 function TrendRow({ t }: { t: TrendItem }) {
   const Icon = t.direction === "up" ? TrendingUp : t.direction === "down" ? TrendingDown : Minus;
-  const color = t.direction === "flat"
-    ? "text-muted-foreground"
-    : t.improved
-      ? "text-success"
-      : "text-destructive";
+  const color =
+    t.direction === "flat"
+      ? "text-muted-foreground"
+      : t.improved
+        ? "text-success"
+        : "text-destructive";
   return (
     <div className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
       <span className="text-sm text-muted-foreground">{t.label}</span>
@@ -418,12 +442,16 @@ export function MatchCoachReport({
       {report.strengths.length > 0 && (
         <Card icon={Trophy} title="Today's Coaching Win" accent="text-success">
           <div className="rounded-2xl border border-success/25 bg-success/[0.08] p-5">
-            <div className="mb-1 text-sm font-semibold text-success">{report.strengths[0].title}</div>
+            <div className="mb-1 text-sm font-semibold text-success">
+              {report.strengths[0].title}
+            </div>
             <p className="text-sm text-muted-foreground">{report.strengths[0].why}</p>
           </div>
           {report.strengths.length > 1 && (
             <div className="mt-3 space-y-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">More you did well</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                More you did well
+              </p>
               {report.strengths.slice(1).map((s, i) => (
                 <div key={i} className="rounded-2xl border border-success/20 bg-success/[0.06] p-4">
                   <div className="mb-1 text-sm font-medium text-success">{s.title}</div>
@@ -506,7 +534,8 @@ export function MatchCoachReport({
       {/* Decision Chain timeline — how one decision influences the next. */}
       <Card icon={Clock} title="Match Timeline">
         <p className="mb-4 text-xs text-muted-foreground">
-          How one decision led to the next. Times are approximate until interactive replay is connected.
+          How one decision led to the next. Times are approximate until interactive replay is
+          connected.
         </p>
         <div className="space-y-3">
           {report.plan.timeline.events.map((e) => (
@@ -538,13 +567,16 @@ export function MatchCoachReport({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            The game ended before your first core power spike — the fastest improvement is reaching your first item sooner.
+            The game ended before your first core power spike — the fastest improvement is reaching
+            your first item sooner.
           </p>
         )}
 
         {!report.plan.powerSpike.timelineAvailable && (
           <p className="mt-3 text-xs text-muted-foreground/70">
-            {report.plan.powerSpike.timelineUnavailableMessage} Until then, BotDiff coaches the recall, farm, and rotation decisions that decide when your spikes come online — not fabricated timestamps.
+            {report.plan.powerSpike.timelineUnavailableMessage} Until then, BotDiff coaches the
+            recall, farm, and rotation decisions that decide when your spikes come online — not
+            fabricated timestamps.
           </p>
         )}
 
@@ -569,7 +601,9 @@ export function MatchCoachReport({
 
           {report.plan.powerSpike.tempoFactors.length > 0 && (
             <div className="mt-3">
-              <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Why your tempo landed here</p>
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+                Why your tempo landed here
+              </p>
               <div className="space-y-2">
                 {report.plan.powerSpike.tempoFactors.map((f, i) => (
                   <div key={i} className="rounded-2xl bg-white/[0.03] p-3">
@@ -582,7 +616,9 @@ export function MatchCoachReport({
           )}
 
           <div className="mt-4">
-            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">How this decision rippled forward</p>
+            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+              How this decision rippled forward
+            </p>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               {report.plan.powerSpike.decisionChain.map((link, i) => (
                 <span key={i} className="flex items-center gap-2">
@@ -596,13 +632,48 @@ export function MatchCoachReport({
           </div>
 
           <dl className="mt-4 space-y-2 text-sm">
-            <div><dt className="inline font-medium text-foreground/80">Tempo: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.tempo}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Economy: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.economy}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Wave management: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.waveManagement}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Recall timing: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.recallTiming}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Objective prep: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.objectivePrep}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Decision relationships: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.decisionRelationships}</dd></div>
-            <div><dt className="inline font-medium text-foreground/80">Expected impact: </dt><dd className="inline text-muted-foreground">{report.plan.powerSpike.learnMore.expectedImpact}</dd></div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Tempo: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.tempo}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Economy: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.economy}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Wave management: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.waveManagement}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Recall timing: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.recallTiming}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Objective prep: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.objectivePrep}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Decision relationships: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.decisionRelationships}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-foreground/80">Expected impact: </dt>
+              <dd className="inline text-muted-foreground">
+                {report.plan.powerSpike.learnMore.expectedImpact}
+              </dd>
+            </div>
           </dl>
         </details>
       </Card>
@@ -629,7 +700,8 @@ export function MatchCoachReport({
       <Card icon={TrendingUp} title="Player Improvement History">
         {report.history.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            This is your earliest analyzed match — play another game to unlock match-over-match trends.
+            This is your earliest analyzed match — play another game to unlock match-over-match
+            trends.
           </p>
         ) : (
           <>

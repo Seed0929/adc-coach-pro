@@ -85,7 +85,10 @@ export function useMatchHistory(): MatchHistoryState {
       }
     } catch {
       setError("Couldn't sync your matches right now.");
-      trackBetaEvent(BETA_EVENTS.recoverableError, { surface: "match-sync", reason: "unreachable" });
+      trackBetaEvent(BETA_EVENTS.recoverableError, {
+        surface: "match-sync",
+        reason: "unreachable",
+      });
     } finally {
       setSyncing(false);
     }
