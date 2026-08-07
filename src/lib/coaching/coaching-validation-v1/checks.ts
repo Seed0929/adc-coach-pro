@@ -490,14 +490,15 @@ export function runCoachingValidationChecks(): CheckResult[] {
   });
 
   check("missing data is reported explicitly, never invented", () => {
-    const v = V.set(DC.build(scenario("top")));
-    if (!v.missing.length) return "no missing states";
-    if (!v.missing.some((m) => m.requiredSource === "player-memory"))
-      return `sources: ${v.missing.map((m) => m.requiredSource).join(",")}`;
+    const set = DC.build(scenario("top"));
+    const v = V.set(set);
     return (
       v.missing.length > 0 &&
-      v.missing.some((m) => m.requiredSource === "player-memory") &&
-      v.missing.every((m) => m.reason.length > 0 && m.field.length > 0)
+      v.missing.some((m) => m.requiredSource === "habit-intelligence") &&
+      v.missing.every((m) => m.reason.length > 0 && m.field.length > 0) &&
+      !v.sources.playerMemory &&
+      !v.sources.habits &&
+      set.chains.every((c) => c.playerHabitContext === undefined)
     );
   });
 
