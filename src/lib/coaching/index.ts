@@ -476,3 +476,28 @@ export function decisionChainFor(
     ...options,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Sprint 5.2 — Coaching Validation V1 (end-to-end contracts + beta audit).
+// ---------------------------------------------------------------------------
+export * as CoachingValidationFramework from "./coaching-validation-v1";
+export {
+  CoachingValidationV1,
+  type CoachingValidationV1Facade,
+  type ChainValidation,
+  type PipelineValidation,
+  type PipelineAudit,
+  type AuditFinding,
+  type MissingDataState,
+  type CounterfactualValidation,
+  type ContractFieldResult,
+  type SourceAvailability,
+  type ValidationStatus,
+  type ValidationSeverity,
+} from "./coaching-validation-v1";
+
+// Sprint 5.2 — the real-match bridge into the Decision Chain.
+export {
+  buildMatchDecisionChain,
+  buildMatchReportDecisionChain,
+} from "./match-coaching-bridge";

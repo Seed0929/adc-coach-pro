@@ -19,6 +19,7 @@ export type { MatchPlan } from "./coaching/match-plan";
 import { LeagueIntelligence } from "./coaching/league-intelligence";
 import type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 export type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
+import { buildMatchReportDecisionChain } from "./coaching/match-coaching-bridge";
 
 /**
  * Role-safe language shim — every ADC-worded coaching string routes through
@@ -908,6 +909,16 @@ export function buildMatchReport(
   const mistakes = buildMistakes(m, analysis.grades);
   const priorityImprovement = buildPriority(m, mistakes);
   const assessment = buildAssessment(m);
+  const plan = buildMatchPlan(m, history);
+
+  // Sprint 5.2 — OPTIONAL structured Decision Chain built from this match's
+  // real, evidence-grounded timeline. Never allowed to break the report.
+  let decisionChain: MatchReportDecisionChain | null = null;
+  try {
+    decisionChain = buildMatchReportDecisionChain(m, history, plan.timeline);
+  } catch {
+    decisionChain = null;
+  }
 
   return {
     matchId: m.matchId,
@@ -927,11 +938,12 @@ export function buildMatchReport(
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
-    plan: buildMatchPlan(m, history),
+    plan,
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
     source: "rule-based",
+    decisionChain,
   };
 }
 
