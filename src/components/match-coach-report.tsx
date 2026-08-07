@@ -13,7 +13,9 @@ import {
 import { Swords, Clock, Compass, Crown } from "lucide-react";
 import { ChevronRight, Zap } from "lucide-react";
 import { Brain, Search } from "lucide-react";
+import { useEffect } from "react";
 import { Pill } from "@/components/app-shell";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
   MatchCoachingReport,
@@ -53,6 +55,23 @@ function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
     ? primary.evidence.filter((e) => e.observed && e.kind !== "habit-history")
     : [];
   const counterfactual = primary ? validateCounterfactual(primary) : null;
+
+  useEffect(() => {
+    trackBetaEvent(BETA_EVENTS.whyThisCoachingViewed, {
+      surface: "match-report",
+      reason: chain.confidence,
+      degraded: observed.length === 0,
+    });
+    if (observed.length === 0) {
+      trackBetaEvent(BETA_EVENTS.degradedDataState, {
+        surface: "why-this-coaching",
+        reason: "no_observed_evidence",
+        degraded: true,
+      });
+    }
+    // Fires once per rendered chain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chain.primaryDecisionId]);
 
   return (
     <Card icon={Brain} title="Why This Coaching" accent="text-primary">

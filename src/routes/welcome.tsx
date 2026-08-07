@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { useBotDiffData } from "@/lib/player-data";
 import { linkRiotAccount } from "@/lib/riot.functions";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 export const Route = createFileRoute("/welcome")({
   ssr: false,
@@ -73,18 +74,28 @@ function WelcomePage() {
     if (!tag) return toast.error("Enter your Tag Line.");
 
     setSubmitting(true);
+    trackBetaEvent(BETA_EVENTS.riotConnectionStarted, { surface: "welcome" });
     try {
       const result = await link({ data: { gameName: name, tagLine: tag, region } });
       if (!result.ok) {
+        trackBetaEvent(BETA_EVENTS.recoverableError, {
+          surface: "riot-connection",
+          reason: result.code ?? "link_failed",
+        });
         toast.error(result.message);
         return;
       }
+      trackBetaEvent(BETA_EVENTS.riotConnectionCompleted, { surface: "welcome" });
       await Promise.all([refreshProfile(), refreshIdentity()]);
       toast.success(
         `Linked ${result.account.gameName}#${result.account.tagLine}. Welcome to BotDiff!`,
       );
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
+      trackBetaEvent(BETA_EVENTS.recoverableError, {
+        surface: "riot-connection",
+        reason: "unexpected",
+      });
       toast.error(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally {
       setSubmitting(false);
