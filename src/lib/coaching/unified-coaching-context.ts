@@ -23,6 +23,7 @@ import {
   type LeagueDecision,
   type LeagueFundamentalId,
 } from "./knowledge-base";
+import { PENDING } from "./knowledge-base/types";
 import type { RoleId } from "./knowledge-base/templates/champion";
 import type { CoachingContext, CoachingIssue } from "./coaching-pipeline";
 import type { PrioritizedDecision, DecisionScoreBreakdown } from "./decision-priority-engine";
@@ -407,7 +408,7 @@ export function buildUnifiedCoachingContext(
     laneState: options.laneState
       ? {
           laneStateId: options.laneState.laneStateId,
-          role: options.laneState.role === PENDING_ROLE ? undefined : (options.laneState.role as RoleId),
+          role: options.laneState.role === PENDING ? undefined : (options.laneState.role as RoleId),
           laneContext: options.laneState.laneContext,
           lanePhase: options.laneState.lanePhase,
           waveState: options.laneState.waveState,
