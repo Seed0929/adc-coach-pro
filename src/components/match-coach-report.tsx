@@ -439,6 +439,11 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
             <p className="text-sm text-muted-foreground">{report.priorityImprovement.why}</p>
           </div>
         </Card>
+              <Sparkles className="size-4" /> {report.priorityImprovement.title}
+            </div>
+            <p className="text-sm text-muted-foreground">{report.priorityImprovement.why}</p>
+          </div>
+        </Card>
 
         {/* Practice goal */}
         <Card icon={Flag} title="Practice Goal">
