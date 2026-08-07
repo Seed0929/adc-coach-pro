@@ -382,18 +382,6 @@ function buildEvidence(
 
   for (const e of input.evidenceByDecisionId?.[u.decision.decisionId] ?? []) push(e);
 
-  if (timestampSeconds !== null) {
-    push({
-      id: `${u.decision.decisionId}:timestamp`,
-      kind: "timestamp",
-      statement: `Observed at ${Math.floor(timestampSeconds / 60)}:${String(timestampSeconds % 60).padStart(2, "0")}.`,
-      source: "riot-data",
-      observed: true,
-      timestampSeconds,
-      matchId: input.matchId,
-    });
-  }
-
   u.decisionPriority.evidence.forEach((statement, i) =>
     push({
       id: `${u.decision.decisionId}:priority-${i}`,
@@ -404,6 +392,20 @@ function buildEvidence(
       matchId: input.matchId,
     }),
   );
+
+  // Only add a bare clock line when nothing else already pins this decision to
+  // that moment — duplicate timestamps read as padded evidence.
+  if (timestampSeconds !== null && !out.some((e) => e.timestampSeconds === timestampSeconds)) {
+    push({
+      id: `${u.decision.decisionId}:timestamp`,
+      kind: "timestamp",
+      statement: `Observed at ${Math.floor(timestampSeconds / 60)}:${String(timestampSeconds % 60).padStart(2, "0")}.`,
+      source: "riot-data",
+      observed: true,
+      timestampSeconds,
+      matchId: input.matchId,
+    });
+  }
 
   if (habit) {
     push({
