@@ -118,20 +118,14 @@ function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
         </div>
       )}
 
-      {/* Counterfactual — certainty is stated, never implied. */}
-      {counterfactual && (
+      {/* Counterfactual — only when one exists; certainty is stated, never implied. */}
+      {counterfactual?.present && counterfactual.alternativeDecision && (
         <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
           <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
             The alternative{" "}
             <span className="text-muted-foreground/70">({counterfactual.certainty.toLowerCase()})</span>
           </p>
-          {counterfactual.alternativeDecision ? (
-            <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No alternative decision could be established from this match's data.
-            </p>
-          )}
+          <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
           <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
         </div>
       )}
