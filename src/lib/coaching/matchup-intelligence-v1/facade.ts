@@ -1,0 +1,80 @@
+// ---------------------------------------------------------------------------
+// Matchup Intelligence V1 — namespaced facade (Sprint 4.8).
+//
+// The single entry point consumers depend on: Decision Prioritization Engine,
+// Unified Coaching Context, Coaching Pipeline, Match Reports, Replay Coach,
+// Practice Planner and the future AI Coach.
+// ---------------------------------------------------------------------------
+import {
+  get,
+  getMatchup,
+  getMatchupById,
+  getAllMatchups,
+  findMatchupsForChampion,
+  findMatchupsForRole,
+  getLanePhaseProfile,
+  getPhaseProfile,
+  getPowerSpikeInteraction,
+  getInteraction,
+  getPunishWindows,
+  getDangerWindows,
+  getRecoveryWindows,
+  getDecisionPriorities,
+  getDecisionReferences,
+  getCurriculumReferences,
+  getHabitReferences,
+  getPracticeReferences,
+  getCommonMistakes,
+  getChampionAvailability,
+  getChampionContext,
+  hasDirectionalCounterpart,
+  isAvailable,
+  isKnowledgePopulated,
+  safeFallback,
+} from "./engine";
+import {
+  allMatchupProfiles,
+  clearMatchupProfiles,
+  registerMatchupProfiles,
+  registeredMatchupCount,
+  registeredMatchupIds,
+} from "./registry";
+import { createMatchupProfileV1, emptyMatchupProfileV1, makeMatchupId } from "./types";
+
+export const MatchupIntelligenceV1 = {
+  get,
+  getMatchup,
+  getMatchupById,
+  getAllMatchups,
+  findMatchupsForChampion,
+  findMatchupsForRole,
+  getLanePhaseProfile,
+  getPhaseProfile,
+  getPowerSpikeInteraction,
+  getInteraction,
+  getPunishWindows,
+  getDangerWindows,
+  getRecoveryWindows,
+  getDecisionPriorities,
+  getDecisionReferences,
+  getCurriculumReferences,
+  getHabitReferences,
+  getPracticeReferences,
+  getCommonMistakes,
+  getChampionAvailability,
+  getChampionContext,
+  hasDirectionalCounterpart,
+  isAvailable,
+  isKnowledgePopulated,
+  safeFallback,
+  create: createMatchupProfileV1,
+  empty: emptyMatchupProfileV1,
+  id: makeMatchupId,
+  all: allMatchupProfiles,
+  ids: registeredMatchupIds,
+  count: registeredMatchupCount,
+  register: registerMatchupProfiles,
+  clear: clearMatchupProfiles,
+} as const;
+
+export type MatchupIntelligenceV1Facade = typeof MatchupIntelligenceV1;
