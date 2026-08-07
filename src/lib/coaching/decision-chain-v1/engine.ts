@@ -823,6 +823,11 @@ export interface MatchReportDecisionChain {
 
 export function forMatchReport(set: DecisionChainSet): MatchReportDecisionChain {
   const p = set.primary;
+  // A single observation is not a pattern: only surface the habit note once the
+  // decision has been recorded in at least two matches.
+  const habit = p?.playerHabitContext;
+  const habitNote =
+    habit && habit.occurrences >= 2 ? p!.explanation.habitThatMayHaveContributed : null;
   return {
     matchId: set.matchId,
     primaryDecisionId: p?.source.decision.decisionId ?? null,
@@ -830,7 +835,7 @@ export function forMatchReport(set: DecisionChainSet): MatchReportDecisionChain 
     whatHappened: p?.explanation.whatHappened ?? null,
     whyItMattered: p?.explanation.whyItMattered ?? null,
     decisionsAvailable: p?.explanation.decisionsAvailable ?? [],
-    habitNote: p?.explanation.habitThatMayHaveContributed ?? null,
+    habitNote,
     practiceGoal: p?.explanation.whatToPractice ?? null,
     counterfactual: p?.counterfactual ?? null,
     confidence: p?.confidence.level ?? "INSUFFICIENT_DATA",
