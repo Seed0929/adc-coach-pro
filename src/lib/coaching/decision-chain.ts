@@ -144,8 +144,11 @@ const DETECTORS: Record<DetectorId, (m: MatchAnalysisInput) => boolean> = {
 
 function recurrenceOf(id: DetectorId, history: MatchAnalysisInput[]): number {
   if (!history.length) return 0;
-  const fn = DETECTORS[id];
-  return history.filter(fn).length;
+  // Not every coachable moment has a history detector — those simply have no
+  // recurrence signal. Never assume the id is a DetectorId.
+  const fn = DETECTORS[id] as ((m: MatchAnalysisInput) => boolean) | undefined;
+  if (typeof fn !== "function") return 0;
+  return history.filter((m) => fn(m)).length;
 }
 
 function habitTag(id: DetectorId, history: MatchAnalysisInput[]): string | null {
