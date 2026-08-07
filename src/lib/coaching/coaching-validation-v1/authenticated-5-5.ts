@@ -140,7 +140,14 @@ export function runAuthenticatedChecks(): CheckResult[] {
     if (chains.length === 0) return "no chains built from a real match";
     for (const c of chains) {
       const audit = V.chain(c);
-      if (!audit.valid) return `${c.selectedDecision.label}: ${audit.issues.join("; ")}`;
+      if (audit.status === "FAIL") {
+        const missing = audit.fields
+          .filter((f) => f.state === "MISSING")
+          .map((f) => f.field)
+          .join(", ");
+        return `${c.selectedDecision.label}: ${missing || audit.status}`;
+      }
+      if (!audit.traceable) return `${c.selectedDecision.label}: no observed evidence`;
     }
     return true;
   });
