@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      beta_events: {
+        Row: {
+          created_at: string
+          detail: Json
+          event_name: string
+          id: string
+          profile_id: string | null
+          session_id: string
+          stage: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event_name: string
+          id?: string
+          profile_id?: string | null
+          session_id: string
+          stage?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event_name?: string
+          id?: string
+          profile_id?: string | null
+          session_id?: string
+          stage?: string | null
+        }
+        Relationships: []
+      }
       coaching_analyses: {
         Row: {
           analysis: Json
