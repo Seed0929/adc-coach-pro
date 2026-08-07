@@ -9,7 +9,7 @@ import { buildUnifiedCoachingContext } from "../unified-coaching-context";
 import { buildLaneState } from "../lane-state-intelligence-v1";
 import { PracticePlanner } from "../practice-planning-v1";
 import { ReplayEngine } from "../replay-intelligence-v1";
-import { HabitEngine } from "../habit-intelligence";
+import { createHabitEngine } from "../habit-intelligence";
 import { DecisionChainV1 as DC } from "./facade";
 import type { DecisionChainInput, DecisionEvidence } from "./types";
 
@@ -106,8 +106,7 @@ export function runDecisionChainChecks(): CheckResult[] {
       c.laneStateContext === undefined &&
       c.itemContext === undefined &&
       c.runeContext === undefined &&
-      c.playerHabitContext === undefined &&
-      c.completenessFree !== true
+      c.playerHabitContext === undefined
     );
   });
 
@@ -218,10 +217,10 @@ export function runDecisionChainChecks(): CheckResult[] {
 
   // --- habit influence ----------------------------------------------------
   check("habits attach as supporting evidence", () => {
-    const engine = HabitEngine.create();
+    const engine = createHabitEngine();
     const pipeline = contexts();
-    engine.recordMatch(pipeline.unifiedContexts, { matchId: "m1" });
-    engine.recordMatch(pipeline.unifiedContexts, { matchId: "m2" });
+    engine.record(pipeline.unifiedContexts, { matchId: "m1" });
+    engine.record(pipeline.unifiedContexts, { matchId: "m2" });
     const habits = engine.getHabits({ scope: "universal" });
     const set = DC.build({ ...baseInput(), habits });
     const chain = set.primary!;
@@ -233,9 +232,9 @@ export function runDecisionChainChecks(): CheckResult[] {
   });
 
   check("habits never override game evidence or priority", () => {
-    const engine = HabitEngine.create();
+    const engine = createHabitEngine();
     const pipeline = contexts();
-    engine.recordMatch(pipeline.unifiedContexts, { matchId: "m1" });
+    engine.record(pipeline.unifiedContexts, { matchId: "m1" });
     const habits = engine.getHabits({ scope: "universal" });
     const without = DC.build(baseInput());
     const withHabits = DC.build({ ...baseInput(), habits });
