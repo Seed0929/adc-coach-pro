@@ -11,10 +11,12 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadAvatar, removeAvatarFiles } from "@/lib/avatar";
+import { linkRiotAccount } from "@/lib/riot.functions";
 import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/settings/profile")({
@@ -28,6 +30,7 @@ function ProfileSettingsPage() {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
   const { refreshIdentity } = useBotDiffData();
+  const link = useServerFn(linkRiotAccount);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState("");
@@ -129,23 +132,16 @@ function ProfileSettingsPage() {
           display_name: name,
           avatar_url: avatarUrl,
           profile_picture: avatarUrl,
-          onboarding_complete: true,
-          onboarding_completed: true,
         })
         .eq("id", user.id);
       if (error) throw error;
 
-      const { error: riotError } = await supabase.from("riot_accounts").upsert(
-        {
-          profile_id: user.id,
-          game_name: gameName,
-          tag_line: tagLine,
-          region: riotRegion,
-          linked_at: new Date().toISOString(),
-        },
-        { onConflict: "profile_id" },
-      );
-      if (riotError) throw riotError;
+      // Link through the same server contract onboarding uses so the account is
+      // verified with Riot (PUUID resolved) and the connected flags are set.
+      const linkResult = await link({
+        data: { gameName, tagLine, region: riotRegion },
+      });
+      if (!linkResult.ok) throw new Error(linkResult.message);
 
       await refreshProfile();
       await refreshIdentity();
