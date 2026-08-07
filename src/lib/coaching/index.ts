@@ -410,3 +410,69 @@ export {
   type CompositionGameStateInput,
   type CompositionRoleInput,
 } from "./team-composition-intelligence-v1";
+
+// ---------------------------------------------------------------------------
+// Sprint 5.1 — Decision Chain V1: the integration layer that connects the
+// existing intelligence layers into one traceable coaching chain.
+// ---------------------------------------------------------------------------
+export * as DecisionChainFramework from "./decision-chain-v1";
+export {
+  DecisionChainV1,
+  buildDecisionChain,
+  buildAvailableDecisions,
+  buildCounterfactual,
+  buildPracticeReference,
+  assessConfidence,
+  phaseFromSeconds,
+  forMatchReport as decisionChainForMatchReport,
+  toReplayInput as decisionChainToReplayInput,
+  toPracticePlanInput as decisionChainToPracticePlanInput,
+  toAIPayload as decisionChainToAIPayload,
+  type DecisionChainV1Facade,
+  type DecisionChain,
+  type DecisionChainSet,
+  type DecisionChainInput,
+  type DecisionChainAIPayload,
+  type DecisionChainCompleteness,
+  type DecisionChainLayer,
+  type DecisionChainTrace,
+  type DecisionCandidate,
+  type DecisionCandidateInput,
+  type DecisionActionId,
+  type DecisionConfidence,
+  type DecisionConfidenceLevel,
+  type DecisionContextFactor,
+  type DecisionCounterfactual,
+  type DecisionEvidence,
+  type DecisionEvidenceKind,
+  type DecisionExplanation,
+  type DecisionGameContext,
+  type DecisionHabitContext,
+  type DecisionMemoryContext,
+  type DecisionPracticeReference,
+  type MatchReportDecisionChain,
+} from "./decision-chain-v1";
+import {
+  build as buildDecisionChainSet,
+  type DecisionChainInput as DecisionChainInputShape,
+  type DecisionChainSet as DecisionChainSetShape,
+} from "./decision-chain-v1";
+
+/**
+ * Build the Decision Chain for a player straight from the existing pipeline.
+ * Every optional source (habits, memory, practice plan, lane state, matchup,
+ * team composition, items, runes, timestamps) can be supplied — and omitting
+ * any of them simply produces a smaller, still-valid chain.
+ */
+export function decisionChainFor(
+  d: CoachDossier,
+  champion?: string,
+  options: Partial<Omit<DecisionChainInputShape, "contexts">> = {},
+): DecisionChainSetShape {
+  const pipeline = coachingPipelineFor(d, champion);
+  return buildDecisionChainSet({
+    contexts: pipeline.unifiedContexts,
+    champion,
+    ...options,
+  });
+}
