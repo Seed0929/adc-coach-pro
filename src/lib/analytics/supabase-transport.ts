@@ -22,7 +22,7 @@ async function send(record: BetaEventRecord): Promise<void> {
       session_id: record.sessionId,
       event_name: record.name,
       stage: record.stage,
-      detail: record.detail,
+      detail: { ...record.detail },
     });
   } catch {
     // Ignored on purpose.
