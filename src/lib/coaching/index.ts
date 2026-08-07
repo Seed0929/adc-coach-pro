@@ -148,6 +148,28 @@ export {
   type ItemReplayReference,
   type ItemPracticeReference,
 } from "./item-intelligence-v1";
+export * as RuneIntelligenceFramework from "./rune-intelligence-v1";
+export {
+  RuneIntelligenceV1,
+  registerRuneProfiles,
+  hydrateRuneIntelligence,
+  emptyRuneProfileV1,
+  type RuneIntelligenceV1Facade,
+  type RuneProfileV1,
+  type RuneOfficialMetadata,
+  type RuneIdentity,
+  type RuneValueMatrix,
+  type RuneValueRating,
+  type RuneScalingProfile,
+  type RuneSlotType,
+  type RuneResolution,
+  type RuneDecisionReference,
+  type RuneCurriculumReference,
+  type RuneHabitReference,
+  type RuneReplayReference,
+  type RunePracticeReference,
+  type RuneRecoveryReference,
+} from "./rune-intelligence-v1";
 
 export interface CoachAnswer {
   answer: string;
