@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { useSync } from "@/hooks/use-sync";
 import { getMatchReport } from "@/lib/coaching.functions";
 import { buildDemoMatchReport, type MatchCoachingReport } from "@/lib/coaching-engine";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 interface MatchReportState {
   report: MatchCoachingReport | null;
   loading: boolean;
   error: string | null;
   isDemo: boolean;
+  /** Re-request this match's report after a recoverable failure. */
+  retry: () => void;
 }
 
 /**
@@ -23,12 +26,18 @@ export function useMatchReport(matchId: string): MatchReportState {
   const [report, setReport] = useState<MatchCoachingReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
   const isDemoMatch = matchId.startsWith("demo-");
   const linked = Boolean(isAuthenticated && profile?.onboarding_complete && !isDemoMatch);
 
   useEffect(() => {
     let active = true;
+    trackBetaEvent(BETA_EVENTS.matchAnalysisOpened, {
+      surface: "match-report",
+      demo: isDemoMatch || !linked,
+    });
 
     if (isDemoMatch || !linked) {
       const idx = isDemoMatch ? Number(matchId.slice(5)) || 0 : 0;
@@ -46,14 +55,33 @@ export function useMatchReport(matchId: string): MatchReportState {
         if (result.ok) {
           setReport(result.report);
           setError(null);
+          trackBetaEvent(BETA_EVENTS.matchReportViewed, {
+            surface: "match-report",
+            degraded: !result.report.decisionChain,
+          });
+          if (!result.report.decisionChain) {
+            trackBetaEvent(BETA_EVENTS.degradedDataState, {
+              surface: "match-report",
+              reason: "no_decision_chain",
+              degraded: true,
+            });
+          }
         } else {
           setReport(null);
           setError(result.message);
+          trackBetaEvent(
+            result.code === "not_found" ? BETA_EVENTS.noMatchState : BETA_EVENTS.recoverableError,
+            { surface: "match-report", reason: result.code },
+          );
         }
       } catch {
         if (active) {
           setReport(null);
           setError("Couldn't load this match's report.");
+          trackBetaEvent(BETA_EVENTS.recoverableError, {
+            surface: "match-report",
+            reason: "unreachable",
+          });
         }
       } finally {
         if (active) setLoading(false);
@@ -63,7 +91,7 @@ export function useMatchReport(matchId: string): MatchReportState {
     return () => {
       active = false;
     };
-  }, [matchId, linked, isDemoMatch, fetchReport, version]);
+  }, [matchId, linked, isDemoMatch, fetchReport, version, attempt]);
 
-  return { report, loading, error, isDemo: isDemoMatch || !linked };
+  return { report, loading, error, isDemo: isDemoMatch || !linked, retry };
 }

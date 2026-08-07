@@ -10,6 +10,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { autoSync } from "@/lib/matches.functions";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 // ---------------------------------------------------------------------------
 // Automatic Riot match synchronization.
@@ -59,14 +60,25 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (!linked || inFlight.current) return;
     inFlight.current = true;
     setChecking(true);
+    trackBetaEvent(BETA_EVENTS.firstSyncStarted, { surface: "auto-sync" });
     try {
       const result = await runAutoSync();
       if (result.ok) {
         setLastSyncedAt(result.lastSyncedAt);
         if (result.changed) setVersion((v) => v + 1);
+        trackBetaEvent(BETA_EVENTS.firstSyncCompleted, {
+          surface: "auto-sync",
+          count: result.imported,
+        });
+      } else {
+        trackBetaEvent(BETA_EVENTS.recoverableError, {
+          surface: "auto-sync",
+          reason: result.code ?? "sync_failed",
+        });
       }
     } catch {
       // Network / rate-limit failure — keep cached data, try again next cycle.
+      trackBetaEvent(BETA_EVENTS.recoverableError, { surface: "auto-sync", reason: "unreachable" });
     } finally {
       inFlight.current = false;
       setChecking(false);
