@@ -29,6 +29,12 @@ import type { PrioritizedDecision, DecisionScoreBreakdown } from "./decision-pri
 import type { HabitContext } from "./habit-context";
 import type { ChampionProfile } from "./champion-intelligence";
 import type { MatchupProfileV1, MatchupRoleContext } from "./matchup-intelligence-v1/types";
+import type {
+  CompositionAvailability,
+  CompositionRelationship,
+  TeamCompositionAnalysis,
+  TeamCompositionProfile,
+} from "./team-composition-intelligence-v1/types";
 
 // ---------------------------------------------------------------------------
 // Reference shapes — pointers into the permanent layers
@@ -174,6 +180,26 @@ export interface PlayerMemoryPlaceholderRef {
   recurringHabitIds?: string[];
 }
 
+/**
+ * OPTIONAL — Team Composition Intelligence V1 (Sprint 4.9). Absent contexts
+ * remain fully functional: Role only, Role + Champion, Role + Champion +
+ * Matchup, Role + Champion + Team Composition, and every combination in
+ * between degrade gracefully.
+ */
+export interface TeamCompositionIntelligenceRef {
+  compositionId: string;
+  /** The player's own role inside the analyzed team, when known. */
+  playerRole?: RoleId;
+  /** True when authored composition knowledge (not just the stub) exists. */
+  populated: boolean;
+  availability: CompositionAvailability;
+  /** Structural composition-vs-composition relationships, by reference. */
+  relationships: CompositionRelationship[];
+  analyzedTeam?: TeamCompositionProfile;
+  opposingTeam?: TeamCompositionProfile;
+  analysis?: TeamCompositionAnalysis;
+}
+
 // ---------------------------------------------------------------------------
 // The canonical contract
 // ---------------------------------------------------------------------------
@@ -199,6 +225,8 @@ export interface UnifiedCoachingContext {
   habit?: HabitPlaceholderRef;
   /** OPTIONAL — matchup context, never required by any consumer. */
   matchupIntelligence?: MatchupIntelligenceRef;
+  /** OPTIONAL — team composition context, never required by any consumer. */
+  teamComposition?: TeamCompositionIntelligenceRef;
   /** OPTIONAL — reserved for Player Memory. */
   playerMemory?: PlayerMemoryPlaceholderRef;
   /** Escape hatch: the merged pipeline knowledge this context references. */
@@ -218,6 +246,8 @@ export interface UnifiedContextOptions {
   strengthToContinue?: StrengthToContinueRef;
   /** OPTIONAL matchup profile — omit it and nothing changes. */
   matchup?: MatchupProfileV1;
+  /** OPTIONAL team composition analysis — omit it and nothing changes. */
+  teamComposition?: TeamCompositionAnalysis;
 }
 
 function leagueDecisionFor(c: CoachingContext): LeagueDecision | undefined {
@@ -328,6 +358,18 @@ export function buildUnifiedCoachingContext(
           roleContext: options.matchup.roleContext,
           populated: options.matchup.populated,
           profile: options.matchup,
+        }
+      : undefined,
+    teamComposition: options.teamComposition
+      ? {
+          compositionId: options.teamComposition.analyzedTeam.compositionId,
+          playerRole: options.teamComposition.playerRole,
+          populated: options.teamComposition.analyzedTeam.populated,
+          availability: options.teamComposition.availability.analyzedTeam,
+          relationships: options.teamComposition.relationships,
+          analyzedTeam: options.teamComposition.analyzedTeam,
+          opposingTeam: options.teamComposition.opposingTeam,
+          analysis: options.teamComposition,
         }
       : undefined,
     playerMemory: options.playerMemory,
