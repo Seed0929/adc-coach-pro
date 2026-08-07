@@ -28,6 +28,7 @@ import type { CoachingContext, CoachingIssue } from "./coaching-pipeline";
 import type { PrioritizedDecision, DecisionScoreBreakdown } from "./decision-priority-engine";
 import type { HabitContext } from "./habit-context";
 import type { ChampionProfile } from "./champion-intelligence";
+import type { MatchupProfileV1, MatchupRoleContext } from "./matchup-intelligence-v1/types";
 
 // ---------------------------------------------------------------------------
 // Reference shapes — pointers into the permanent layers
@@ -150,6 +151,21 @@ export interface HabitPlaceholderRef {
   habitContext?: HabitContext;
 }
 
+/**
+ * OPTIONAL — Matchup Intelligence V1 (Sprint 4.8). Absent contexts remain
+ * fully functional: Role only, Role + Champion, Role + Champion + Matchup, and
+ * so on all degrade gracefully.
+ */
+export interface MatchupIntelligenceRef {
+  matchupId: string;
+  championA: string;
+  championB: string;
+  roleContext: MatchupRoleContext;
+  /** True when authored matchup knowledge (not just the stub shape) exists. */
+  populated: boolean;
+  profile?: MatchupProfileV1;
+}
+
 /** Optional placeholder — filled by the future Player Memory layer. */
 export interface PlayerMemoryPlaceholderRef {
   /** Stable player key (puuid / profile id) once a source provides it. */
@@ -181,6 +197,8 @@ export interface UnifiedCoachingContext {
   championIntelligence?: ChampionIntelligenceRef;
   /** OPTIONAL — reserved for the Habit Intelligence Engine. */
   habit?: HabitPlaceholderRef;
+  /** OPTIONAL — matchup context, never required by any consumer. */
+  matchupIntelligence?: MatchupIntelligenceRef;
   /** OPTIONAL — reserved for Player Memory. */
   playerMemory?: PlayerMemoryPlaceholderRef;
   /** Escape hatch: the merged pipeline knowledge this context references. */
@@ -198,6 +216,8 @@ export interface UnifiedContextOptions {
   habitContext?: HabitContext;
   playerMemory?: PlayerMemoryPlaceholderRef;
   strengthToContinue?: StrengthToContinueRef;
+  /** OPTIONAL matchup profile — omit it and nothing changes. */
+  matchup?: MatchupProfileV1;
 }
 
 function leagueDecisionFor(c: CoachingContext): LeagueDecision | undefined {
@@ -300,6 +320,16 @@ export function buildUnifiedCoachingContext(
       ? { champion: c.championIntelligence.name, profile: c.championIntelligence }
       : undefined,
     habit: options.habitContext ? { habitContext: options.habitContext } : undefined,
+    matchupIntelligence: options.matchup
+      ? {
+          matchupId: options.matchup.matchupId,
+          championA: options.matchup.championA,
+          championB: options.matchup.championB,
+          roleContext: options.matchup.roleContext,
+          populated: options.matchup.populated,
+          profile: options.matchup,
+        }
+      : undefined,
     playerMemory: options.playerMemory,
     source: c,
   };
