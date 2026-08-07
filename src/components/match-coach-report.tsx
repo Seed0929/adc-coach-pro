@@ -364,8 +364,23 @@ function TrendRow({ t }: { t: TrendItem }) {
   );
 }
 
-export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
+export function MatchCoachReport({
+  report,
+  isDemo = false,
+}: {
+  report: MatchCoachingReport;
+  isDemo?: boolean;
+}) {
   const { assets } = useRiotAssets();
+
+  // The practice plan is the last step of the coaching journey.
+  useEffect(() => {
+    trackBetaEvent(BETA_EVENTS.practicePlanViewed, { surface: "match-report", demo: isDemo });
+    if (!isDemo && report.practiceGoal) {
+      trackBetaEvent(BETA_EVENTS.coachingJourneyCompleted, { surface: "match-report" });
+    }
+  }, [report.practiceGoal, isDemo]);
+
   return (
     <div className="space-y-5">
       {/* Match summary */}

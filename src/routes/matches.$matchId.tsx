@@ -33,7 +33,7 @@ export const Route = createFileRoute("/matches/$matchId")({
 
 function MatchReportPage() {
   const { matchId } = Route.useParams();
-  const { report, loading, error, isDemo } = useMatchReport(matchId);
+  const { report, loading, error, isDemo, retry } = useMatchReport(matchId);
 
   return (
     <AppShell>
@@ -63,11 +63,27 @@ function MatchReportPage() {
           <Loader2 className="size-4 animate-spin" /> Analyzing this match…
         </div>
       ) : error || !report ? (
-        <div className="glass rounded-3xl p-8 text-center text-sm text-muted-foreground">
-          {error ?? "No report available for this match yet."}
+        <div className="glass rounded-3xl p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {error ?? "This match doesn't have a coaching report yet."}
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={retry}
+              className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium"
+            >
+              <RefreshCw className="size-4" /> Try again
+            </button>
+            <Link
+              to="/matches"
+              className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium"
+            >
+              Back to matches
+            </Link>
+          </div>
         </div>
       ) : (
-        <MatchCoachReport report={report} />
+        <MatchCoachReport report={report} isDemo={isDemo} />
       )}
     </AppShell>
   );
