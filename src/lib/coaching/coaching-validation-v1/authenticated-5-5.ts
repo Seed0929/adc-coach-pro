@@ -125,12 +125,13 @@ export function runAuthenticatedChecks(): CheckResult[] {
     return Array.isArray(report.decisionChain?.decisionsAvailable);
   });
 
-  check("counterfactual certainty is always explicit when present", () => {
+  check("counterfactuals stay directional and state their confidence", () => {
     const chains = report.decisionChain?.chains ?? [];
     for (const c of chains) {
-      if (c.counterfactual && !c.counterfactual.certainty) {
-        return `missing certainty on ${c.selectedDecision.label}`;
-      }
+      const cf = c.counterfactual;
+      if (!cf) continue;
+      if (!cf.confidence?.level) return `missing confidence on ${c.selectedDecision.label}`;
+      if (!cf.expectedAdvantage) return `missing expected advantage on ${c.selectedDecision.label}`;
     }
     return true;
   });
@@ -233,7 +234,9 @@ export function runAuthenticatedChecks(): CheckResult[] {
   check("analytics never carries match ids or account identifiers", () => {
     resetBetaAnalytics();
     const seen: unknown[] = [];
-    configureBetaAnalytics((e) => seen.push(e));
+    configureBetaAnalytics((e) => {
+      seen.push(e);
+    });
     trackBetaEvent(BETA_EVENTS.matchReportViewed, { surface: "match-report", degraded: false });
     resetBetaAnalytics();
     const joined = JSON.stringify(seen);
