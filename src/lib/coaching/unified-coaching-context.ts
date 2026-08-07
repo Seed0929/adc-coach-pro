@@ -23,6 +23,7 @@ import {
   type LeagueDecision,
   type LeagueFundamentalId,
 } from "./knowledge-base";
+import { PENDING } from "./knowledge-base/types";
 import type { RoleId } from "./knowledge-base/templates/champion";
 import type { CoachingContext, CoachingIssue } from "./coaching-pipeline";
 import type { PrioritizedDecision, DecisionScoreBreakdown } from "./decision-priority-engine";
@@ -35,6 +36,14 @@ import type {
   TeamCompositionAnalysis,
   TeamCompositionProfile,
 } from "./team-composition-intelligence-v1/types";
+import type {
+  LanePhase,
+  LaneContextKind,
+  LaneStateAvailability,
+  LaneStateDecisionPriority,
+  LaneStateProfile,
+  WaveState,
+} from "./lane-state-intelligence-v1/types";
 
 // ---------------------------------------------------------------------------
 // Reference shapes — pointers into the permanent layers
@@ -181,6 +190,25 @@ export interface PlayerMemoryPlaceholderRef {
 }
 
 /**
+ * OPTIONAL — Lane State Intelligence V1 (Sprint 5.0). Describes the CURRENT
+ * lane state only; it never says what the player should do. Absent contexts
+ * remain fully functional.
+ */
+export interface LaneStateIntelligenceRef {
+  laneStateId: string;
+  role?: RoleId;
+  laneContext: LaneContextKind;
+  lanePhase: LanePhase;
+  waveState: WaveState;
+  /** True when at least one real observation backed the state. */
+  observed: boolean;
+  availability: LaneStateAvailability;
+  /** Decision routing hints, by reference. */
+  decisionPriorities: LaneStateDecisionPriority[];
+  profile?: LaneStateProfile;
+}
+
+/**
  * OPTIONAL — Team Composition Intelligence V1 (Sprint 4.9). Absent contexts
  * remain fully functional: Role only, Role + Champion, Role + Champion +
  * Matchup, Role + Champion + Team Composition, and every combination in
@@ -227,6 +255,8 @@ export interface UnifiedCoachingContext {
   matchupIntelligence?: MatchupIntelligenceRef;
   /** OPTIONAL — team composition context, never required by any consumer. */
   teamComposition?: TeamCompositionIntelligenceRef;
+  /** OPTIONAL — lane state context, never required by any consumer. */
+  laneState?: LaneStateIntelligenceRef;
   /** OPTIONAL — reserved for Player Memory. */
   playerMemory?: PlayerMemoryPlaceholderRef;
   /** Escape hatch: the merged pipeline knowledge this context references. */
@@ -248,6 +278,8 @@ export interface UnifiedContextOptions {
   matchup?: MatchupProfileV1;
   /** OPTIONAL team composition analysis — omit it and nothing changes. */
   teamComposition?: TeamCompositionAnalysis;
+  /** OPTIONAL lane state — omit it and nothing changes. */
+  laneState?: LaneStateProfile;
 }
 
 function leagueDecisionFor(c: CoachingContext): LeagueDecision | undefined {
@@ -373,6 +405,19 @@ export function buildUnifiedCoachingContext(
         }
       : undefined,
     playerMemory: options.playerMemory,
+    laneState: options.laneState
+      ? {
+          laneStateId: options.laneState.laneStateId,
+          role: options.laneState.role === PENDING ? undefined : (options.laneState.role as RoleId),
+          laneContext: options.laneState.laneContext,
+          lanePhase: options.laneState.lanePhase,
+          waveState: options.laneState.waveState,
+          observed: options.laneState.observed,
+          availability: options.laneState.availability,
+          decisionPriorities: options.laneState.decisionPriorities,
+          profile: options.laneState,
+        }
+      : undefined,
     source: c,
   };
 }
