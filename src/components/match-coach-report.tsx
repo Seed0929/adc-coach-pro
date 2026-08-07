@@ -48,7 +48,10 @@ function clock(seconds: number | null | undefined): string | null {
 function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
   const primary = chain.chains[0] ?? null;
   const assessment = CHAIN_ASSESSMENT[chain.confidence] ?? CHAIN_ASSESSMENT.INSUFFICIENT_DATA;
-  const observed = primary ? primary.evidence.filter((e) => e.observed) : [];
+  // Match evidence only — habit history is shown separately as supporting context.
+  const observed = primary
+    ? primary.evidence.filter((e) => e.observed && e.kind !== "habit-history")
+    : [];
   const counterfactual = primary ? validateCounterfactual(primary) : null;
 
   return (
