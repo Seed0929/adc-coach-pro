@@ -12,6 +12,7 @@ import { ArrowUpRight, Crosshair, Eye, Sword, ShieldAlert, ThumbsUp, RefreshCw, 
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData, type Match } from "@/lib/player-data";
 import { useMatchHistory } from "@/hooks/use-match-history";
+import { useSync } from "@/hooks/use-sync";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
 import type { StoredMatch } from "@/lib/matches.functions";
@@ -120,6 +121,8 @@ function kdaRatio(m: StoredMatch): string {
 function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> }) {
   const { matches, loading, syncing, error, lastImported, sync } = history;
   const { assets } = useRiotAssets();
+  const { checking, lastSyncedAt } = useSync();
+  const everSynced = Boolean(lastSyncedAt);
 
   return (
     <AppShell>
@@ -145,7 +148,14 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
 
       {error && (
         <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/[0.06] p-4 text-sm text-destructive">
-          {error}
+          <p>{error}</p>
+          <button
+            onClick={() => void sync()}
+            disabled={syncing}
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-destructive/30 px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+          >
+            <RefreshCw className="size-3.5" /> Try again
+          </button>
         </div>
       )}
       {lastImported != null && !error && (
@@ -156,16 +166,32 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
         </div>
       )}
 
-      {loading && matches.length === 0 ? (
+      {(loading || checking || syncing) && matches.length === 0 ? (
         <div className="glass flex items-center gap-3 rounded-3xl p-8 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Loading your matches…
+          <Loader2 className="size-4 animate-spin" />{" "}
+          {syncing || checking
+            ? "Importing your recent games from Riot. This usually takes a few seconds…"
+            : "Loading your matches…"}
         </div>
       ) : matches.length === 0 ? (
         <div className="glass rounded-3xl p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No matches imported yet. Hit <span className="font-medium text-foreground">Sync Matches</span> to
-            pull your 20 most recent games from Riot.
+          <p className="text-sm font-medium">
+            {everSynced
+              ? "We checked your Riot account and didn't find any games we can coach yet."
+              : "Your first import hasn't run yet."}
           </p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            {everSynced
+              ? "Play a full game of League — remakes and very short games don't give your coach enough to work with — then import again."
+              : "Import your 20 most recent games and your coach will review each one."}
+          </p>
+          <button
+            onClick={() => void sync()}
+            disabled={syncing}
+            className="glass glass-hover mx-auto mt-4 inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          >
+            <RefreshCw className="size-4" /> {everSynced ? "Check again" : "Import my games"}
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
