@@ -162,12 +162,14 @@ function matchupFactors(u: UnifiedCoachingContext): DecisionContextFactor[] {
   if (!m) return [];
   return compact([
     factor("matchup", "Matchup", "matchup-intelligence", `${m.championA} vs ${m.championB}`, true),
-    factor("matchup-role", "Matchup role", "matchup-intelligence", m.roleContext.role, true),
+    factor("matchup-role", "Matchup role", "matchup-intelligence", m.roleContext, true),
     factor(
       "matchup-edge",
-      "Lane edge",
+      "Lane phase edge",
       "matchup-intelligence",
-      m.populated ? m.profile?.laningEdge : undefined,
+      m.populated && m.profile?.lanePhaseProfile.edge !== PENDING
+        ? m.profile?.lanePhaseProfile.edge
+        : undefined,
       m.populated,
     ),
   ]);
@@ -182,7 +184,7 @@ function compositionFactors(u: UnifiedCoachingContext): DecisionContextFactor[] 
       "composition-availability",
       "Composition knowledge",
       "team-composition-intelligence",
-      t.availability,
+      String(t.availability),
       t.populated,
     ),
     ...t.relationships.slice(0, 3).map((r, i) =>
@@ -190,7 +192,7 @@ function compositionFactors(u: UnifiedCoachingContext): DecisionContextFactor[] 
         `composition-relationship-${i}`,
         "Composition relationship",
         "team-composition-intelligence",
-        isText(r.note) ? r.note : r.kind,
+        uniqStrings(r.notes)[0] ?? `${r.analyzedTraitId}: ${r.edge}`,
         t.populated,
       ),
     ),
@@ -283,7 +285,7 @@ function selectedCandidate(u: UnifiedCoachingContext, taken: boolean): DecisionC
     label: u.decision.label,
     source: "decision-library",
     observed: u.decisionPriority.evidence.length > 0,
-    rationale: league?.whyItMatters ?? u.source.whyItMatters,
+    rationale: league?.summary ?? u.source.whyItMatters,
     priority: u.decisionPriority.priority,
     fundamental: u.leagueIntelligence.fundamental,
     curriculumTopic: u.curriculum.topic,
