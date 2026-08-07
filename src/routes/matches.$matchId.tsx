@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { AppShell, PageHeader, DemoModeBadge } from "@/components/app-shell";
 import { MatchCoachReport } from "@/components/match-coach-report";
 import { useMatchReport } from "@/hooks/use-match-report";
