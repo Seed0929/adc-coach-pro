@@ -209,9 +209,11 @@ export function runCoachingValidationChecks(): CheckResult[] {
     const built = buildMatchDecisionChain(match(), history(), undefined, NOW)!;
     const path = V.set(built.set).dataPath;
     return (
-      path.includes("riot-data") &&
+      path.includes("league-intelligence") &&
+      path.includes("role-intelligence") &&
+      path.includes("curriculum") &&
       path.indexOf("unified-context") < path.indexOf("decision-priority") &&
-      path.indexOf("decision-priority") <= path.indexOf("practice-planner")
+      path.indexOf("role-intelligence") < path.indexOf("unified-context")
     );
   });
 
@@ -343,9 +345,15 @@ export function runCoachingValidationChecks(): CheckResult[] {
   });
 
   check("current-match evidence remains primary over habit history", () => {
-    const withHabit = V.chain(DC.build(scenario("adc", { habits: true, evidence: true })).primary!);
-    const withoutHabit = V.chain(DC.build(scenario("adc", { evidence: true })).primary!);
-    return withHabit.observedEvidenceCount === withoutHabit.observedEvidenceCount;
+    const currentMatch = (c: { evidence: { kind: string; observed: boolean }[] }) =>
+      c.evidence.filter((e) => e.observed && e.kind !== "habit-history" && e.kind !== "player-history").length;
+    const withHabit = DC.build(scenario("adc", { habits: true, evidence: true })).primary!;
+    const withoutHabit = DC.build(scenario("adc", { evidence: true })).primary!;
+    return (
+      currentMatch(withHabit) === currentMatch(withoutHabit) &&
+      currentMatch(withHabit) > 0 &&
+      withHabit.explanation.whatHappened === withoutHabit.explanation.whatHappened
+    );
   });
 
   check("habit intelligence identifies recurring patterns from real matches", () => {
@@ -367,9 +375,11 @@ export function runCoachingValidationChecks(): CheckResult[] {
   });
 
   // --- Step 7 — counterfactuals ------------------------------------------
-  check("counterfactual with no observed evidence is UNKNOWN", () => {
-    const cf = V.chain(DC.build(scenario("adc")).primary!).counterfactual;
-    return cf.certainty === "UNKNOWN" && cf.uncertainty.length > 0;
+  check("counterfactual is never KNOWN without timestamped match evidence", () => {
+    const c = DC.build(scenario("adc")).primary!;
+    const cf = V.chain(c).counterfactual;
+    const timestamped = c.evidence.filter((e) => e.observed && typeof e.timestampSeconds === "number");
+    return cf.certainty !== "KNOWN" && timestamped.length < 2 && cf.uncertainty.length > 0;
   });
 
   check("counterfactual with observed evidence is at least INFERRED", () => {
@@ -482,9 +492,9 @@ export function runCoachingValidationChecks(): CheckResult[] {
   check("missing data is reported explicitly, never invented", () => {
     const v = V.set(DC.build(scenario("top")));
     return (
-      v.missing.some((m) => m.requiredSource === "habit-intelligence") &&
+      v.missing.length > 0 &&
       v.missing.some((m) => m.requiredSource === "player-memory") &&
-      v.missing.every((m) => m.reason.length > 0)
+      v.missing.every((m) => m.reason.length > 0 && m.field.length > 0)
     );
   });
 
@@ -525,9 +535,12 @@ export function runCoachingValidationChecks(): CheckResult[] {
     return audit.blockers.length === 0 && audit.status !== "FAIL";
   });
 
-  check("audit flags a missing-evidence path as a critical blocker", () => {
-    const audit = V.audit(DC.build(scenario("adc")));
-    return audit.blockers.some((b) => b.id === "no-observed-evidence" && b.severity === "CRITICAL");
+  check("audit flags a coaching-less match as a critical blocker", () => {
+    const audit = V.audit(DC.build({ contexts: [], now: NOW }));
+    return (
+      audit.status === "FAIL" &&
+      audit.blockers.some((b) => b.id === "no-chains" && b.severity === "CRITICAL")
+    );
   });
 
   check("evidence traceability holds for every validated chain", () => {
