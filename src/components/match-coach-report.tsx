@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Swords, Clock, Compass, Crown } from "lucide-react";
 import { ChevronRight, Zap } from "lucide-react";
+import { Brain, Search } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type {
@@ -22,6 +23,138 @@ import type {
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
 import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
+import type { MatchReportDecisionChain } from "@/lib/coaching/decision-chain-v1";
+import { validateCounterfactual } from "@/lib/coaching/coaching-validation-v1";
+
+// ---------------------------------------------------------------------------
+// Why This Coaching — the validated Decision Chain V1 payload, surfaced as-is.
+// Nothing here is invented: absent sources render as an explicit note.
+// ---------------------------------------------------------------------------
+
+const CHAIN_ASSESSMENT: Record<string, { label: string; tone: "success" | "warning" | "danger" }> = {
+  HIGH: { label: "Reliable read", tone: "success" },
+  MEDIUM: { label: "Solid read", tone: "warning" },
+  LOW: { label: "Early read", tone: "danger" },
+  INSUFFICIENT_DATA: { label: "Not enough data yet", tone: "danger" },
+};
+
+function clock(seconds: number | null | undefined): string | null {
+  if (typeof seconds !== "number" || seconds < 0) return null;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
+  const primary = chain.chains[0] ?? null;
+  const assessment = CHAIN_ASSESSMENT[chain.confidence] ?? CHAIN_ASSESSMENT.INSUFFICIENT_DATA;
+  const observed = primary ? primary.evidence.filter((e) => e.observed) : [];
+  const counterfactual = primary ? validateCounterfactual(primary) : null;
+
+  return (
+    <Card icon={Brain} title="Why This Coaching" accent="text-primary">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Pill tone={assessment.tone}>{assessment.label}</Pill>
+        {chain.primaryFundamental && (
+          <span className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+            {chain.primaryFundamental.replace(/-/g, " ")}
+          </span>
+        )}
+      </div>
+
+      <dl className="space-y-1.5 text-sm">
+        {chain.whatHappened && (
+          <div>
+            <dt className="inline font-medium text-foreground/80">What happened: </dt>
+            <dd className="inline text-muted-foreground">{chain.whatHappened}</dd>
+          </div>
+        )}
+        {chain.whyItMattered && (
+          <div>
+            <dt className="inline font-medium text-foreground/80">Why it mattered: </dt>
+            <dd className="inline text-muted-foreground">{chain.whyItMattered}</dd>
+          </div>
+        )}
+      </dl>
+
+      {/* Observed match evidence — coaching is never shown without it. */}
+      <div className="mt-4">
+        <p className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <Search className="size-3.5" /> Evidence from your match
+        </p>
+        {observed.length > 0 ? (
+          <ul className="space-y-2">
+            {observed.slice(0, 4).map((e) => (
+              <li key={e.id} className="flex gap-2 rounded-2xl bg-white/[0.03] p-3 text-sm">
+                {clock(e.timestampSeconds) && (
+                  <span className="font-display shrink-0 font-semibold text-primary tabular-nums">
+                    {clock(e.timestampSeconds)}
+                  </span>
+                )}
+                <span className="text-muted-foreground">{e.statement}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No observed match data reached this decision, so this coaching stays at knowledge level.
+          </p>
+        )}
+      </div>
+
+      {/* Decisions that were available at that moment. */}
+      {chain.decisionsAvailable.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Decisions available to you
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            {chain.decisionsAvailable.map((d, i) => (
+              <span key={i} className="rounded-lg bg-white/[0.04] px-2 py-1">
+                {d}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Counterfactual — certainty is stated, never implied. */}
+      {counterfactual && (
+        <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+            The alternative{" "}
+            <span className="text-muted-foreground/70">({counterfactual.certainty.toLowerCase()})</span>
+          </p>
+          {counterfactual.alternativeDecision ? (
+            <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No alternative decision could be established from this match's data.
+            </p>
+          )}
+          <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
+        </div>
+      )}
+
+      {/* Habit history is supporting context — explicitly not proof. */}
+      {chain.habitNote && (
+        <div className="mt-4 rounded-2xl border border-warning/20 bg-warning/[0.06] p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-warning">
+            Supporting pattern (not proof)
+          </p>
+          <p className="text-sm text-muted-foreground">{chain.habitNote}</p>
+        </div>
+      )}
+
+      {chain.practiceGoal && (
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-primary/[0.07] p-4">
+          <Flag className="size-5 shrink-0 text-primary" />
+          <p className="text-sm font-medium">{chain.practiceGoal}</p>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function assessmentTone(c: CoachAssessment): "success" | "warning" | "danger" {
   return c === "Reliable read" ? "success" : c === "Solid read" ? "warning" : "danger";
