@@ -520,6 +520,12 @@ export interface MatchCoachingReport {
 
   engineVersion: number;
   source: "rule-based" | "llm";
+
+  /**
+   * OPTIONAL structured Decision Chain data (Sprint 5.1). Absent on reports
+   * built before the chain exists — every consumer must treat it as optional.
+   */
+  decisionChain?: MatchReportDecisionChain | null;
 }
 
 /**
