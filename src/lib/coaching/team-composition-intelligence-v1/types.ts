@@ -540,11 +540,17 @@ export const TRAIT_FIELD_BY_ID: Record<CompositionTraitId, keyof TeamComposition
 };
 
 /** Create a profile from a partial authored record, filling every slot. */
+export type CreateTeamCompositionInput = Omit<Partial<TeamCompositionProfile>, "champions" | "teamSide"> & {
+  /** Role → champion map. Missing roles stay placeholders. */
+  champions?: CompositionRoleInput;
+  teamSide?: TeamSide | string;
+};
+
 export function createTeamCompositionProfile(
-  input: Partial<TeamCompositionProfile> & { champions?: CompositionRoleInput; teamSide?: TeamSide },
+  input: CreateTeamCompositionInput,
 ): TeamCompositionProfile {
   const roleChampions: CompositionRoleInput =
-    (input.champions as CompositionRoleInput | undefined) ??
+    input.champions ??
     (input.roleAssignments
       ? COMPOSITION_ROLES.reduce((acc, role) => {
           const champ = input.roleAssignments?.[role]?.champion;
@@ -553,7 +559,7 @@ export function createTeamCompositionProfile(
         }, {} as CompositionRoleInput)
       : {});
   const base = emptyTeamCompositionProfile(roleChampions, input.teamSide as string | undefined);
-  const { champions: _ignored, ...rest } = input;
+  const { champions: _ignored, teamSide: _side, ...rest } = input;
   return {
     ...base,
     ...(rest as Partial<TeamCompositionProfile>),
