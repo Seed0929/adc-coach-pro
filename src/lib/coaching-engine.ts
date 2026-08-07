@@ -17,6 +17,8 @@ export const COACHING_ENGINE_VERSION = 1;
 import { buildMatchPlan, type MatchPlan } from "./coaching/match-plan";
 export type { MatchPlan } from "./coaching/match-plan";
 import { LeagueIntelligence } from "./coaching/league-intelligence";
+import type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
+export type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 
 /**
  * Role-safe language shim — every ADC-worded coaching string routes through
@@ -518,6 +520,17 @@ export interface MatchCoachingReport {
 
   engineVersion: number;
   source: "rule-based" | "llm";
+}
+
+/**
+ * Sprint 5.1 — OPTIONAL structured Decision Chain data. Existing reports keep
+ * working unchanged when it is absent; nothing here fabricates coaching.
+ */
+export function attachDecisionChain(
+  report: MatchCoachingReport,
+  decisionChain: MatchReportDecisionChain | null,
+): MatchCoachingReport {
+  return { ...report, decisionChain: decisionChain ?? null };
 }
 
 /** Report grade adds an S+ tier above the base engine's S. */
