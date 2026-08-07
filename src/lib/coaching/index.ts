@@ -124,6 +124,30 @@ export {
   type ChampionProfileV1,
   type ChampionResolution,
 } from "./champion-intelligence-v1";
+export * as ItemIntelligenceFramework from "./item-intelligence-v1";
+export {
+  ItemIntelligenceV1,
+  registerItemProfiles,
+  hydrateItemIntelligence,
+  emptyItemProfileV1,
+  type ItemIntelligenceV1Facade,
+  type ItemProfileV1,
+  type ItemOfficialMetadata,
+  type ItemIdentity,
+  type ItemPhaseValue,
+  type ItemValueMatrix,
+  type ItemPhilosophy,
+  type ItemMistakeLibrary,
+  type ItemPowerSpikeType,
+  type ItemRiskProfile,
+  type ItemValueRating,
+  type ItemResolution,
+  type ItemDecisionReference,
+  type ItemCurriculumReference,
+  type ItemHabitReference,
+  type ItemReplayReference,
+  type ItemPracticeReference,
+} from "./item-intelligence-v1";
 
 export interface CoachAnswer {
   answer: string;
