@@ -30,7 +30,11 @@ export function useMatchReport(matchId: string): MatchReportState {
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
   const isDemoMatch = matchId.startsWith("demo-");
-  const linked = Boolean(isAuthenticated && profile?.onboarding_complete && !isDemoMatch);
+  // Gate on `riot_connected` — the same flag every other data hook uses. Keying
+  // this on `onboarding_complete` made a profile-only onboarding look "linked"
+  // here while history/sync treated it as a guest, so real reports were fetched
+  // for an account that had no synced matches.
+  const linked = Boolean(isAuthenticated && profile?.riot_connected && !isDemoMatch);
 
   useEffect(() => {
     let active = true;
