@@ -471,7 +471,7 @@ function decisionRef(
 ): LaneStateDecisionReference | null {
   const decision = getLeagueDecision(decisionId);
   if (!decision) return null;
-  return { decisionId, label: decision.label ?? PENDING, weightMultiplier, note: PENDING };
+  return { decisionId, label: decision.title, weightMultiplier, note: PENDING };
 }
 
 const WAVE_DECISIONS: Partial<Record<WaveState, string[]>> = {
