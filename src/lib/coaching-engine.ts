@@ -909,6 +909,15 @@ export function buildMatchReport(
   const priorityImprovement = buildPriority(m, mistakes);
   const assessment = buildAssessment(m);
 
+  // Sprint 5.2 — OPTIONAL structured Decision Chain built from this match's
+  // real, evidence-grounded timeline. Never allowed to break the report.
+  let decisionChain: MatchReportDecisionChain | null = null;
+  try {
+    decisionChain = buildMatchReportDecisionChain(m, history, plan.timeline);
+  } catch {
+    decisionChain = null;
+  }
+
   return {
     matchId: m.matchId,
     champion: m.champion,
@@ -927,11 +936,12 @@ export function buildMatchReport(
     practiceGoal: buildPracticeGoal(m, priorityImprovement.title),
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
-    plan: buildMatchPlan(m, history),
+    plan,
     history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
     source: "rule-based",
+    decisionChain,
   };
 }
 
