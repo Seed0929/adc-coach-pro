@@ -322,3 +322,40 @@ export function coachingPipelineFor(d: CoachDossier, champion?: string): Coachin
       }));
   return runCoachingPipeline(issues, normalizeRole(d.layeredMemory?.role?.role), champion);
 }
+
+export * as TeamCompositionIntelligenceFramework from "./team-composition-intelligence-v1";
+export {
+  TeamCompositionIntelligenceV1,
+  registerTeamCompositions,
+  clearTeamCompositions,
+  createTeamCompositionProfile,
+  emptyTeamCompositionProfile,
+  makeCompositionId,
+  COMPOSITION_ROLES,
+  COMPOSITION_TRAIT_IDS,
+  type TeamCompositionIntelligenceV1Facade,
+  type TeamCompositionProfile,
+  type TeamCompositionAnalysis,
+  type TeamSide,
+  type CompositionSlot,
+  type CompositionTrait,
+  type CompositionTraitId,
+  type CompositionRating,
+  type CompositionEdge,
+  type CompositionResolution,
+  type CompositionAvailability,
+  type CompositionRelationship,
+  type CompositionComparison,
+  type CompositionObservation,
+  type CompositionDamageDistribution,
+  type CompositionDecisionPriority,
+  type CompositionDecisionReference,
+  type CompositionCurriculumReference,
+  type CompositionHabitReference,
+  type CompositionPracticeReference,
+  type CompositionItemReference,
+  type CompositionRuneReference,
+  type CompositionMatchupReference,
+  type CompositionGameStateInput,
+  type CompositionRoleInput,
+} from "./team-composition-intelligence-v1";
