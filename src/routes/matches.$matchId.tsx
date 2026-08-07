@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { AppShell, PageHeader, DemoModeBadge } from "@/components/app-shell";
 import { MatchCoachReport } from "@/components/match-coach-report";
 import { useMatchReport } from "@/hooks/use-match-report";
@@ -15,7 +15,10 @@ export const Route = createFileRoute("/matches/$matchId")({
           "A personalized AI coaching report for one match: grade, strengths, mistakes, priority improvement, practice goal, and how you've trended.",
       },
       { property: "og:title", content: "AI Coach — Match Review — BotDiff" },
-      { property: "og:description", content: "Read your match like feedback from a real League coach." },
+      {
+        property: "og:description",
+        content: "Read your match like feedback from a real League coach.",
+      },
     ],
   }),
   component: MatchReportPage,
@@ -33,7 +36,7 @@ export const Route = createFileRoute("/matches/$matchId")({
 
 function MatchReportPage() {
   const { matchId } = Route.useParams();
-  const { report, loading, error, isDemo } = useMatchReport(matchId);
+  const { report, loading, error, isDemo, retry } = useMatchReport(matchId);
 
   return (
     <AppShell>
@@ -63,11 +66,27 @@ function MatchReportPage() {
           <Loader2 className="size-4 animate-spin" /> Analyzing this match…
         </div>
       ) : error || !report ? (
-        <div className="glass rounded-3xl p-8 text-center text-sm text-muted-foreground">
-          {error ?? "No report available for this match yet."}
+        <div className="glass rounded-3xl p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {error ?? "This match doesn't have a coaching report yet."}
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={retry}
+              className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium"
+            >
+              <RefreshCw className="size-4" /> Try again
+            </button>
+            <Link
+              to="/matches"
+              className="glass glass-hover inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium"
+            >
+              Back to matches
+            </Link>
+          </div>
         </div>
       ) : (
-        <MatchCoachReport report={report} />
+        <MatchCoachReport report={report} isDemo={isDemo} />
       )}
     </AppShell>
   );

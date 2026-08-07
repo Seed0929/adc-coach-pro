@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Mail, Lock, User as UserIcon, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
@@ -48,6 +49,11 @@ function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const dest = search.redirect && search.redirect !== "/auth" ? search.redirect : "/dashboard";
+
+  // Beta journey: the player reached the account step.
+  useEffect(() => {
+    trackBetaEvent(BETA_EVENTS.loginJourneyReached, { surface: "auth" });
+  }, []);
 
   // Already signed in → go to onboarding only when incomplete; otherwise go to
   // the dashboard or intended protected destination.

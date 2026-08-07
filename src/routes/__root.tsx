@@ -15,6 +15,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { DataProvider } from "@/lib/player-data";
 import { SyncProvider } from "@/hooks/use-sync";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/hooks/use-theme";
+import { installBetaAnalytics } from "@/lib/analytics/supabase-transport";
 import { Toaster } from "sonner";
 
 function NotFoundComponent() {
@@ -132,6 +133,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Private-beta journey observation. Best-effort; never blocks the app.
+  useEffect(() => {
+    installBetaAnalytics();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

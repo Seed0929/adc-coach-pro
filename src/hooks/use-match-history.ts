@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { useSync } from "@/hooks/use-sync";
 import { getStoredMatches, syncMatches, type StoredMatch } from "@/lib/matches.functions";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 interface MatchHistoryState {
   matches: StoredMatch[];
@@ -43,10 +44,24 @@ export function useMatchHistory(): MatchHistoryState {
     setError(null);
     try {
       const result = await fetchStored();
-      if (result.ok) setMatches(result.matches);
-      else setError(result.message);
+      if (result.ok) {
+        setMatches(result.matches);
+        if (result.matches.length === 0) {
+          trackBetaEvent(BETA_EVENTS.noMatchState, { surface: "match-history" });
+        }
+      } else {
+        setError(result.message);
+        trackBetaEvent(BETA_EVENTS.recoverableError, {
+          surface: "match-history",
+          reason: result.code,
+        });
+      }
     } catch {
       setError("Couldn't load your match history right now.");
+      trackBetaEvent(BETA_EVENTS.recoverableError, {
+        surface: "match-history",
+        reason: "unreachable",
+      });
     } finally {
       setLoading(false);
     }
@@ -63,9 +78,17 @@ export function useMatchHistory(): MatchHistoryState {
         setLastImported(result.imported ?? 0);
       } else {
         setError(result.message);
+        trackBetaEvent(BETA_EVENTS.recoverableError, {
+          surface: "match-sync",
+          reason: result.code,
+        });
       }
     } catch {
       setError("Couldn't sync your matches right now.");
+      trackBetaEvent(BETA_EVENTS.recoverableError, {
+        surface: "match-sync",
+        reason: "unreachable",
+      });
     } finally {
       setSyncing(false);
     }
