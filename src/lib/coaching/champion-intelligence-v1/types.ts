@@ -102,6 +102,93 @@ export interface ChampionPracticeFocus {
   measurable: string | Pending;
 }
 
+// --- Sprint 4.5: reusable structural blocks --------------------------------
+
+/** Difficulty grading used by the difficulty triad. Riot only supplies one. */
+export type ChampionDifficultyRating = "low" | "moderate" | "high" | "very-high" | "unknown";
+
+/**
+ * A capability slot (peel / engage / pick / split push / objective ...).
+ * `rating` stays "unknown" and `notes` empty until a data source populates it —
+ * never inferred from gameplay opinion here.
+ */
+export interface ChampionCapability {
+  id:
+    | "peel"
+    | "engage"
+    | "pick"
+    | "split-push"
+    | "objective"
+    | "teamfight"
+    | "waveclear"
+    | "roam";
+  rating: Rating | Pending;
+  summary: string | Pending;
+  notes: string[];
+}
+
+/** The full capability matrix. Every slot always exists. */
+export interface ChampionCapabilityProfile {
+  peel: ChampionCapability;
+  engage: ChampionCapability;
+  pick: ChampionCapability;
+  splitPush: ChampionCapability;
+  objective: ChampionCapability;
+  teamfight: ChampionCapability;
+  waveclear: ChampionCapability;
+  roam: ChampionCapability;
+}
+
+/** Playstyle descriptors — structural placeholders, no authored advice. */
+export interface ChampionStyleProfile {
+  tradingStyle: string | Pending;
+  waveclearProfile: string | Pending;
+  roamProfile: string | Pending;
+  positioningPhilosophy: string | Pending;
+  spacingPhilosophy: string | Pending;
+  recoveryPhilosophy: string | Pending;
+  recallPhilosophy: string | Pending;
+}
+
+/**
+ * The difficulty triad. `officialRiotDifficulty` is the only field Riot can
+ * fill (Data Dragon `info.difficulty`, 1-10); the rest stay placeholders.
+ */
+export interface ChampionDifficultyProfile {
+  mechanical: ChampionDifficultyRating | Pending;
+  macro: ChampionDifficultyRating | Pending;
+  execution: ChampionDifficultyRating | Pending;
+  officialRiotDifficulty: number | null;
+}
+
+/** A point on the scaling curve. Structural only. */
+export interface ChampionScalingPoint {
+  phase: GamePhase;
+  rating: Rating | Pending;
+  note: string | Pending;
+}
+
+/** Reference into Habit Intelligence (never a player evaluation). */
+export interface ChampionHabitReference {
+  habitId: string;
+  fundamental: LeagueFundamentalId;
+  note: string | Pending;
+}
+
+/** Reference into Replay Intelligence moment types. */
+export interface ChampionReplayReference {
+  momentType: string;
+  fundamental: LeagueFundamentalId;
+  note: string | Pending;
+}
+
+/** A prioritised list slot (vision / economy / resource priorities). */
+export interface ChampionPriority {
+  fundamental: LeagueFundamentalId;
+  priority: string | Pending;
+  rank: number;
+}
+
 /** Official Riot ability metadata (facts only — supplied by Data Dragon). */
 export interface ChampionOfficialAbility {
   slot: "P" | "Q" | "W" | "E" | "R";
