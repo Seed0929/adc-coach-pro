@@ -433,6 +433,7 @@ export function MatchCoachReport({ report }: { report: MatchCoachingReport }) {
         {/* Priority improvement */}
         <Card icon={Target} title="Your Next Habit to Build">
           <div className="rounded-2xl bg-primary/[0.07] p-5">
+
             <div className="mb-1 flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="size-4" /> {report.priorityImprovement.title}
             </div>
