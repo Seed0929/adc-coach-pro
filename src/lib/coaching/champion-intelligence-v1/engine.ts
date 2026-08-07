@@ -151,6 +151,7 @@ export function getIdentity(championId: string, role?: RoleId): ChampionIdentity
     rangeType: p.rangeType,
     resourceType: p.resourceType,
     scalingCurve: p.scalingProfile,
+    difficulty: p.difficulty.mechanical,
     earlyGameIdentity: p.earlyGameIdentity,
     midGameIdentity: p.midGameIdentity,
     lateGameIdentity: p.lateGameIdentity,
