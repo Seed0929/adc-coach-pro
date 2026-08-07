@@ -144,9 +144,14 @@ export function runDecisionChainChecks(): CheckResult[] {
           } satisfies DecisionEvidence,
         ],
       },
-      habits: [],
+      habits: (() => {
+        const engine = createHabitEngine();
+        engine.record(contexts().unifiedContexts, { matchId: "m1" });
+        return engine.getHabits({ scope: "universal" });
+      })(),
+      practicePlan: PracticePlanner.create({ contexts: input.contexts, priorities: input.priorities, now: "t" }),
     });
-    return set.completeness.percent >= 60;
+    return set.completeness.percent >= 70;
   });
 
   // --- multiple available decisions ---------------------------------------
