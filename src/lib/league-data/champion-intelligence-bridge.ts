@@ -69,6 +69,29 @@ function toOfficial(champ: ChampionData): ChampionOfficialMetadata {
 }
 
 /**
+ * Riot's own `info.attack` vs `info.magic` ratings — a FACT lookup, not a
+ * coaching judgement. Unknown whenever Riot omits `info`.
+ */
+function damageProfile(champ: ChampionData): ChampionProfileV1["damageProfile"] {
+  const info = champ.info;
+  if (!info) return "unknown";
+  const diff = info.attack - info.magic;
+  if (diff >= 3) return "AD";
+  if (diff <= -3) return "AP";
+  if (info.attack === 0 && info.magic === 0) return "unknown";
+  return "hybrid";
+}
+
+/** Riot's `info.difficulty` (1-10) bucketed. No other difficulty is invented. */
+function riotDifficulty(value: number | null): ChampionProfileV1["difficulty"]["mechanical"] {
+  if (value === null) return "unknown";
+  if (value <= 3) return "low";
+  if (value <= 6) return "moderate";
+  if (value <= 8) return "high";
+  return "very-high";
+}
+
+/**
  * Merge Riot facts into an existing (or placeholder) ChampionProfileV1.
  * Coaching fields are never overwritten — only factual metadata is filled in.
  */
@@ -78,10 +101,12 @@ export function toChampionProfile(champ: ChampionData): ChampionProfileV1 {
   const official = toOfficial(champ);
   const primaryRole =
     base.primaryRole !== "__pending__" ? base.primaryRole : official.officialRoles[0] ?? "__pending__";
+  const officialDifficulty = official.info?.difficulty ?? null;
   return {
     ...base,
     championId: champ.id,
     championName: champ.name,
+    championTitle: champ.title,
     primaryRole,
     secondaryRoles:
       base.secondaryRoles.length > 0
@@ -94,6 +119,20 @@ export function toChampionProfile(champ: ChampionData): ChampionProfileV1 {
         : ((champ.tags[0] as ChampionProfileV1["championClass"]) ?? "unknown"),
     rangeType: official.officialRangeType,
     resourceType: official.officialResourceType,
+    damageProfile:
+      base.damageProfile !== "unknown" && base.damageProfile !== "__pending__"
+        ? base.damageProfile
+        : damageProfile(champ),
+    // Only Riot's own difficulty rating is filled in; the mechanical bucket is
+    // a direct mapping of it. Macro / execution stay placeholders for coaching.
+    difficulty: {
+      ...base.difficulty,
+      mechanical:
+        base.difficulty.mechanical !== "unknown" && base.difficulty.mechanical !== "__pending__"
+          ? base.difficulty.mechanical
+          : riotDifficulty(officialDifficulty),
+      officialRiotDifficulty: officialDifficulty,
+    },
     official,
     source: "datadragon",
     patch: official.patch,
