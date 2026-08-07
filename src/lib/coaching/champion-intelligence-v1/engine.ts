@@ -409,7 +409,7 @@ export function getHabitReferences(
   const r = resolveRole(p, role);
   if (p?.habitReferences.length) return wrap(championId, r, true, p.habitReferences);
   const fallback: ChampionHabitReference[] = roleHabitLibrary(r, "mistake").map((h) => ({
-    habitId: h.id,
+    habitId: `${r}:${h.fundamental}`,
     fundamental: h.fundamental,
     note: PENDING,
   }));
