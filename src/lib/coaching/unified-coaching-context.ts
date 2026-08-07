@@ -360,6 +360,18 @@ export function buildUnifiedCoachingContext(
           profile: options.matchup,
         }
       : undefined,
+    teamComposition: options.teamComposition
+      ? {
+          compositionId: options.teamComposition.analyzedTeam.compositionId,
+          playerRole: options.teamComposition.playerRole,
+          populated: options.teamComposition.analyzedTeam.populated,
+          availability: options.teamComposition.availability.analyzedTeam,
+          relationships: options.teamComposition.relationships,
+          analyzedTeam: options.teamComposition.analyzedTeam,
+          opposingTeam: options.teamComposition.opposingTeam,
+          analysis: options.teamComposition,
+        }
+      : undefined,
     playerMemory: options.playerMemory,
     source: c,
   };
