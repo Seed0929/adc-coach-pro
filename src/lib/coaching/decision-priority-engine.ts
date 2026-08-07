@@ -261,7 +261,8 @@ function overallPriority(s: DecisionScoreBreakdown): number {
 
 function reasonFor(c: CoachingContext, s: DecisionScoreBreakdown, ev?: PriorityEvidence): string {
   const parts: string[] = [];
-  if (ev?.games && (ev.total ?? 0) > 0) {
+  // One game is not a pattern — never claim recurrence from a single match.
+  if (ev?.games && ev.games >= 2 && (ev.total ?? 0) >= 2) {
     parts.push(`It shows up in ${ev.games} of your last ${ev.total} games.`);
   }
   parts.push(c.whyItMatters);
