@@ -269,7 +269,9 @@ function reasonFor(c: CoachingContext, s: DecisionScoreBreakdown, ev?: PriorityE
   if (s.difficulty >= 60 && c.practiceDrills[0]) parts.push(`Fastest fix: ${c.practiceDrills[0]}`);
   const out: string[] = [];
   for (const p of parts) if (p && !out.includes(p)) out.push(p);
-  return out.join(" ");
+  // Coaching text is read by players — never emit run-on sentences when two
+  // knowledge fragments are joined.
+  return out.map((p) => (/[.!?]$/.test(p.trim()) ? p.trim() : `${p.trim()}.`)).join(" ");
 }
 
 function toPrioritized(
