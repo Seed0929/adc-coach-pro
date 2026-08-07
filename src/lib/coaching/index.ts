@@ -170,6 +170,36 @@ export {
   type RunePracticeReference,
   type RuneRecoveryReference,
 } from "./rune-intelligence-v1";
+export * as MatchupIntelligenceFramework from "./matchup-intelligence-v1";
+export {
+  MatchupIntelligenceV1,
+  registerMatchupProfiles,
+  clearMatchupProfiles,
+  createMatchupProfileV1,
+  emptyMatchupProfileV1,
+  makeMatchupId,
+  type MatchupIntelligenceV1Facade,
+  type MatchupProfileV1,
+  type MatchupRoleContext,
+  type MatchupInteraction,
+  type MatchupInteractionId,
+  type MatchupPhaseProfile,
+  type MatchupWindow,
+  type MatchupWindowKind,
+  type MatchupEdge,
+  type MatchupRating,
+  type MatchupResolution,
+  type MatchupChampionAvailability,
+  type MatchupDecisionPriority,
+  type MatchupDecisionReference,
+  type MatchupCurriculumReference,
+  type MatchupHabitReference,
+  type MatchupPracticeReference,
+  type MatchupMistakeReference,
+  type MatchupItemReference,
+  type MatchupRuneReference,
+  type MatchupGameStateInput,
+} from "./matchup-intelligence-v1";
 
 export interface CoachAnswer {
   answer: string;
