@@ -49,6 +49,12 @@ export {
   toChampionProfile,
   type HydrationResult,
 } from "./champion-intelligence-bridge";
+export {
+  hydrateItemIntelligenceFromDataDragon,
+  hydrateItem,
+  toItemProfile,
+  type ItemHydrationResult,
+} from "./item-intelligence-bridge";
 export { clearCache as clearLeagueDataCache } from "./cache";
 
 import { DataDragonProvider } from "./provider";
@@ -58,6 +64,7 @@ import { RuneRepository } from "./rune-repository";
 import { AssetRepository } from "./asset-repository";
 import { VersionRepository } from "./version-repository";
 import { hydrateChampionIntelligenceFromDataDragon } from "./champion-intelligence-bridge";
+import { hydrateItemIntelligenceFromDataDragon } from "./item-intelligence-bridge";
 
 /** One object every future intelligence module can depend on. */
 export const LeagueDataProviders = {
@@ -69,6 +76,7 @@ export const LeagueDataProviders = {
   version: VersionRepository,
   /** Load Riot data and feed Champion Intelligence with validated facts. */
   hydrateChampionIntelligence: hydrateChampionIntelligenceFromDataDragon,
+  hydrateItemIntelligence: hydrateItemIntelligenceFromDataDragon,
 } as const;
 
 export type LeagueDataProvidersFacade = typeof LeagueDataProviders;
