@@ -908,6 +908,7 @@ export function buildMatchReport(
   const mistakes = buildMistakes(m, analysis.grades);
   const priorityImprovement = buildPriority(m, mistakes);
   const assessment = buildAssessment(m);
+  const plan = buildMatchPlan(m, history);
 
   // Sprint 5.2 — OPTIONAL structured Decision Chain built from this match's
   // real, evidence-grounded timeline. Never allowed to break the report.
