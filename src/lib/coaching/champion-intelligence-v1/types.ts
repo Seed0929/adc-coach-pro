@@ -102,6 +102,93 @@ export interface ChampionPracticeFocus {
   measurable: string | Pending;
 }
 
+// --- Sprint 4.5: reusable structural blocks --------------------------------
+
+/** Difficulty grading used by the difficulty triad. Riot only supplies one. */
+export type ChampionDifficultyRating = "low" | "moderate" | "high" | "very-high" | "unknown";
+
+/**
+ * A capability slot (peel / engage / pick / split push / objective ...).
+ * `rating` stays "unknown" and `notes` empty until a data source populates it —
+ * never inferred from gameplay opinion here.
+ */
+export interface ChampionCapability {
+  id:
+    | "peel"
+    | "engage"
+    | "pick"
+    | "split-push"
+    | "objective"
+    | "teamfight"
+    | "waveclear"
+    | "roam";
+  rating: Rating | Pending;
+  summary: string | Pending;
+  notes: string[];
+}
+
+/** The full capability matrix. Every slot always exists. */
+export interface ChampionCapabilityProfile {
+  peel: ChampionCapability;
+  engage: ChampionCapability;
+  pick: ChampionCapability;
+  splitPush: ChampionCapability;
+  objective: ChampionCapability;
+  teamfight: ChampionCapability;
+  waveclear: ChampionCapability;
+  roam: ChampionCapability;
+}
+
+/** Playstyle descriptors — structural placeholders, no authored advice. */
+export interface ChampionStyleProfile {
+  tradingStyle: string | Pending;
+  waveclearProfile: string | Pending;
+  roamProfile: string | Pending;
+  positioningPhilosophy: string | Pending;
+  spacingPhilosophy: string | Pending;
+  recoveryPhilosophy: string | Pending;
+  recallPhilosophy: string | Pending;
+}
+
+/**
+ * The difficulty triad. `officialRiotDifficulty` is the only field Riot can
+ * fill (Data Dragon `info.difficulty`, 1-10); the rest stay placeholders.
+ */
+export interface ChampionDifficultyProfile {
+  mechanical: ChampionDifficultyRating | Pending;
+  macro: ChampionDifficultyRating | Pending;
+  execution: ChampionDifficultyRating | Pending;
+  officialRiotDifficulty: number | null;
+}
+
+/** A point on the scaling curve. Structural only. */
+export interface ChampionScalingPoint {
+  phase: GamePhase;
+  rating: Rating | Pending;
+  note: string | Pending;
+}
+
+/** Reference into Habit Intelligence (never a player evaluation). */
+export interface ChampionHabitReference {
+  habitId: string;
+  fundamental: LeagueFundamentalId;
+  note: string | Pending;
+}
+
+/** Reference into Replay Intelligence moment types. */
+export interface ChampionReplayReference {
+  momentType: string;
+  fundamental: LeagueFundamentalId;
+  note: string | Pending;
+}
+
+/** A prioritised list slot (vision / economy / resource priorities). */
+export interface ChampionPriority {
+  fundamental: LeagueFundamentalId;
+  priority: string | Pending;
+  rank: number;
+}
+
 /** Official Riot ability metadata (facts only — supplied by Data Dragon). */
 export interface ChampionOfficialAbility {
   slot: "P" | "Q" | "W" | "E" | "R";
@@ -162,6 +249,7 @@ export interface ChampionOfficialMetadata {
 export interface ChampionProfileV1 {
   championId: string;
   championName: string | Pending;
+  championTitle: string | Pending;
   primaryRole: RoleId | Pending;
   secondaryRoles: RoleId[];
   championClass: ChampionClassId | Pending;
@@ -169,6 +257,8 @@ export interface ChampionProfileV1 {
   rangeType: ChampionRangeType | Pending;
   resourceType: ChampionResourceType | Pending;
   scalingProfile: ChampionScalingProfile | Pending;
+  /** Early / mid / late curve as structured points. */
+  scalingCurve: ChampionScalingPoint[];
   earlyGameIdentity: ChampionPhaseIdentity;
   midGameIdentity: ChampionPhaseIdentity;
   lateGameIdentity: ChampionPhaseIdentity;
@@ -178,18 +268,32 @@ export interface ChampionProfileV1 {
   laneIdentity: string | Pending;
   sideLaneIdentity: string | Pending;
   objectiveStrengths: string[];
+  /** Capability matrix: peel / engage / pick / split push / objective / ... */
+  capabilities: ChampionCapabilityProfile;
+  /** Trading, waveclear, roaming, positioning, spacing, recovery, recall. */
+  style: ChampionStyleProfile;
+  /** Mechanical / macro / execution difficulty + Riot's own rating. */
+  difficulty: ChampionDifficultyProfile;
   waveManagementTendencies: ChampionTendency[];
   recallTendencies: ChampionTendency[];
   visionTendencies: ChampionTendency[];
   roamingTendencies: ChampionTendency[];
+  visionPriorities: ChampionPriority[];
+  economyPriorityList: ChampionPriority[];
+  resourcePriorities: ChampionPriority[];
   economyPriorities: string[];
   powerSpikeReferences: ChampionPowerSpikeReference[];
+  /** Ordered power-spike timeline (same references, timeline semantics). */
+  powerSpikeTimeline: ChampionPowerSpikeReference[];
   commonMistakes: ChampionCoachingPoint[];
   commonStrengths: ChampionCoachingPoint[];
   curriculumReferences: ChampionCurriculumReference[];
   decisionLibraryReferences: ChampionDecisionReference[];
+  habitReferences: ChampionHabitReference[];
+  replayReferences: ChampionReplayReference[];
   roleOverrides: ChampionRoleOverride[];
   practiceFocus: ChampionPracticeFocus[];
+  practicePriorities: ChampionPracticeFocus[];
   /** Riot-validated facts from the Data Dragon provider (OPTIONAL). */
   official?: ChampionOfficialMetadata;
   /** Provenance so `curated` → `datadragon` is a data change, not a code one. */
@@ -203,11 +307,58 @@ function phase(p: GamePhase): ChampionPhaseIdentity {
   return { phase: p, identity: "__pending__", rating: "unknown", notes: [] };
 }
 
+function capability(id: ChampionCapability["id"]): ChampionCapability {
+  return { id, rating: "unknown", summary: "__pending__", notes: [] };
+}
+
+export function emptyCapabilityProfile(): ChampionCapabilityProfile {
+  return {
+    peel: capability("peel"),
+    engage: capability("engage"),
+    pick: capability("pick"),
+    splitPush: capability("split-push"),
+    objective: capability("objective"),
+    teamfight: capability("teamfight"),
+    waveclear: capability("waveclear"),
+    roam: capability("roam"),
+  };
+}
+
+export function emptyStyleProfile(): ChampionStyleProfile {
+  return {
+    tradingStyle: "__pending__",
+    waveclearProfile: "__pending__",
+    roamProfile: "__pending__",
+    positioningPhilosophy: "__pending__",
+    spacingPhilosophy: "__pending__",
+    recoveryPhilosophy: "__pending__",
+    recallPhilosophy: "__pending__",
+  };
+}
+
+export function emptyDifficultyProfile(): ChampionDifficultyProfile {
+  return {
+    mechanical: "unknown",
+    macro: "unknown",
+    execution: "unknown",
+    officialRiotDifficulty: null,
+  };
+}
+
+export function emptyScalingCurve(): ChampionScalingPoint[] {
+  return (["early", "mid", "late"] as GamePhase[]).map((p) => ({
+    phase: p,
+    rating: "unknown" as Rating,
+    note: "__pending__" as Pending,
+  }));
+}
+
 /** A valid, placeholder-only profile. Never throws, never invents data. */
 export function emptyChampionProfileV1(championId: string): ChampionProfileV1 {
   return {
     championId,
     championName: "__pending__",
+    championTitle: "__pending__",
     primaryRole: "__pending__",
     secondaryRoles: [],
     championClass: "unknown",
@@ -215,6 +366,7 @@ export function emptyChampionProfileV1(championId: string): ChampionProfileV1 {
     rangeType: "unknown",
     resourceType: "unknown",
     scalingProfile: "unknown",
+    scalingCurve: emptyScalingCurve(),
     earlyGameIdentity: phase("early"),
     midGameIdentity: phase("mid"),
     lateGameIdentity: phase("late"),
@@ -224,18 +376,28 @@ export function emptyChampionProfileV1(championId: string): ChampionProfileV1 {
     laneIdentity: "__pending__",
     sideLaneIdentity: "__pending__",
     objectiveStrengths: [],
+    capabilities: emptyCapabilityProfile(),
+    style: emptyStyleProfile(),
+    difficulty: emptyDifficultyProfile(),
     waveManagementTendencies: [],
     recallTendencies: [],
     visionTendencies: [],
     roamingTendencies: [],
+    visionPriorities: [],
+    economyPriorityList: [],
+    resourcePriorities: [],
     economyPriorities: [],
     powerSpikeReferences: [],
+    powerSpikeTimeline: [],
     commonMistakes: [],
     commonStrengths: [],
     curriculumReferences: [],
     decisionLibraryReferences: [],
+    habitReferences: [],
+    replayReferences: [],
     roleOverrides: [],
     practiceFocus: [],
+    practicePriorities: [],
     source: "curated",
     populated: false,
   };

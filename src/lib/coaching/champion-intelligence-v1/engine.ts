@@ -26,14 +26,25 @@ import {
 } from "../role-intelligence-v1";
 import {
   emptyChampionProfileV1,
+  emptyCapabilityProfile,
+  emptyDifficultyProfile,
+  emptyScalingCurve,
+  emptyStyleProfile,
+  type ChampionCapabilityProfile,
   type ChampionCoachingPoint,
   type ChampionCurriculumReference,
   type ChampionDecisionReference,
+  type ChampionDifficultyProfile,
+  type ChampionHabitReference,
   type ChampionPowerSpikeReference,
   type ChampionPracticeFocus,
+  type ChampionPriority,
   type ChampionProfileV1,
+  type ChampionReplayReference,
   type ChampionResolution,
   type ChampionRoleOverride,
+  type ChampionScalingPoint,
+  type ChampionStyleProfile,
 } from "./types";
 import {
   emptyChampionIdentityV1,
@@ -140,6 +151,7 @@ export function getIdentity(championId: string, role?: RoleId): ChampionIdentity
     rangeType: p.rangeType,
     resourceType: p.resourceType,
     scalingCurve: p.scalingProfile,
+    difficulty: p.difficulty.mechanical,
     earlyGameIdentity: p.earlyGameIdentity,
     midGameIdentity: p.midGameIdentity,
     lateGameIdentity: p.lateGameIdentity,
@@ -272,6 +284,161 @@ export function getPowerSpikes(
 }
 
 /**
+ * Ordered power-spike timeline. Falls back to the flat reference list, then to
+ * an empty timeline — the pipeline treats it as optional enrichment.
+ */
+export function getPowerSpikeTimeline(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionPowerSpikeReference[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const order: Record<string, number> = { early: 0, mid: 1, late: 2 };
+  const list = (p?.powerSpikeTimeline.length ? p.powerSpikeTimeline : p?.powerSpikeReferences) ?? [];
+  const sorted = [...list].sort(
+    (a, b) => (order[a.timing ?? "mid"] ?? 1) - (order[b.timing ?? "mid"] ?? 1),
+  );
+  return wrap(championId, r, sorted.length > 0, sorted);
+}
+
+/** Capability matrix (peel / engage / pick / split push / ...). */
+export function getCapabilities(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionCapabilityProfile> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  return wrap(championId, r, Boolean(p), p?.capabilities ?? emptyCapabilityProfile());
+}
+
+/** Playstyle descriptors, inheriting Role Intelligence for empty slots. */
+export function getStyle(championId: string, role?: RoleId): ChampionResolution<ChampionStyleProfile> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const rp = getRoleProfile(r);
+  const base = p?.style ?? emptyStyleProfile();
+  const inherit = (value: string | typeof PENDING, roleValue?: string): string | typeof PENDING =>
+    isPending(value) ? (roleValue ?? PENDING) : value;
+  return wrap(championId, r, Boolean(p), {
+    tradingStyle: inherit(base.tradingStyle, rp.tempoPhilosophy[0]),
+    waveclearProfile: inherit(base.waveclearProfile, rp.wavePriority[0]),
+    roamProfile: inherit(base.roamProfile, rp.sideLaneResponsibilities[0]),
+    positioningPhilosophy: inherit(base.positioningPhilosophy, rp.positioningPhilosophy[0]),
+    spacingPhilosophy: inherit(base.spacingPhilosophy, rp.positioningPhilosophy[1] ?? rp.positioningPhilosophy[0]),
+    recoveryPhilosophy: inherit(base.recoveryPhilosophy, rp.recallPhilosophy[0]),
+    recallPhilosophy: inherit(base.recallPhilosophy, rp.recallPhilosophy[0]),
+  });
+}
+
+/** Difficulty triad. Only Riot's own rating is ever populated automatically. */
+export function getDifficulty(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionDifficultyProfile> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  return wrap(championId, r, Boolean(p), p?.difficulty ?? emptyDifficultyProfile());
+}
+
+/** Structured early / mid / late scaling curve. */
+export function getScalingCurve(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionScalingPoint[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const curve = p?.scalingCurve.length ? p.scalingCurve : emptyScalingCurve();
+  return wrap(championId, r, Boolean(p?.scalingCurve.length), curve);
+}
+
+function priorities(
+  list: ChampionPriority[] | undefined,
+  roleStatements: string[],
+  fundamental: ChampionPriority["fundamental"],
+): { value: ChampionPriority[]; fromChampion: boolean } {
+  if (list?.length) return { value: list, fromChampion: true };
+  return {
+    value: roleStatements.map((priority, i) => ({ fundamental, priority, rank: i + 1 })),
+    fromChampion: false,
+  };
+}
+
+/** Vision priorities — role vision responsibilities when unpopulated. */
+export function getVisionPriorities(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionPriority[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const out = priorities(p?.visionPriorities, getRoleProfile(r).visionResponsibilities, "vision");
+  return wrap(championId, r, out.fromChampion, out.value);
+}
+
+/** Economy priorities — role economy philosophy when unpopulated. */
+export function getEconomyPriorities(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionPriority[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const out = priorities(p?.economyPriorityList, getRoleProfile(r).economyPhilosophy, "economy");
+  return wrap(championId, r, out.fromChampion, out.value);
+}
+
+/** Resource priorities — role resources when unpopulated. */
+export function getResourcePriorities(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionPriority[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  const rp = getRoleProfile(r);
+  const out = priorities(
+    p?.resourcePriorities,
+    [rp.primaryResource, rp.secondaryResource].filter(Boolean),
+    "resource-management",
+  );
+  return wrap(championId, r, out.fromChampion, out.value);
+}
+
+/** Habit Intelligence references. Empty until populated — never invented. */
+export function getHabitReferences(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionHabitReference[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  if (p?.habitReferences.length) return wrap(championId, r, true, p.habitReferences);
+  const fallback: ChampionHabitReference[] = roleHabitLibrary(r, "mistake").map((h) => ({
+    habitId: `${r}:${h.fundamental}`,
+    fundamental: h.fundamental,
+    note: PENDING,
+  }));
+  return wrap(championId, r, false, fallback);
+}
+
+/** Replay Intelligence references. */
+export function getReplayReferences(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionReplayReference[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  return wrap(championId, r, Boolean(p?.replayReferences.length), p?.replayReferences ?? []);
+}
+
+/** Practice priorities — mirrors practice focus when not separately populated. */
+export function getPracticePriorities(
+  championId: string,
+  role?: RoleId,
+): ChampionResolution<ChampionPracticeFocus[]> {
+  const p = get(championId);
+  const r = resolveRole(p, role);
+  if (p?.practicePriorities.length) return wrap(championId, r, true, p.practicePriorities);
+  return getPracticeFocus(championId, role);
+}
+
+/**
  * The guaranteed-coaching escape hatch: complete material from a role alone.
  */
 export function safeFallback(role?: RoleId): InheritableRoleProfile {
@@ -291,10 +458,21 @@ export const ChampionIntelligence = {
   getRoleAdjustments,
   getDecisionAdjustments,
   getPracticeFocus,
+  getPracticePriorities,
   getCurriculum,
   getStrengths,
   getWeaknesses,
   getPowerSpikes,
+  getPowerSpikeTimeline,
+  getCapabilities,
+  getStyle,
+  getDifficulty,
+  getScalingCurve,
+  getVisionPriorities,
+  getEconomyPriorities,
+  getResourcePriorities,
+  getHabitReferences,
+  getReplayReferences,
   safeFallback,
   isAvailable,
 } as const;
