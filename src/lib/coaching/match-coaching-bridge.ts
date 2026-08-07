@@ -178,7 +178,7 @@ export function buildMatchDecisionChain(
       list.push({
         id: `${e.id}:clock`,
         kind: "timestamp",
-        statement: `Observed around ${e.gameTime} of the game.`,
+        statement: `Observed around ${e.gameTime.replace(/^~\s*/, "")} of the game.`,
         source: "riot-data",
         observed: true,
         timestampSeconds: seconds,

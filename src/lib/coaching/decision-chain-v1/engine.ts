@@ -382,18 +382,6 @@ function buildEvidence(
 
   for (const e of input.evidenceByDecisionId?.[u.decision.decisionId] ?? []) push(e);
 
-  if (timestampSeconds !== null) {
-    push({
-      id: `${u.decision.decisionId}:timestamp`,
-      kind: "timestamp",
-      statement: `Observed at ${Math.floor(timestampSeconds / 60)}:${String(timestampSeconds % 60).padStart(2, "0")}.`,
-      source: "riot-data",
-      observed: true,
-      timestampSeconds,
-      matchId: input.matchId,
-    });
-  }
-
   u.decisionPriority.evidence.forEach((statement, i) =>
     push({
       id: `${u.decision.decisionId}:priority-${i}`,
@@ -404,6 +392,20 @@ function buildEvidence(
       matchId: input.matchId,
     }),
   );
+
+  // Only add a bare clock line when nothing else already pins this decision to
+  // that moment — duplicate timestamps read as padded evidence.
+  if (timestampSeconds !== null && !out.some((e) => e.timestampSeconds === timestampSeconds)) {
+    push({
+      id: `${u.decision.decisionId}:timestamp`,
+      kind: "timestamp",
+      statement: `Observed at ${Math.floor(timestampSeconds / 60)}:${String(timestampSeconds % 60).padStart(2, "0")}.`,
+      source: "riot-data",
+      observed: true,
+      timestampSeconds,
+      matchId: input.matchId,
+    });
+  }
 
   if (habit) {
     push({
@@ -823,6 +825,11 @@ export interface MatchReportDecisionChain {
 
 export function forMatchReport(set: DecisionChainSet): MatchReportDecisionChain {
   const p = set.primary;
+  // A single observation is not a pattern: only surface the habit note once the
+  // decision has been recorded in at least two matches.
+  const habit = p?.playerHabitContext;
+  const habitNote =
+    habit && habit.occurrences >= 2 ? p!.explanation.habitThatMayHaveContributed : null;
   return {
     matchId: set.matchId,
     primaryDecisionId: p?.source.decision.decisionId ?? null,
@@ -830,7 +837,7 @@ export function forMatchReport(set: DecisionChainSet): MatchReportDecisionChain 
     whatHappened: p?.explanation.whatHappened ?? null,
     whyItMattered: p?.explanation.whyItMattered ?? null,
     decisionsAvailable: p?.explanation.decisionsAvailable ?? [],
-    habitNote: p?.explanation.habitThatMayHaveContributed ?? null,
+    habitNote,
     practiceGoal: p?.explanation.whatToPractice ?? null,
     counterfactual: p?.counterfactual ?? null,
     confidence: p?.confidence.level ?? "INSUFFICIENT_DATA",

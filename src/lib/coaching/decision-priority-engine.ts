@@ -261,7 +261,8 @@ function overallPriority(s: DecisionScoreBreakdown): number {
 
 function reasonFor(c: CoachingContext, s: DecisionScoreBreakdown, ev?: PriorityEvidence): string {
   const parts: string[] = [];
-  if (ev?.games && (ev.total ?? 0) > 0) {
+  // One game is not a pattern — never claim recurrence from a single match.
+  if (ev?.games && ev.games >= 2 && (ev.total ?? 0) >= 2) {
     parts.push(`It shows up in ${ev.games} of your last ${ev.total} games.`);
   }
   parts.push(c.whyItMatters);
@@ -269,7 +270,9 @@ function reasonFor(c: CoachingContext, s: DecisionScoreBreakdown, ev?: PriorityE
   if (s.difficulty >= 60 && c.practiceDrills[0]) parts.push(`Fastest fix: ${c.practiceDrills[0]}`);
   const out: string[] = [];
   for (const p of parts) if (p && !out.includes(p)) out.push(p);
-  return out.join(" ");
+  // Coaching text is read by players — never emit run-on sentences when two
+  // knowledge fragments are joined.
+  return out.map((p) => (/[.!?]$/.test(p.trim()) ? p.trim() : `${p.trim()}.`)).join(" ");
 }
 
 function toPrioritized(
