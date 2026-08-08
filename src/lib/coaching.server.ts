@@ -224,7 +224,7 @@ export async function buildMatchInputs(
   const { data: rows } = await supabase
     .from("matches")
     .select(
-      "match_id, champion_name, team_position, win, kills, deaths, assists, cs, gold, vision_score, game_duration, game_creation, raw",
+      "match_id, champion_name, team_position, win, kills, deaths, assists, cs, gold, vision_score, game_duration, game_creation, raw, timeline",
     )
     .eq("profile_id", userId)
     .order("game_creation", { ascending: false })
