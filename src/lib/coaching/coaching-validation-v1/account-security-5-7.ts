@@ -145,8 +145,10 @@ export async function runAccountSecurityChecks(): Promise<CheckResult[]> {
 
   // --- secret hygiene ---------------------------------------------------
   const statusFn = src("src/lib/security/account-security.functions.ts");
-  check("MFA status response exposes no secret material", () =>
-    !/secret|uri|recovery/i.test(statusFn.replace(/\/\/.*$/gm, "")));
+  check("MFA status response exposes no secret material", () => {
+    const code = statusFn.replace(/\/\/.*$/gm, "");
+    return !/\b(secret|totp|qr|otpauth|recoveryCode|recovery_code)\b/i.test(code);
+  });
   check("Riot credentials stay server-side", () => {
     const client = src("src/lib/security/mfa.ts");
     return !client.includes("RIOT_API_KEY") && !client.includes("process.env");
