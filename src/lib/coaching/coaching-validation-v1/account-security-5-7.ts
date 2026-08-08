@@ -89,15 +89,10 @@ export async function runAccountSecurityChecks(): Promise<CheckResult[]> {
   });
   check("gate allows aal1 when the user has no verified factor", () => ok);
 
-  check("gate rejects aal1 when the user is MFA-enrolled", async () => true);
   results.push({
     name: "gate rejects aal1 when the user is MFA-enrolled",
     passed: await rejects(assertSessionAssurance("u1", "aal1", async () => state(true))),
   });
-  results.splice(
-    results.findIndex((r) => r.name === "gate rejects aal1 when the user is MFA-enrolled"),
-    1,
-  );
 
   let elevated = true;
   await assertSessionAssurance("u1", "aal2", async () => state(true)).catch(() => {
