@@ -110,6 +110,25 @@ export const getMatchReport = createServerFn({ method: "GET" })
       if (idx < 0) {
         return { ok: false, code: "not_found", message: "That match hasn't been analyzed yet." };
       }
+      // Sprint 5.6 — lazily enrich THIS match with Riot timeline evidence. One
+      // Riot request at most (skipped entirely when a timeline is already
+      // stored), and any failure leaves the report fully intact.
+      try {
+        const { getLinkedAccount } = await import("./matches.server");
+        const { ensureMatchTimeline } = await import("./match-timeline.server");
+        const account = await getLinkedAccount(supabase, userId);
+        if (account) {
+          const { timeline } = await ensureMatchTimeline(
+            supabase,
+            userId,
+            data.matchId,
+            account.region,
+          );
+          if (timeline) inputs[idx].timeline = timeline;
+        }
+      } catch {
+        /* timeline is enrichment only — never block the report */
+      }
       const prev = inputs[idx + 1] ?? null;
       // Sprint 2.2 — pass the older-match window so the decision-chain can
       // recognise recurring wave / objective habits across recent games.
