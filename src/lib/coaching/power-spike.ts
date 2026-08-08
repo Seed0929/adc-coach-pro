@@ -18,6 +18,7 @@
 // PURE + client-safe. Grounded entirely in real MatchAnalysisInput stats.
 // ---------------------------------------------------------------------------
 import type { MatchAnalysisInput } from "../coaching-engine";
+import { completedItemPurchases, type TimelineItemPurchase } from "../match-timeline";
 // Sprint 2.1 — go through the League Intelligence facade so every coaching
 // module consumes the same validated champion identity + item ecosystem.
 import { LeagueIntelligence } from "./league-intelligence";
@@ -167,6 +168,32 @@ function statusFor(diff: number): SpikeStatus {
 function buildItems(m: MatchAnalysisInput): PowerSpikeItem[] {
   const names = coreItemNames(m);
   const items: PowerSpikeItem[] = [];
+  // Sprint 5.6 — when Riot timeline evidence exists, spike timings come from
+  // ACTUAL purchase timestamps for this player. Fully role- and
+  // champion-agnostic: the items are whatever Riot says they bought.
+  const purchases = timelineSpikePurchases(m);
+  if (purchases.length > 0) {
+    return purchases.slice(0, 3).map((p, i) => {
+      const base = ACTIVE_BASELINES[i] ?? CURATED_BASELINES[i] ?? CURATED_BASELINES[2];
+      const diff = round1(p.minute - base.sameRankMinute);
+      return {
+        slot: i + 1,
+        itemName: p.itemName ?? names[i] ?? `Core item ${i + 1}`,
+        timingAvailable: true,
+        purchaseTime: mmss(p.minute),
+        targetTime: mmss(base.sameRankMinute),
+        highEloTime: mmss(base.highEloMinute),
+        differenceLabel:
+          diff === 0
+            ? "on baseline"
+            : `${Math.abs(diff)} min ${diff > 0 ? "late" : "early"}`,
+        status: statusFor(diff),
+        confidence: "high",
+        baselineSource: base.source,
+      };
+    });
+  }
+
   // We do NOT have Riot timeline data yet, so we never fabricate a purchase
   // minute. Instead we list the champion's core spikes and let the UI show
   // the timeline-unavailable message. We still expose the roughly-reachable
@@ -188,9 +215,27 @@ function buildItems(m: MatchAnalysisInput): PowerSpikeItem[] {
   }
   return items;
 }
-// Silence unused-var lint for helpers we keep for the future timeline hook.
+
+/**
+ * Real purchase evidence for this player, oldest first. Empty whenever the
+ * timeline is missing, malformed, or carries no completed-item purchases —
+ * which keeps the existing graceful fallback fully intact.
+ */
+function timelineSpikePurchases(m: MatchAnalysisInput): TimelineItemPurchase[] {
+  try {
+    return completedItemPurchases(m.timeline ?? null);
+  } catch {
+    return [];
+  }
+}
+
+/** True when this match can be coached from real Riot purchase timestamps. */
+export function hasTimelineEvidence(m: MatchAnalysisInput): boolean {
+  return timelineSpikePurchases(m).length > 0;
+}
+// Silence unused-var lint for the economy estimator we deliberately never use
+// for user-facing timings (kept for future statistical baselines only).
 void estimateSpikeMinute;
-void statusFor;
 
 // --- tempo analysis (WHY a spike was delayed) ------------------------------
 
@@ -384,6 +429,7 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
   const items = buildItems(m);
   const factors = tempoFactors(m);
   const positive = positiveNote(m, items);
+  const timelineAvailable = items.some((i) => i.timingAvailable);
 
   const headline =
     items.length === 0
@@ -394,7 +440,7 @@ export function buildPowerSpikeReview(m: MatchAnalysisInput): PowerSpikeReview {
 
   return {
     hasData: items.length > 0,
-    timelineAvailable: false,
+    timelineAvailable,
     timelineUnavailableMessage: TIMELINE_UNAVAILABLE,
     headline,
     positive,
