@@ -277,8 +277,8 @@ export async function autoSyncForUser(
   const recentIds = await getMatchIdsByPuuid(puuid, region, lookback);
 
   let imported = 0;
+  const newIds: string[] = [];
   if (recentIds.length > 0) {
-    // (declared above the loop so timeline enrichment can see the new ids)
     const { data: existingRows } = await supabase
       .from("matches")
       .select("match_id")
