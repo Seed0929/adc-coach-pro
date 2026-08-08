@@ -20,6 +20,8 @@ import { LeagueIntelligence } from "./coaching/league-intelligence";
 import type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 export type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 import { buildMatchReportDecisionChain } from "./coaching/match-coaching-bridge";
+import type { NormalizedMatchTimeline } from "./match-timeline";
+export type { NormalizedMatchTimeline } from "./match-timeline";
 
 /**
  * Role-safe language shim — every ADC-worded coaching string routes through
@@ -100,6 +102,15 @@ export interface MatchAnalysisInput {
   enemies?: string[];
   /** The direct lane opponent's champion, if known. */
   laneOpponent?: string | null;
+
+  // --- optional Riot timeline evidence (Sprint 5.6) -------------------------
+  /**
+   * Normalized Match-V5 timeline for THIS player, when Riot timeline data has
+   * been fetched and stored for the match. Optional and safe when
+   * null/absent — every existing consumer keeps working unchanged, and
+   * coaching only uses it as evidence, never as a requirement.
+   */
+  timeline?: NormalizedMatchTimeline | null;
 }
 
 export interface MatchCoachingAnalysis {

@@ -12,6 +12,7 @@ import {
   queueLabel,
 } from "./riot.server";
 import { analyzeAndStoreMatches } from "./coaching.server";
+import { enrichTimelines } from "./match-timeline.server";
 import type { Json } from "@/integrations/supabase/types";
 
 export interface StoredMatch {
@@ -160,6 +161,7 @@ export async function syncMatchesForUser(
   const toFetch = matchIds.filter((id) => !existing.has(id));
 
   let imported = 0;
+  const importedIds: string[] = [];
   for (const matchId of toFetch) {
     let match;
     try {
@@ -195,6 +197,12 @@ export async function syncMatchesForUser(
       { onConflict: "profile_id,match_id" },
     );
     if (!upErr) imported += 1;
+    if (!upErr) importedIds.push(match.metadata.matchId);
+  }
+
+  // Bounded timeline enrichment for the newest imports (see match-timeline.server).
+  if (importedIds.length > 0) {
+    await enrichTimelines(supabase, userId, importedIds, region);
   }
 
   await supabase
@@ -269,6 +277,7 @@ export async function autoSyncForUser(
   const recentIds = await getMatchIdsByPuuid(puuid, region, lookback);
 
   let imported = 0;
+  const newIds: string[] = [];
   if (recentIds.length > 0) {
     const { data: existingRows } = await supabase
       .from("matches")
@@ -291,7 +300,19 @@ export async function autoSyncForUser(
         if (err instanceof RiotError && err.code === "rate_limited") break;
         continue;
       }
-      if (await upsertMatch(supabase, userId, puuid, match)) imported += 1;
+      if (await upsertMatch(supabase, userId, puuid, match)) {
+        imported += 1;
+        newIds.push(match.metadata.matchId);
+      }
+    }
+  }
+
+  // Timeline is enrichment: a failure here never affects the sync result.
+  if (newIds.length > 0) {
+    try {
+      await enrichTimelines(supabase, userId, newIds, region);
+    } catch {
+      /* ignore */
     }
   }
 

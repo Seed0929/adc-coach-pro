@@ -212,6 +212,31 @@ export interface RiotMatch {
   };
 }
 
+/**
+ * match-v5 TIMELINE: only the shape BotDiff consumes. Riot's real payload is
+ * far larger (per-frame participant snapshots, every event type). We keep the
+ * typing loose where we don't rely on it so a Riot schema addition can never
+ * break parsing.
+ */
+export interface RiotTimelineEvent {
+  type: string;
+  timestamp: number;
+  participantId?: number;
+  itemId?: number;
+  beforeId?: number;
+  afterId?: number;
+  [k: string]: unknown;
+}
+
+export interface RiotMatchTimeline {
+  metadata?: { matchId?: string; participants?: string[] };
+  info?: {
+    frameInterval?: number;
+    participants?: { participantId: number; puuid: string }[];
+    frames?: { timestamp?: number; events?: RiotTimelineEvent[] }[];
+  };
+}
+
 // --- Endpoints -------------------------------------------------------------
 
 /** account-v1: resolve a Riot ID (gameName#tagLine) to a PUUID. */
@@ -318,6 +343,25 @@ export async function getMatchById(matchId: string, region: string): Promise<Rio
 }
 
 /** Human-readable label for common Summoner's Rift queue IDs. */
+/**
+ * match-v5: the full event timeline for one match.
+ *
+ * ONE extra Riot request per match, on top of the existing match-detail call.
+ * Cached for 24h like match detail (a finished match's timeline is immutable).
+ * Errors are mapped by `riotFetch` exactly like every other endpoint, so the
+ * caller can distinguish `not_found` / `rate_limited` / `downtime`.
+ */
+export async function getMatchTimelineById(
+  matchId: string,
+  region: string,
+): Promise<RiotMatchTimeline> {
+  const { regional } = resolveRegion(region);
+  const url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(
+    matchId,
+  )}/timeline`;
+  return riotFetch<RiotMatchTimeline>(url, 24 * 60 * 60 * 1000);
+}
+
 export function queueLabel(queueId: number): string {
   const map: Record<number, string> = {
     400: "Normal Draft",
