@@ -212,6 +212,31 @@ export interface RiotMatch {
   };
 }
 
+/**
+ * match-v5 TIMELINE: only the shape BotDiff consumes. Riot's real payload is
+ * far larger (per-frame participant snapshots, every event type). We keep the
+ * typing loose where we don't rely on it so a Riot schema addition can never
+ * break parsing.
+ */
+export interface RiotTimelineEvent {
+  type: string;
+  timestamp: number;
+  participantId?: number;
+  itemId?: number;
+  beforeId?: number;
+  afterId?: number;
+  [k: string]: unknown;
+}
+
+export interface RiotMatchTimeline {
+  metadata?: { matchId?: string; participants?: string[] };
+  info?: {
+    frameInterval?: number;
+    participants?: { participantId: number; puuid: string }[];
+    frames?: { timestamp?: number; events?: RiotTimelineEvent[] }[];
+  };
+}
+
 // --- Endpoints -------------------------------------------------------------
 
 /** account-v1: resolve a Riot ID (gameName#tagLine) to a PUUID. */
