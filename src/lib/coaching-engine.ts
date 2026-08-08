@@ -20,6 +20,8 @@ import { LeagueIntelligence } from "./coaching/league-intelligence";
 import type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 export type { MatchReportDecisionChain } from "./coaching/decision-chain-v1";
 import { buildMatchReportDecisionChain } from "./coaching/match-coaching-bridge";
+import type { NormalizedMatchTimeline } from "./match-timeline";
+export type { NormalizedMatchTimeline } from "./match-timeline";
 
 /**
  * Role-safe language shim — every ADC-worded coaching string routes through
