@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import {
   RiotError,
   RIOT_REGIONS,
@@ -262,7 +262,7 @@ function buildDashboard(
 
 /** Load the signed-in user's full live dashboard. Syncs matches if none stored. */
 export const getRiotDashboard = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<DashboardResult> => {
     const { supabase, userId } = context;
     try {

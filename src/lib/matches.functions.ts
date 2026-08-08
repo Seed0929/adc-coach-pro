@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import { RiotError } from "./riot.server";
 import {
   readStoredMatches,
@@ -29,7 +29,7 @@ function toResultError(err: unknown): MatchesResult {
 
 /** Return the user's stored matches (most recent first). No Riot calls. */
 export const getStoredMatches = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<MatchesResult> => {
     const { supabase, userId } = context;
     try {
@@ -42,7 +42,7 @@ export const getStoredMatches = createServerFn({ method: "GET" })
 
 /** Import the user's 20 most recent matches from Riot; idempotent upsert. */
 export const syncMatches = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<MatchesResult> => {
     const { supabase, userId } = context;
     try {
@@ -60,7 +60,7 @@ export const syncMatches = createServerFn({ method: "POST" })
  * with `changed: false` when nothing new exists so the client keeps cached data.
  */
 export const autoSync = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<AutoSyncResponse> => {
     const { supabase, userId } = context;
     try {

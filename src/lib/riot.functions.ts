@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import {
   RiotError,
   RIOT_REGIONS,
@@ -92,7 +92,7 @@ async function buildSummary(
 
 /** Validate a Riot account, then persist it to the signed-in user's profile. */
 export const linkRiotAccount = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((input: { gameName: string; tagLine: string; region: string }) => {
     const gameName = (input?.gameName ?? "").trim();
     const tagLine = (input?.tagLine ?? "").trim().replace(/^#/, "");
@@ -152,7 +152,7 @@ export const linkRiotAccount = createServerFn({ method: "POST" })
 
 /** Fetch the latest live Riot summary for the signed-in user's linked account. */
 export const getRiotSummary = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<RiotResult> => {
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
@@ -228,7 +228,7 @@ function normalizeInput(input: { gameName?: string; tagLine?: string; region?: s
 
 /** 1. Validate a Riot ID exists (gameName + tagLine). */
 export const validateRiotId = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator(normalizeInput)
   .handler(async ({ data }): Promise<ApiResult<{ valid: boolean; puuid: string; gameName: string; tagLine: string }>> => {
     const { gameName, tagLine, region } = data;
@@ -244,7 +244,7 @@ export const validateRiotId = createServerFn({ method: "POST" })
 
 /** 2. Fetch PUUID from a Riot ID. */
 export const fetchPuuid = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator(normalizeInput)
   .handler(async ({ data }): Promise<ApiResult<{ puuid: string }>> => {
     const { gameName, tagLine, region } = data;
@@ -259,7 +259,7 @@ export const fetchPuuid = createServerFn({ method: "POST" })
 
 /** 3. Fetch Summoner (level + icon) by PUUID. */
 export const fetchSummoner = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((input: { puuid?: string; region?: string }) => ({
     puuid: (input?.puuid ?? "").trim(),
     region: (input?.region ?? "").trim().toUpperCase(),
@@ -286,7 +286,7 @@ export const fetchSummoner = createServerFn({ method: "POST" })
 
 /** 4. Fetch ranked information by PUUID. */
 export const fetchRanked = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((input: { puuid?: string; region?: string }) => ({
     puuid: (input?.puuid ?? "").trim(),
     region: (input?.region ?? "").trim().toUpperCase(),
@@ -369,7 +369,7 @@ function normalizeMatch(matchId: string, me: RiotMatchParticipant, info: { gameD
 
 /** 5. Fetch match history (last 20 ranked games) as normalized objects. */
 export const fetchMatchHistory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((input: { puuid?: string; region?: string; count?: number }) => ({
     puuid: (input?.puuid ?? "").trim(),
     region: (input?.region ?? "").trim().toUpperCase(),
@@ -398,7 +398,7 @@ export const fetchMatchHistory = createServerFn({ method: "POST" })
 
 /** 6. Fetch a single match's details as a normalized object. */
 export const fetchMatchDetails = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((input: { matchId?: string; puuid?: string; region?: string }) => ({
     matchId: (input?.matchId ?? "").trim(),
     puuid: (input?.puuid ?? "").trim(),

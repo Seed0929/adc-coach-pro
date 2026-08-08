@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import {
   RiotError,
   RIOT_REGIONS,
@@ -34,7 +34,7 @@ export type PlayerProfileResult =
 const LIMIT = 50;
 
 export const getPlayerProfile = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<PlayerProfileResult> => {
     const { supabase, userId } = context;
     try {
