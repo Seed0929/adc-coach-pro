@@ -343,6 +343,25 @@ export async function getMatchById(matchId: string, region: string): Promise<Rio
 }
 
 /** Human-readable label for common Summoner's Rift queue IDs. */
+/**
+ * match-v5: the full event timeline for one match.
+ *
+ * ONE extra Riot request per match, on top of the existing match-detail call.
+ * Cached for 24h like match detail (a finished match's timeline is immutable).
+ * Errors are mapped by `riotFetch` exactly like every other endpoint, so the
+ * caller can distinguish `not_found` / `rate_limited` / `downtime`.
+ */
+export async function getMatchTimelineById(
+  matchId: string,
+  region: string,
+): Promise<RiotMatchTimeline> {
+  const { regional } = resolveRegion(region);
+  const url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/${encodeURIComponent(
+    matchId,
+  )}/timeline`;
+  return riotFetch<RiotMatchTimeline>(url, 24 * 60 * 60 * 1000);
+}
+
 export function queueLabel(queueId: number): string {
   const map: Record<number, string> = {
     400: "Normal Draft",
