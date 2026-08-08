@@ -6,8 +6,9 @@
 // client state or localStorage — status is always re-derived from the provider.
 // ---------------------------------------------------------------------------
 import { supabase } from "@/integrations/supabase/client";
+import { deriveChallengeRequired, deriveMfaEnabled, type AssuranceLevel } from "./mfa-policy";
 
-export type AssuranceLevel = "aal1" | "aal2";
+export type { AssuranceLevel };
 
 export interface MfaFactorSummary {
   id: string;
@@ -71,11 +72,11 @@ export async function readMfaStatus(): Promise<MfaStatus> {
   const verifiedFactors = all.filter((f) => f.status === "verified");
 
   return {
-    enabled: verifiedFactors.length > 0,
+    enabled: deriveMfaEnabled(all),
     currentLevel,
     nextLevel,
     // Fail closed: a session that must reach aal2 but hasn't is NOT complete.
-    challengeRequired: nextLevel === "aal2" && currentLevel !== "aal2",
+    challengeRequired: deriveChallengeRequired(currentLevel, nextLevel),
     verifiedFactors,
     unverifiedFactors: all.filter((f) => f.status === "unverified"),
   };
