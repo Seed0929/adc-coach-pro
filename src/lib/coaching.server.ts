@@ -12,6 +12,7 @@ import {
   type MatchAnalysisInput,
   type MatchCoachingAnalysis,
 } from "./coaching-engine";
+import { readStoredTimeline } from "./match-timeline";
 
 type SupabaseLike = { from: (t: string) => any };
 
@@ -118,6 +119,9 @@ export function extractInput(row: any, puuid: string | null): MatchAnalysisInput
     allies,
     enemies,
     laneOpponent: laneOpponent ? String(laneOpponent) : null,
+    // Sprint 5.6 — stored (already normalized) Riot timeline evidence, when the
+    // row has it. Absent for every match that hasn't been enriched yet.
+    timeline: readStoredTimeline(row.timeline),
   };
 }
 
@@ -141,7 +145,7 @@ export async function analyzeAndStoreMatches(
   const { data: rows } = await supabase
     .from("matches")
     .select(
-      "match_id, champion_name, team_position, win, kills, deaths, assists, cs, gold, vision_score, game_duration, game_creation, raw",
+      "match_id, champion_name, team_position, win, kills, deaths, assists, cs, gold, vision_score, game_duration, game_creation, raw, timeline",
     )
     .eq("profile_id", userId)
     .order("game_creation", { ascending: false })
