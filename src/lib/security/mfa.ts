@@ -59,13 +59,9 @@ function toSummary(factor: {
  */
 export async function readMfaStatus(): Promise<MfaStatus> {
   const { data: factorData, error } = await supabase.auth.mfa.listFactors();
-  const aal = supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  const levels = "then" in (aal as object) ? await (aal as Promise<unknown>) : aal;
-  const parsed = levels as {
-    data?: { currentLevel: AssuranceLevel | null; nextLevel: AssuranceLevel | null } | null;
-  } | null;
-  const currentLevel = parsed?.data?.currentLevel ?? null;
-  const nextLevel = parsed?.data?.nextLevel ?? null;
+  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const currentLevel = (aalData?.currentLevel as AssuranceLevel | null) ?? null;
+  const nextLevel = (aalData?.nextLevel as AssuranceLevel | null) ?? null;
 
   if (error) {
     return { ...MFA_STATUS_UNKNOWN, currentLevel, nextLevel };
