@@ -9,14 +9,10 @@
 // ---------------------------------------------------------------------------
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assuranceFromClaims, type AssuranceLevel } from "./mfa-policy";
 
-export type AssuranceLevel = "aal1" | "aal2";
-
-/** Reads `aal` from verified token claims. Unknown values degrade to aal1. */
-export function assuranceFromClaims(claims: unknown): AssuranceLevel {
-  const value = (claims as { aal?: unknown } | null)?.aal;
-  return value === "aal2" ? "aal2" : "aal1";
-}
+export { assuranceFromClaims };
+export type { AssuranceLevel };
 
 export const requireVerifiedSession = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])
