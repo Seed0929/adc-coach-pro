@@ -16,6 +16,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { FlaskConical, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
+import { MfaChallenge } from "@/components/mfa-challenge";
 import { useBotDiffData } from "@/lib/player-data";
 import logoLockup from "@/assets/botdiff-logo.png";
 import logoMark from "@/assets/botdiff-mark.png";
@@ -45,7 +46,7 @@ function Ambient() {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const { loading, isAuthenticated, profile, user, signOut } = useAuth();
+  const { loading, isAuthenticated, profile, user, signOut, mfaChallengeRequired } = useAuth();
   const { identity } = useBotDiffData();
   const onboardingComplete = hasCompletedOnboarding(profile);
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
@@ -73,6 +74,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  // An MFA-enrolled session that hasn't answered its challenge never renders
+  // the app. Server functions reject it too, so this is UX, not the gate.
+  if (mfaChallengeRequired) return <MfaChallenge />;
 
   const displayName = isAuthenticated
     ? profile?.username ?? user?.email?.split("@")[0] ?? "Player"

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import { analyzeAndStoreMatches, buildMatchInputs } from "./coaching.server";
 import {
   buildMatchReport,
@@ -31,7 +31,7 @@ export type CoachDossierResult =
 
 /** Build the signed-in player's full coaching dossier from cached analyses. */
 export const getCoachDossier = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .handler(async ({ context }): Promise<CoachDossierResult> => {
     const { supabase, userId } = context;
     try {
@@ -65,7 +65,7 @@ export type AskCoachResult =
   | { ok: false; code: string; message: string };
 
 export const askCoach = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((data: { question: string }) => data)
   .handler(async ({ data, context }): Promise<AskCoachResult> => {
     const { supabase, userId } = context;
@@ -100,7 +100,7 @@ export type MatchReportResult =
 
 /** Build the full AI Coach report for a single match (with trend vs previous). */
 export const getMatchReport = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireVerifiedSession])
   .inputValidator((data: { matchId: string }) => data)
   .handler(async ({ data, context }): Promise<MatchReportResult> => {
     const { supabase, userId } = context;

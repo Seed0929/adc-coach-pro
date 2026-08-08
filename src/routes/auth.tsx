@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Mail, Lock, User as UserIcon, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
+import { MfaChallenge } from "@/components/mfa-challenge";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 export const Route = createFileRoute("/auth")({
@@ -40,7 +41,16 @@ function Field({
 function AuthPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const { isAuthenticated, loading, profile, signIn, signUp, resetPassword, signInWithGoogle } = useAuth();
+  const {
+    isAuthenticated,
+    loading,
+    profile,
+    signIn,
+    signUp,
+    resetPassword,
+    signInWithGoogle,
+    mfaChallengeRequired,
+  } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -58,10 +68,11 @@ function AuthPage() {
   // Already signed in → go to onboarding only when incomplete; otherwise go to
   // the dashboard or intended protected destination.
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    // While MFA is outstanding the login is NOT complete — stay on /auth.
+    if (!loading && isAuthenticated && !mfaChallengeRequired) {
       navigate({ to: profile && !hasCompletedOnboarding(profile) ? "/welcome" : dest, replace: true });
     }
-  }, [loading, isAuthenticated, profile, navigate, dest]);
+  }, [loading, isAuthenticated, profile, navigate, dest, mfaChallengeRequired]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

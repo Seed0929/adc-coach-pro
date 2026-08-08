@@ -12,6 +12,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import type { Tables } from "@/integrations/supabase/types";
+import { readMfaStatus, MFA_STATUS_UNKNOWN, type MfaStatus } from "@/lib/security/mfa";
 
 export type Profile = Tables<"profiles">;
 
@@ -25,6 +26,11 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   isAuthenticated: boolean;
+  /** Provider-derived MFA state for the current session. */
+  mfa: MfaStatus;
+  /** True while the provider says this session still owes an MFA challenge. */
+  mfaChallengeRequired: boolean;
+  refreshMfa: () => Promise<void>;
   signUp: (params: {
     email: string;
     password: string;
@@ -63,8 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfa, setMfa] = useState<MfaStatus>(MFA_STATUS_UNKNOWN);
   const userIdRef = useRef<string | null>(null);
   const profileRef = useRef<Profile | null>(null);
+
+  const refreshMfa = useCallback(async () => {
+    try {
+      setMfa(await readMfaStatus());
+    } catch {
+      setMfa(MFA_STATUS_UNKNOWN);
+    }
+  }, []);
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
     if (!nextUser) {
@@ -90,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!nextUser) {
         userIdRef.current = null;
         setProfile(null);
+        setMfa(MFA_STATUS_UNKNOWN);
         setLoading(false);
         return;
       }
@@ -102,6 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active) setProfile(null);
         profileRef.current = null;
       }
+      // MFA state is re-read from the provider on every session change, so it
+      // survives refresh/new tabs and can't be spoofed from client state.
+      if (active) await refreshMfa();
       if (active) setLoading(false);
     }
 
@@ -116,11 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!nextUser) {
         userIdRef.current = null;
         setProfile(null);
+        setMfa(MFA_STATUS_UNKNOWN);
         setLoading(false);
         return;
       }
 
       if (userIdRef.current === nextUser.id && profileRef.current) {
+        void refreshMfa();
         setLoading(false);
         return;
       }
@@ -143,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, refreshMfa]);
 
   const signUp = useCallback<AuthContextValue["signUp"]>(async ({ email, password, username }) => {
     const { error } = await supabase.auth.signUp({
@@ -176,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     profileRef.current = null;
+    setMfa(MFA_STATUS_UNKNOWN);
     setLoading(false);
   }, []);
 
@@ -197,6 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       isAuthenticated: !!session,
+      mfa,
+      mfaChallengeRequired: !!session && mfa.challengeRequired,
+      refreshMfa,
       signUp,
       signIn,
       signInWithGoogle,
@@ -204,7 +229,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetPassword,
       refreshProfile,
     }),
-    [session, user, profile, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword, refreshProfile],
+    [
+      session,
+      user,
+      profile,
+      loading,
+      mfa,
+      refreshMfa,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      resetPassword,
+      refreshProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
