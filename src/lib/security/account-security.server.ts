@@ -6,6 +6,8 @@
 // assurance level carried by the request's verified access token.
 // ---------------------------------------------------------------------------
 
+import { isSessionPermitted } from "./mfa-policy";
+
 export interface ServerMfaState {
   /** At least one provider-verified factor exists for this user. */
   enrolled: boolean;
@@ -31,10 +33,11 @@ export async function readServerMfaState(userId: string): Promise<ServerMfaState
 export async function assertSessionAssurance(
   userId: string,
   assuranceLevel: string,
+  readState: (userId: string) => Promise<ServerMfaState> = readServerMfaState,
 ): Promise<void> {
   if (assuranceLevel === "aal2") return;
-  const { enrolled } = await readServerMfaState(userId);
-  if (enrolled) {
+  const { enrolled } = await readState(userId);
+  if (!isSessionPermitted({ assuranceLevel, enrolled })) {
     throw new Error("Unauthorized: MFA verification required");
   }
 }
