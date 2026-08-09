@@ -7,10 +7,10 @@ import { LifeBuoy, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { listMyFeedbackReports } from "@/lib/feedback/feedback.functions";
-import type { StoredReport } from "@/lib/feedback/feedback.server";
 import {
   REPORT_TYPE_LABELS,
   type ReportType,
+  type StoredReport,
 } from "@/lib/feedback/feedback-policy";
 
 const STATUS_LABELS: Record<string, string> = {
