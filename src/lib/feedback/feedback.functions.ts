@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import { validateReport, type ReportDraft } from "./feedback-policy";
-import type { StoredReport } from "./feedback.server";
+import type { StoredReport } from "./feedback-policy";
 
 export type SubmitReportResult =
   | { ok: true; report: StoredReport }
