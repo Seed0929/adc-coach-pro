@@ -20,6 +20,16 @@ export type ReportType = (typeof REPORT_TYPES)[number];
 export const REPORT_STATUSES = ["new", "reviewing", "resolved", "closed"] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
+/** Client-safe shape of a stored report (no internal diagnostics). */
+export interface StoredReport {
+  id: string;
+  reportType: string;
+  title: string;
+  status: ReportStatus;
+  matchId: string | null;
+  createdAt: string;
+}
+
 /** Player-friendly labels — no technical jargon in the UI. */
 export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   bug: "Something is broken",
