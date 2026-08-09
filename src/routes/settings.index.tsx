@@ -5,6 +5,7 @@ import { AppShell, Pill, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { MfaSettings } from "@/components/mfa-settings";
+import { FeedbackSettings } from "@/components/feedback-settings";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/settings/")({
@@ -148,6 +149,7 @@ function SettingsPage() {
           action={<Pill tone="success">On</Pill>}
         />
         <MfaSettings />
+        <FeedbackSettings />
         <ThemePicker />
       </div>
     </AppShell>
