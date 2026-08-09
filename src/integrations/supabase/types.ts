@@ -77,6 +77,54 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_reports: {
+        Row: {
+          coaching_verdict: string | null
+          created_at: string
+          description: string
+          diagnostics: Json
+          feature: string | null
+          id: string
+          match_id: string | null
+          profile_id: string
+          report_type: Database["public"]["Enums"]["feedback_report_type"]
+          route: string | null
+          status: Database["public"]["Enums"]["feedback_report_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          coaching_verdict?: string | null
+          created_at?: string
+          description: string
+          diagnostics?: Json
+          feature?: string | null
+          id?: string
+          match_id?: string | null
+          profile_id: string
+          report_type: Database["public"]["Enums"]["feedback_report_type"]
+          route?: string | null
+          status?: Database["public"]["Enums"]["feedback_report_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          coaching_verdict?: string | null
+          created_at?: string
+          description?: string
+          diagnostics?: Json
+          feature?: string | null
+          id?: string
+          match_id?: string | null
+          profile_id?: string
+          report_type?: Database["public"]["Enums"]["feedback_report_type"]
+          route?: string | null
+          status?: Database["public"]["Enums"]["feedback_report_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           assists: number
@@ -276,7 +324,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      feedback_report_status: "new" | "reviewing" | "resolved" | "closed"
+      feedback_report_type:
+        | "bug"
+        | "coaching_feedback"
+        | "incorrect_data"
+        | "ui_issue"
+        | "feature_request"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -403,6 +458,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      feedback_report_status: ["new", "reviewing", "resolved", "closed"],
+      feedback_report_type: [
+        "bug",
+        "coaching_feedback",
+        "incorrect_data",
+        "ui_issue",
+        "feature_request",
+        "other",
+      ],
+    },
   },
 } as const

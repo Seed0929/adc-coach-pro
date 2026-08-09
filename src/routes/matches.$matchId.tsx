@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw, Flag } from "lucide-react";
 import { AppShell, PageHeader, DemoModeBadge } from "@/components/app-shell";
 import { MatchCoachReport } from "@/components/match-coach-report";
 import { useMatchReport } from "@/hooks/use-match-report";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 export const Route = createFileRoute("/matches/$matchId")({
   head: () => ({
@@ -59,6 +60,19 @@ function MatchReportPage() {
           subtitle="Why the game went the way it did — not just the stats."
         />
         {isDemo && <DemoModeBadge />}
+        <FeedbackDialog
+          matchId={matchId}
+          feature="match_report"
+          defaultType="coaching_feedback"
+          trigger={
+            <button
+              type="button"
+              className="glass glass-hover ml-auto inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium"
+            >
+              <Flag className="size-4" /> Report Issue
+            </button>
+          }
+        />
       </div>
 
       {loading ? (
