@@ -10,19 +10,13 @@ import type { Database } from "@/integrations/supabase/types";
 import {
   isDuplicateSubmission,
   type ReportStatus,
+  type StoredReport,
   type ValidReport,
 } from "./feedback-policy";
 
 type Client = SupabaseClient<Database>;
 
-export interface StoredReport {
-  id: string;
-  reportType: string;
-  title: string;
-  status: ReportStatus;
-  matchId: string | null;
-  createdAt: string;
-}
+export type { StoredReport };
 
 export class FeedbackError extends Error {
   constructor(
