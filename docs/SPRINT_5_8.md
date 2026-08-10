@@ -81,3 +81,30 @@ Browser-verified the Settings entry point and dialog render.
 - No admin triage surface: status transitions are done outside the app for now
   (no UPDATE policy exists, deliberately).
 - Attachments/screenshots were not added; diagnostics cover the common cases.
+## Sprint 5.8A — polish pass (post-Preview testing)
+
+Two UI corrections only; no backend, RLS, schema, or coaching changes.
+
+1. **Dropdown contrast** — both native selects in `feedback-dialog.tsx` (report
+   type, coaching verdict) now paint their own colors: the control uses
+   `text-foreground` and every `<option>` carries `bg-background text-foreground`,
+   so the OS popup no longer renders white-on-white. Measured in the preview:
+   option text `oklch(0.97 …)` on `oklch(0.15 …)` background — readable before
+   hover, with the platform hover/selected highlight still distinct. Added a
+   `focus-visible` ring so the control is usable without a mouse.
+2. **Duplicate summary field removed** — the separate "Short summary" input is
+   gone. The form now has Report Type (+ verdict for coaching feedback), a single
+   "What happened?" description, and the optional match attachment. The stored
+   `title` column is unchanged and is derived from the first line of the
+   description (capped at 120 chars), so report IDs, ownership, status, match
+   association, diagnostics, and RLS are all untouched.
+
+### Validation
+
+Suites re-run after the change: 5.4 21/21, 5.5 20/20, 5.6 18/18, 5.7 37/37,
+5.8 42/42, coaching 49/49, decision chain 31/31, beta readiness 16/16;
+typecheck clean. Preview: Settings entry point opens the dialog, option contrast
+measured as above, only one description field renders. The signed-in submit path
+could not be exercised in this environment (no beta session available to the
+test browser), so no permanent test report was created; the submission path
+itself is unchanged apart from the derived title.
