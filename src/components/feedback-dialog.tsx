@@ -26,10 +26,23 @@ import {
   DESCRIPTION_MAX,
   REPORT_TYPES,
   REPORT_TYPE_LABELS,
-  TITLE_MAX,
   type CoachingVerdict,
   type ReportType,
 } from "@/lib/feedback/feedback-policy";
+
+// Native <select> popups are painted by the OS, so the option text needs an
+// explicit background/foreground — otherwise the dark theme's inherited white
+// text lands on the platform's white menu and is only legible on hover.
+const SELECT_CLASS =
+  "h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
+const OPTION_CLASS = "bg-background text-foreground";
+
+/** One field only: the summary stored server-side is derived from the text. */
+function deriveTitle(description: string): string {
+  const firstLine = description.trim().split(/\r?\n/)[0]?.trim() ?? "";
+  const base = firstLine || description.trim();
+  return base.length > 120 ? `${base.slice(0, 117).trimEnd()}…` : base;
+}
 
 export function FeedbackDialog({
   trigger,
@@ -47,7 +60,6 @@ export function FeedbackDialog({
   const [open, setOpen] = useState(false);
   const [reportType, setReportType] = useState<ReportType>(defaultType);
   const [verdict, setVerdict] = useState<CoachingVerdict | "">("");
-  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [includeMatch, setIncludeMatch] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -63,7 +75,7 @@ export function FeedbackDialog({
       const result = await submitFeedbackReport({
         data: {
           reportType,
-          title,
+          title: deriveTitle(description),
           description,
           route,
           feature,
@@ -90,7 +102,6 @@ export function FeedbackDialog({
     setOpen(next);
     if (!next && done) {
       setDone(false);
-      setTitle("");
       setDescription("");
       setVerdict("");
       setError(null);
@@ -129,10 +140,10 @@ export function FeedbackDialog({
                 id="report-type"
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value as ReportType)}
-                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm"
+                className={SELECT_CLASS}
               >
                 {REPORT_TYPES.map((t) => (
-                  <option key={t} value={t}>
+                  <option key={t} value={t} className={OPTION_CLASS}>
                     {REPORT_TYPE_LABELS[t]}
                   </option>
                 ))}
@@ -146,28 +157,19 @@ export function FeedbackDialog({
                   id="report-verdict"
                   value={verdict}
                   onChange={(e) => setVerdict(e.target.value as CoachingVerdict | "")}
-                  className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm"
+                  className={SELECT_CLASS}
                 >
-                  <option value="">Not sure / other</option>
+                  <option value="" className={OPTION_CLASS}>
+                    Not sure / other
+                  </option>
                   {COACHING_VERDICTS.map((v) => (
-                    <option key={v} value={v}>
+                    <option key={v} value={v} className={OPTION_CLASS}>
                       {COACHING_VERDICT_LABELS[v]}
                     </option>
                   ))}
                 </select>
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="report-title">Short summary</Label>
-              <Input
-                id="report-title"
-                value={title}
-                maxLength={TITLE_MAX}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Practice goal didn't update after my match"
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="report-description">What happened?</Label>
