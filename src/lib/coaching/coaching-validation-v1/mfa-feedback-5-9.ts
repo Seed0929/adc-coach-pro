@@ -18,7 +18,10 @@ import {
   PROVIDER_MFA_FACTOR_TYPES,
 } from "../../security/mfa-factors";
 import { isSessionPermitted } from "../../security/mfa-policy";
-import { assertSessionAssurance, type ServerMfaState } from "../../security/account-security.server";
+import {
+  assertSessionAssurance,
+  type ServerMfaState,
+} from "../../security/account-security.server";
 import {
   COACHING_VERDICTS,
   COACHING_VERDICT_LABELS,
@@ -74,8 +77,10 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
   const serverFns = src("src/lib/feedback/feedback.functions.ts");
 
   // --- factor catalog honesty -------------------------------------------
-  check("only provider-native factor types are claimed", () =>
-    PROVIDER_MFA_FACTOR_TYPES.join(",") === "totp,phone");
+  check(
+    "only provider-native factor types are claimed",
+    () => PROVIDER_MFA_FACTOR_TYPES.join(",") === "totp,phone",
+  );
   check("three factor choices are presented", () => describeMfaFactors(UNCONFIGURED).length === 3);
   check("authenticator app is always available", () => {
     const totp = describeMfaFactors(UNCONFIGURED).find((f) => f.kind === "totp");
@@ -84,17 +89,26 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
   check("email is never a second factor", () => emailFactorAvailability() === "unsupported");
   check("email option cannot be enabled", () => {
     const email = describeMfaFactors(CONFIGURED).find((f) => f.kind === "email")!;
-    return !canEnableFactor(email) && !isFactorEnabled({ option: email, verifiedFactorTypes: ["email"] });
+    return (
+      !canEnableFactor(email) && !isFactorEnabled({ option: email, verifiedFactorTypes: ["email"] })
+    );
   });
   check("email option explains why it is not MFA", () => {
     const email = describeMfaFactors(CONFIGURED).find((f) => f.kind === "email")!;
     return typeof email.requirement === "string" && email.requirement.length > 0;
   });
-  check("SMS needs a configured provider", () => smsFactorAvailability(UNCONFIGURED) === "needs_config");
-  check("SMS is available only with phone auth AND a gateway", () =>
-    smsFactorAvailability({ phoneAuthEnabled: true, smsProvider: null }) === "needs_config" &&
-    smsFactorAvailability({ phoneAuthEnabled: false, smsProvider: "twilio" }) === "needs_config" &&
-    smsFactorAvailability(CONFIGURED) === "available");
+  check(
+    "SMS needs a configured provider",
+    () => smsFactorAvailability(UNCONFIGURED) === "needs_config",
+  );
+  check(
+    "SMS is available only with phone auth AND a gateway",
+    () =>
+      smsFactorAvailability({ phoneAuthEnabled: true, smsProvider: null }) === "needs_config" &&
+      smsFactorAvailability({ phoneAuthEnabled: false, smsProvider: "twilio" }) ===
+        "needs_config" &&
+      smsFactorAvailability(CONFIGURED) === "available",
+  );
   check("unconfigured SMS can never read as enabled", () => {
     const sms = describeMfaFactors(UNCONFIGURED).find((f) => f.kind === "sms")!;
     return !isFactorEnabled({ option: sms, verifiedFactorTypes: ["phone"] });
@@ -114,47 +128,71 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
       !isFactorEnabled({ option: totp, verifiedFactorTypes: ["phone"] })
     );
   });
-  check("the UI derives availability from the shared policy", () =>
-    mfaUi.includes("describeMfaFactors") && mfaUi.includes("isFactorEnabled"));
-  check("the UI reads its state from the server function", () =>
-    mfaUi.includes("getAccountSecurityStatus") && !mfaUi.includes("localStorage"));
+  check(
+    "the UI derives availability from the shared policy",
+    () => mfaUi.includes("describeMfaFactors") && mfaUi.includes("isFactorEnabled"),
+  );
+  check(
+    "the UI reads its state from the server function",
+    () => mfaUi.includes("getAccountSecurityStatus") && !mfaUi.includes("localStorage"),
+  );
 
   // --- TOTP flow preserved ----------------------------------------------
-  check("TOTP enrollment still uses the provider", () =>
-    mfaLib.includes("factorType: \"totp\"") && mfaLib.includes("supabase.auth.mfa.enroll"));
-  check("verification is delegated to the provider", () =>
-    mfaLib.includes("challengeAndVerify"));
+  check(
+    "TOTP enrollment still uses the provider",
+    () => mfaLib.includes('factorType: "totp"') && mfaLib.includes("supabase.auth.mfa.enroll"),
+  );
+  check("verification is delegated to the provider", () => mfaLib.includes("challengeAndVerify"));
   check("SMS enrollment uses the provider's phone factor", () =>
-    mfaLib.includes("factorType: \"phone\""));
-  check("setup can be cancelled and the factor discarded", () =>
-    mfaLib.includes("cancelMfaEnrollment") && mfaUi.includes("cancelMfaEnrollment"));
-  check("a failed verification never reports MFA as on", () =>
-    /still off/i.test(mfaUi) && mfaUi.includes("if (result.error)"));
-  check("turning a factor off unenrolls it with the provider", () =>
-    mfaUi.includes("removeMfaFactor") && mfaLib.includes("unenroll"));
+    mfaLib.includes('factorType: "phone"'),
+  );
+  check(
+    "setup can be cancelled and the factor discarded",
+    () => mfaLib.includes("cancelMfaEnrollment") && mfaUi.includes("cancelMfaEnrollment"),
+  );
+  check(
+    "a failed verification never reports MFA as on",
+    () => /still off/i.test(mfaUi) && mfaUi.includes("if (result.error)"),
+  );
+  check(
+    "turning a factor off unenrolls it with the provider",
+    () => mfaUi.includes("removeMfaFactor") && mfaLib.includes("unenroll"),
+  );
 
   // --- no secret / code leakage -----------------------------------------
-  check("no MFA secret or code is logged", () =>
-    !/console\.(log|info|warn|error)/.test(mfaUi) &&
-    !/console\.(log|info|warn|error)/.test(mfaLib));
-  check("no MFA secret or code is persisted", () =>
-    !code("src/components/mfa-settings.tsx").includes("localStorage") &&
-    !code("src/lib/security/mfa.ts").includes("localStorage") &&
-    !code("src/lib/security/mfa.ts").includes(".from(") &&
-    !code("src/components/mfa-settings.tsx").includes(".from("));
+  check(
+    "no MFA secret or code is logged",
+    () =>
+      !/console\.(log|info|warn|error)/.test(mfaUi) &&
+      !/console\.(log|info|warn|error)/.test(mfaLib),
+  );
+  check(
+    "no MFA secret or code is persisted",
+    () =>
+      !code("src/components/mfa-settings.tsx").includes("localStorage") &&
+      !code("src/lib/security/mfa.ts").includes("localStorage") &&
+      !code("src/lib/security/mfa.ts").includes(".from(") &&
+      !code("src/components/mfa-settings.tsx").includes(".from("),
+  );
   check("the setup key is only shown during enrollment", () =>
-    mfaUi.includes("setup.kind === \"totp\" && setup.secret"));
+    mfaUi.includes('setup.kind === "totp" && setup.secret'),
+  );
   check("server status never returns factor secrets", () => {
     const fns = code("src/lib/security/account-security.functions.ts");
     return !/secret/i.test(fns) && !/\buri\b/i.test(fns);
   });
 
   // --- enforcement stays fail-closed ------------------------------------
-  check("enrolled users with aal1 are rejected", () =>
-    isSessionPermitted({ assuranceLevel: "aal1", enrolled: true }) === false);
-  check("unknown assurance is rejected for enrolled users", () =>
-    isSessionPermitted({ assuranceLevel: null, enrolled: true }) === false &&
-    isSessionPermitted({ assuranceLevel: undefined, enrolled: true }) === false);
+  check(
+    "enrolled users with aal1 are rejected",
+    () => isSessionPermitted({ assuranceLevel: "aal1", enrolled: true }) === false,
+  );
+  check(
+    "unknown assurance is rejected for enrolled users",
+    () =>
+      isSessionPermitted({ assuranceLevel: null, enrolled: true }) === false &&
+      isSessionPermitted({ assuranceLevel: undefined, enrolled: true }) === false,
+  );
   results.push({
     name: "an unreadable enrollment state rejects the request",
     passed: await rejects(
@@ -169,49 +207,79 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
       ),
     ),
   });
-  check("the assurance gate is still layered on verified auth", () =>
-    guard.includes("requireSupabaseAuth") && guard.includes("assertSessionAssurance"));
-  check("MFA state changes require an authenticated provider session", () =>
-    !factors.includes("supabase") && mfaUi.includes("isAuthenticated"));
+  check(
+    "the assurance gate is still layered on verified auth",
+    () => guard.includes("requireSupabaseAuth") && guard.includes("assertSessionAssurance"),
+  );
+  check(
+    "MFA state changes require an authenticated provider session",
+    () => !factors.includes("supabase") && mfaUi.includes("isAuthenticated"),
+  );
 
   // --- feedback selectors -----------------------------------------------
-  check("report-type selector uses the styled Select primitive", () =>
-    dialog.includes("@/components/ui/select") && !/<select[\s>]/.test(code("src/components/feedback-dialog.tsx")));
-  check("no OS-painted <option> elements remain", () =>
-    !/<option[\s>]/.test(code("src/components/feedback-dialog.tsx")));
-  check("every report type is still offered", () =>
-    REPORT_TYPES.every((t) => REPORT_TYPE_LABELS[t].length > 0) &&
-    dialog.includes("REPORT_TYPES.map"));
-  check("every coaching verdict is still offered", () =>
-    COACHING_VERDICTS.every((v) => COACHING_VERDICT_LABELS[v].length > 0) &&
-    dialog.includes("COACHING_VERDICTS.map"));
-  check("an unspecified verdict still submits as null", () =>
-    dialog.includes("unspecified") && dialog.includes("verdict || null"));
-  check("selected and hover states are themed, not inherited", () =>
-    dialog.includes("data-[state=checked]") && dialog.includes("focus:bg-primary/20"));
+  check(
+    "report-type selector uses the styled Select primitive",
+    () =>
+      dialog.includes("@/components/ui/select") &&
+      !/<select[\s>]/.test(code("src/components/feedback-dialog.tsx")),
+  );
+  check(
+    "no OS-painted <option> elements remain",
+    () => !/<option[\s>]/.test(code("src/components/feedback-dialog.tsx")),
+  );
+  check(
+    "every report type is still offered",
+    () =>
+      REPORT_TYPES.every((t) => REPORT_TYPE_LABELS[t].length > 0) &&
+      dialog.includes("REPORT_TYPES.map"),
+  );
+  check(
+    "every coaching verdict is still offered",
+    () =>
+      COACHING_VERDICTS.every((v) => COACHING_VERDICT_LABELS[v].length > 0) &&
+      dialog.includes("COACHING_VERDICTS.map"),
+  );
+  check(
+    "an unspecified verdict still submits as null",
+    () => dialog.includes("unspecified") && dialog.includes("verdict || null"),
+  );
+  check(
+    "selected and hover states are themed, not inherited",
+    () => dialog.includes("data-[state=checked]") && dialog.includes("focus:bg-primary/20"),
+  );
   check("keyboard focus is visible on the trigger", () => dialog.includes("focus:ring-2"));
 
   // --- exactly one free-text field --------------------------------------
   check("exactly one textarea exists", () => (dialog.match(/<Textarea/g) ?? []).length === 1);
-  check("no summary/title input is present", () =>
-    !/<Input/.test(dialog) && !/Short summary/i.test(dialog));
+  check(
+    "no summary/title input is present",
+    () => !/<Input/.test(dialog) && !/Short summary/i.test(dialog),
+  );
   check("the stored title is derived from the description", () =>
-    dialog.includes("deriveTitle(description)"));
+    dialog.includes("deriveTitle(description)"),
+  );
 
   // --- feedback security unchanged --------------------------------------
-  check("submission still runs through a verified session", () =>
-    serverFns.includes("requireVerifiedSession") || serverFns.includes("requireSupabaseAuth"));
+  check(
+    "submission still runs through a verified session",
+    () => serverFns.includes("requireVerifiedSession") || serverFns.includes("requireSupabaseAuth"),
+  );
   check("the client never sends a report status", () => !/status:/.test(dialog));
-  check("report ownership is not client-supplied", () =>
-    !dialog.includes("profile_id") && !dialog.includes("user_id"));
+  check(
+    "report ownership is not client-supplied",
+    () => !dialog.includes("profile_id") && !dialog.includes("user_id"),
+  );
 
   return results;
 }
 
 if (import.meta.main) {
   const all = await runMfaFeedbackChecks();
-  for (const r of all) console.log(`${r.passed ? "PASS" : "FAIL"}  ${r.name}${r.detail ? ` — ${r.detail}` : ""}`);
+  for (const r of all)
+    console.log(`${r.passed ? "PASS" : "FAIL"}  ${r.name}${r.detail ? ` — ${r.detail}` : ""}`);
   const passed = all.filter((r) => r.passed).length;
-  console.log(`\nSprint 5.9 MFA + feedback: ${passed}/${all.length} ${passed === all.length ? "PASS" : "FAIL"}`);
+  console.log(
+    `\nSprint 5.9 MFA + feedback: ${passed}/${all.length} ${passed === all.length ? "PASS" : "FAIL"}`,
+  );
   if (passed !== all.length) process.exit(1);
 }
