@@ -26,9 +26,8 @@ export const getAccountSecurityStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AccountSecurityStatus> => {
     const assuranceLevel = assuranceFromClaims(context.claims);
-    const { readServerMfaState, readProviderAuthCapabilities } = await import(
-      "./account-security.server"
-    );
+    const { readServerMfaState, readProviderAuthCapabilities } =
+      await import("./account-security.server");
     const { enrolled, verifiedFactorCount, verifiedFactorTypes } = await readServerMfaState(
       context.userId,
     );

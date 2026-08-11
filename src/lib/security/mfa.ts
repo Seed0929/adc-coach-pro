@@ -98,7 +98,8 @@ export async function startTotpEnrollment(
     factorType: "totp",
     friendlyName,
   });
-  if (error || !data) return { enrollment: null, error: error?.message ?? "Couldn't start MFA setup." };
+  if (error || !data)
+    return { enrollment: null, error: error?.message ?? "Couldn't start MFA setup." };
   return {
     enrollment: {
       factorId: data.id,

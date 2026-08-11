@@ -200,7 +200,10 @@ export function MfaSettings() {
             const setupOpen = setup?.kind === option.kind;
             const canSetUp = option.availability === "available";
             return (
-              <div key={option.kind} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <div
+                key={option.kind}
+                className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
+              >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/[0.05] text-muted-foreground">
                     <Icon className="size-4" />
@@ -233,7 +236,13 @@ export function MfaSettings() {
                       onClick={() => (enabled ? turnOff(option.kind) : beginSetup(option))}
                       className="shrink-0 rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium transition-colors hover:bg-white/[0.1] disabled:opacity-50"
                     >
-                      {busy ? <Loader2 className="size-4 animate-spin" /> : enabled ? "Turn off" : "Set up"}
+                      {busy ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : enabled ? (
+                        "Turn off"
+                      ) : (
+                        "Set up"
+                      )}
                     </button>
                   )}
                 </div>

@@ -164,7 +164,9 @@ export function FeedbackDialog({
                 <Label htmlFor="report-verdict">What was off about the coaching?</Label>
                 <Select
                   value={verdict === "" ? "unspecified" : verdict}
-                  onValueChange={(v) => setVerdict(v === "unspecified" ? "" : (v as CoachingVerdict))}
+                  onValueChange={(v) =>
+                    setVerdict(v === "unspecified" ? "" : (v as CoachingVerdict))
+                  }
                 >
                   <SelectTrigger id="report-verdict" className={TRIGGER_CLASS}>
                     <SelectValue placeholder="Not sure / other" />
