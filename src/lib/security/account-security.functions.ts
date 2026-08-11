@@ -15,7 +15,7 @@ export interface AccountSecurityStatus {
   assuranceLevel: "aal1" | "aal2";
   /** True when this session still owes a successful MFA challenge. */
   challengeRequired: boolean;
-  /** Verified provider factor types ("totp" | "phone"). Never secrets. */
+  // Provider-verified factor kinds only — never any enrollment material.
   verifiedFactorTypes: string[];
   /** Real provider configuration, so the UI never fakes SMS availability. */
   phoneAuthEnabled: boolean;
