@@ -3,6 +3,13 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "overrides": {
+    "brace-expansion": "^1.1.18",
+    "nanoid": "^3.3.17",
+    "postcss": "^8.5.23",
+    "js-yaml": "^4.3.1",
+    "@babel/core": "^7.29.6"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
