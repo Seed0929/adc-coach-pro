@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { collectClientDiagnostics } from "@/lib/feedback/client-context";
 import { submitFeedbackReport } from "@/lib/feedback/feedback.functions";
@@ -29,12 +36,15 @@ import {
   type ReportType,
 } from "@/lib/feedback/feedback-policy";
 
-// Native <select> popups are painted by the OS, so the option text needs an
-// explicit background/foreground — otherwise the dark theme's inherited white
-// text lands on the platform's white menu and is only legible on hover.
-const SELECT_CLASS =
-  "h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
-const OPTION_CLASS = "bg-background text-foreground";
+// Sprint 5.9: the native <select> popup was painted by the OS, so options were
+// unreadable until hovered. These selectors now use the project's styled Select
+// primitive, which renders its own menu with themed contrast, hover, selected
+// and keyboard-focus states.
+const TRIGGER_CLASS =
+  "h-10 w-full rounded-xl border-white/10 bg-white/[0.04] px-3 text-sm text-foreground focus:ring-2 focus:ring-primary/60";
+const CONTENT_CLASS = "border-white/10 bg-popover text-popover-foreground";
+const ITEM_CLASS =
+  "cursor-pointer text-sm text-popover-foreground focus:bg-primary/20 focus:text-foreground data-[state=checked]:bg-primary/15 data-[state=checked]:font-medium";
 
 /** One field only: the summary stored server-side is derived from the text. */
 function deriveTitle(description: string): string {
@@ -135,38 +145,43 @@ export function FeedbackDialog({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="report-type">What kind of report is this?</Label>
-              <select
-                id="report-type"
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value as ReportType)}
-                className={SELECT_CLASS}
-              >
-                {REPORT_TYPES.map((t) => (
-                  <option key={t} value={t} className={OPTION_CLASS}>
-                    {REPORT_TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </select>
+              <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
+                <SelectTrigger id="report-type" className={TRIGGER_CLASS}>
+                  <SelectValue placeholder="Choose a report type" />
+                </SelectTrigger>
+                <SelectContent className={CONTENT_CLASS}>
+                  {REPORT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t} className={ITEM_CLASS}>
+                      {REPORT_TYPE_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {reportType === "coaching_feedback" && (
               <div className="space-y-2">
                 <Label htmlFor="report-verdict">What was off about the coaching?</Label>
-                <select
-                  id="report-verdict"
-                  value={verdict}
-                  onChange={(e) => setVerdict(e.target.value as CoachingVerdict | "")}
-                  className={SELECT_CLASS}
+                <Select
+                  value={verdict === "" ? "unspecified" : verdict}
+                  onValueChange={(v) =>
+                    setVerdict(v === "unspecified" ? "" : (v as CoachingVerdict))
+                  }
                 >
-                  <option value="" className={OPTION_CLASS}>
-                    Not sure / other
-                  </option>
-                  {COACHING_VERDICTS.map((v) => (
-                    <option key={v} value={v} className={OPTION_CLASS}>
-                      {COACHING_VERDICT_LABELS[v]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="report-verdict" className={TRIGGER_CLASS}>
+                    <SelectValue placeholder="Not sure / other" />
+                  </SelectTrigger>
+                  <SelectContent className={CONTENT_CLASS}>
+                    <SelectItem value="unspecified" className={ITEM_CLASS}>
+                      Not sure / other
+                    </SelectItem>
+                    {COACHING_VERDICTS.map((v) => (
+                      <SelectItem key={v} value={v} className={ITEM_CLASS}>
+                        {COACHING_VERDICT_LABELS[v]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
