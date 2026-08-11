@@ -140,3 +140,33 @@ export async function removeMfaFactor(factorId: string): Promise<{ error: string
 export async function cancelMfaEnrollment(factorId: string): Promise<void> {
   await supabase.auth.mfa.unenroll({ factorId }).catch(() => undefined);
 }
+
+/**
+ * Starts provider-side PHONE (SMS) enrollment. This is the provider's native
+ * `phone` MFA factor — it only works when phone auth and an SMS gateway are
+ * configured for the project; otherwise the provider's error is surfaced as-is
+ * and nothing is marked enabled.
+ */
+export async function startPhoneEnrollment(
+  phone: string,
+  friendlyName = `BotDiff SMS ${new Date().toISOString().slice(0, 10)}`,
+): Promise<{ factorId: string | null; error: string | null }> {
+  const { data, error } = await supabase.auth.mfa.enroll({
+    factorType: "phone",
+    phone,
+    friendlyName,
+  });
+  if (error || !data) {
+    return { factorId: null, error: error?.message ?? "Couldn't start SMS setup." };
+  }
+  return { factorId: data.id, error: null };
+}
+
+/** Verifies an SMS enrollment code. A wrong code leaves the factor unverified. */
+export async function verifyPhoneEnrollment(
+  factorId: string,
+  code: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
+  return { error: error?.message ?? null };
+}
