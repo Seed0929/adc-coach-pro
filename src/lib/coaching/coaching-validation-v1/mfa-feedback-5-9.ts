@@ -49,6 +49,11 @@ function check(name: string, fn: () => boolean | string) {
 }
 
 const src = (path: string) => readFileSync(new URL(`../../../../${path}`, import.meta.url), "utf8");
+/** Comments explain the rules; the checks below assert the CODE. */
+const code = (path: string) =>
+  src(path)
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
 const rejects = async (p: Promise<unknown>) =>
   p.then(
     () => false,
@@ -133,15 +138,15 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
     !/console\.(log|info|warn|error)/.test(mfaUi) &&
     !/console\.(log|info|warn|error)/.test(mfaLib));
   check("no MFA secret or code is persisted", () =>
-    !mfaUi.includes("localStorage") &&
-    !mfaLib.includes("localStorage") &&
-    !mfaLib.includes(".from(") &&
-    !mfaUi.includes(".from("));
+    !code("src/components/mfa-settings.tsx").includes("localStorage") &&
+    !code("src/lib/security/mfa.ts").includes("localStorage") &&
+    !code("src/lib/security/mfa.ts").includes(".from(") &&
+    !code("src/components/mfa-settings.tsx").includes(".from("));
   check("the setup key is only shown during enrollment", () =>
     mfaUi.includes("setup.kind === \"totp\" && setup.secret"));
   check("server status never returns factor secrets", () => {
-    const fns = src("src/lib/security/account-security.functions.ts");
-    return !/secret/i.test(fns) && !/uri/i.test(fns);
+    const fns = code("src/lib/security/account-security.functions.ts");
+    return !/secret/i.test(fns) && !/\buri\b/i.test(fns);
   });
 
   // --- enforcement stays fail-closed ------------------------------------
@@ -171,8 +176,9 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
 
   // --- feedback selectors -----------------------------------------------
   check("report-type selector uses the styled Select primitive", () =>
-    dialog.includes("@/components/ui/select") && !/<select/.test(dialog));
-  check("no OS-painted <option> elements remain", () => !/<option/.test(dialog));
+    dialog.includes("@/components/ui/select") && !/<select[\s>]/.test(code("src/components/feedback-dialog.tsx")));
+  check("no OS-painted <option> elements remain", () =>
+    !/<option[\s>]/.test(code("src/components/feedback-dialog.tsx")));
   check("every report type is still offered", () =>
     REPORT_TYPES.every((t) => REPORT_TYPE_LABELS[t].length > 0) &&
     dialog.includes("REPORT_TYPES.map"));
