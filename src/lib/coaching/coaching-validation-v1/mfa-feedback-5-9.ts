@@ -150,7 +150,6 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
   check("unknown assurance is rejected for enrolled users", () =>
     isSessionPermitted({ assuranceLevel: null, enrolled: true }) === false &&
     isSessionPermitted({ assuranceLevel: undefined, enrolled: true }) === false);
-  check("an unreadable enrollment state rejects the request", async () => true);
   results.push({
     name: "an unreadable enrollment state rejects the request",
     passed: await rejects(
