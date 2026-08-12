@@ -131,6 +131,29 @@ export async function verifyMfaChallenge(
   return { error: error?.message ?? null };
 }
 
+/**
+ * Asks the provider to issue a challenge for a verified factor. Needed for
+ * phone factors, where the challenge is what actually sends the SMS. TOTP
+ * factors don't need this — the app already shows a current code.
+ */
+export async function sendMfaChallenge(
+  factorId: string,
+): Promise<{ challengeId: string | null; error: string | null }> {
+  const { data, error } = await supabase.auth.mfa.challenge({ factorId });
+  if (error || !data) return { challengeId: null, error: error?.message ?? "Couldn't send a code." };
+  return { challengeId: data.id, error: null };
+}
+
+/** Verifies a code against an already-issued challenge. */
+export async function verifyMfaChallengeCode(
+  factorId: string,
+  challengeId: string,
+  code: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.mfa.verify({ factorId, challengeId, code });
+  return { error: error?.message ?? null };
+}
+
 /** Removes a factor. The provider requires an aal2 session to allow this. */
 export async function removeMfaFactor(factorId: string): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.mfa.unenroll({ factorId });

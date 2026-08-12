@@ -42,7 +42,7 @@ type Setup =
   | { kind: "sms"; step: "code"; factorId: string };
 
 export function MfaSettings() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshMfa } = useAuth();
   const [status, setStatus] = useState<AccountSecurityStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [setup, setSetup] = useState<Setup | null>(null);
@@ -66,7 +66,10 @@ export function MfaSettings() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+    // Keep the app-wide (provider-derived) MFA state in step, so enrolling or
+    // removing a factor here can't leave a stale challenge state elsewhere.
+    await refreshMfa();
+  }, [isAuthenticated, refreshMfa]);
 
   useEffect(() => {
     void refresh();
