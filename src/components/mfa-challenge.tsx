@@ -7,25 +7,53 @@
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { verifyMfaChallenge } from "@/lib/security/mfa";
+import {
+  sendMfaChallenge,
+  verifyMfaChallenge,
+  verifyMfaChallengeCode,
+} from "@/lib/security/mfa";
 
 export function MfaChallenge() {
   const { mfa, refreshMfa, signOut } = useAuth();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
 
-  const factor = mfa.verifiedFactors[0];
+  const factors = mfa.verifiedFactors;
+  const factor = factors.find((f) => f.id === factorId) ?? factors[0];
+  // Phone factors only deliver a code once the provider issues a challenge.
+  const needsSend = factor?.factorType === "phone" && !challengeId;
+
+  async function handleSend() {
+    if (!factor || busy) return;
+    setBusy(true);
+    setError(null);
+    const { challengeId: id, error: sendError } = await sendMfaChallenge(factor.id);
+    setBusy(false);
+    if (sendError || !id) {
+      setError(sendError ?? "Couldn't send a code.");
+      return;
+    }
+    setChallengeId(id);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!factor || busy) return;
     setBusy(true);
     setError(null);
-    const result = await verifyMfaChallenge(factor.id, code.trim());
+    const result = challengeId
+      ? await verifyMfaChallengeCode(factor.id, challengeId, code.trim())
+      : await verifyMfaChallenge(factor.id, code.trim());
     setBusy(false);
     if (result.error) {
-      setError("That code wasn't accepted. Try the current code from your authenticator app.");
+      setError(
+        factor.factorType === "phone"
+          ? "That code wasn't accepted. Request a new code and try again."
+          : "That code wasn't accepted. Try the current code from your authenticator app.",
+      );
       setCode("");
       return;
     }
@@ -42,9 +70,44 @@ export function MfaChallenge() {
           Two-factor verification
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Enter the 6-digit code from your authenticator app to finish signing in.
+          {factor?.factorType === "phone"
+            ? "Enter the 6-digit code we text you to finish signing in."
+            : "Enter the 6-digit code from your authenticator app to finish signing in."}
         </p>
+        {factors.length > 1 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {factors.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  setFactorId(f.id);
+                  setChallengeId(null);
+                  setCode("");
+                  setError(null);
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  f.id === factor?.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-white/[0.06] text-muted-foreground hover:bg-white/[0.1]"
+                }`}
+              >
+                {f.factorType === "phone" ? "Text message" : "Authenticator app"}
+              </button>
+            ))}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+          {needsSend && (
+            <button
+              type="button"
+              onClick={() => void handleSend()}
+              disabled={busy}
+              className="w-full rounded-full bg-white/[0.06] px-4 py-3 text-sm font-medium disabled:opacity-60"
+            >
+              {busy ? "Sending…" : "Send code"}
+            </button>
+          )}
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -56,7 +119,7 @@ export function MfaChallenge() {
           {error && <p className="text-sm text-destructive">{error}</p>}
           <button
             type="submit"
-            disabled={busy || code.trim().length < 6 || !factor}
+            disabled={busy || code.trim().length < 6 || !factor || needsSend}
             className="w-full rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
           >
             {busy ? "Verifying…" : "Verify"}
