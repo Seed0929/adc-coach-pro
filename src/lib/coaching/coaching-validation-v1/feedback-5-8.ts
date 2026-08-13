@@ -299,7 +299,10 @@ export async function runFeedbackChecks(): Promise<CheckResult[]> {
   const fns = src("src/lib/feedback/feedback.functions.ts");
   check("feedback server functions are gated by requireVerifiedSession", () => {
     const gated = (fns.match(/\.middleware\(\[requireVerifiedSession\]\)/g) ?? []).length;
-    return gated === 2 ? true : `expected 2 gated functions, found ${gated}`;
+    const declared = (fns.match(/createServerFn\(/g) ?? []).length;
+    return gated === declared && declared >= 2
+      ? true
+      : `expected every server function gated (${declared} declared, ${gated} gated)`;
   });
   check("unauthenticated submission cannot reach the handler", () =>
     !fns.includes("requireSupabaseAuth") && fns.includes("requireVerifiedSession"));
