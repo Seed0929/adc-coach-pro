@@ -20,6 +20,6 @@ const suites: [string, () => any][] = [
 ];
 for (const [name, fn] of suites) {
   const res = await fn();
-  const fail = res.filter((r: any) => r.status !== "pass" && r.status !== "PASS");
+  const fail = res.filter((r: any) => r.passed !== true);
   console.log(`${name}: ${res.length - fail.length}/${res.length}`, fail.length ? JSON.stringify(fail.slice(0,5)) : "");
 }
