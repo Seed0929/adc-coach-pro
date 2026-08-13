@@ -18,6 +18,14 @@ export type ListReportsResult =
   | { ok: true; reports: StoredReport[] }
   | { ok: false; code: string; message: string };
 
+export type TriageListResult =
+  | { ok: true; reports: import("./feedback-triage.server").TriageReport[] }
+  | { ok: false; code: string; message: string };
+
+export type TriageUpdateResult =
+  | { ok: true; report: import("./feedback-triage.server").TriageReport }
+  | { ok: false; code: string; message: string };
+
 export const submitFeedbackReport = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((data: ReportDraft) => data)
@@ -45,5 +53,51 @@ export const listMyFeedbackReports = createServerFn({ method: "GET" })
     } catch (err) {
       if (err instanceof FeedbackError) return { ok: false, code: err.code, message: err.message };
       return { ok: false, code: "unknown", message: "Couldn't load your reports right now." };
+    }
+  });
+
+// --- Admin triage (role-gated server-side; no UI surface yet) --------------
+
+export const listAllFeedbackReports = createServerFn({ method: "GET" })
+  .middleware([requireVerifiedSession])
+  .handler(async ({ context }): Promise<TriageListResult> => {
+    const { listAllReports, NotAdminError } = await import("./feedback-triage.server");
+    const { FeedbackError } = await import("./feedback.server");
+    try {
+      return { ok: true, reports: await listAllReports(context.supabase, context.userId) };
+    } catch (err) {
+      if (err instanceof NotAdminError) {
+        return { ok: false, code: "forbidden", message: "You don't have access to report triage." };
+      }
+      if (err instanceof FeedbackError) return { ok: false, code: err.code, message: err.message };
+      return { ok: false, code: "unknown", message: "Couldn't load reports right now." };
+    }
+  });
+
+export const setFeedbackReportStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: { reportId: string; status: string }) => data)
+  .middleware([requireVerifiedSession])
+  .handler(async ({ data, context }): Promise<TriageUpdateResult> => {
+    const { setReportStatus, isValidStatus, NotAdminError } = await import(
+      "./feedback-triage.server"
+    );
+    const { FeedbackError } = await import("./feedback.server");
+    if (!data?.reportId || !isValidStatus(data.status)) {
+      return { ok: false, code: "invalid", message: "Unknown report or status." };
+    }
+    try {
+      const report = await setReportStatus(
+        context.supabase,
+        context.userId,
+        data.reportId,
+        data.status,
+      );
+      return { ok: true, report };
+    } catch (err) {
+      if (err instanceof NotAdminError) {
+        return { ok: false, code: "forbidden", message: "You don't have access to report triage." };
+      }
+      if (err instanceof FeedbackError) return { ok: false, code: err.code, message: err.message };
+      return { ok: false, code: "unknown", message: "Couldn't update that report." };
     }
   });
