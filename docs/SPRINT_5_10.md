@@ -91,3 +91,91 @@ typecheck clean · production build succeeds.
   untouched, credentials remain server-side).
 - **SAFE TO DEFER POST-BETA** — admin triage dashboard, reviewer comments,
   email as a second factor (not offered by the provider), monetization.
+
+---
+
+## 5.10B — Private-beta backend readiness pass (second half of the sprint)
+
+### Feedback report operability (the one real change)
+
+Sprint 5.8 left an operational gap: reports were submitted but nobody could
+review them in-app. Closed with the minimum safe architecture, no RLS
+weakening and no client-side authorization:
+
+- `public.app_role` enum + `public.user_roles` table (roles are NOT on
+  `profiles`). Users may read only their own role row; there is no INSERT/
+  UPDATE/DELETE policy, so roles can only be granted by the backend.
+- `public.has_role(uuid, app_role)` — `SECURITY DEFINER`, `search_path = public`,
+  `EXECUTE` revoked from `PUBLIC`/`anon`. It additionally refuses to answer
+  about anyone other than `auth.uid()` when a signed-in role calls it, so a
+  tester cannot probe who the admins are.
+- `feedback_reports`: added **admin-only** SELECT (all reports) and
+  **admin-only** UPDATE. Normal users still have no UPDATE and no DELETE
+  policy — the append-only model from 5.8 is unchanged.
+- `src/lib/feedback/feedback-triage.server.ts` + two role-gated server
+  functions (`listAllFeedbackReports`, `setFeedbackReportStatus`). Both run
+  behind `requireVerifiedSession`, resolve the admin role server-side via
+  `has_role` through the *caller's* RLS-scoped client, and never touch the
+  service-role key. Diagnostics are not returned.
+- Deliberately **no admin UI** (that is UI work, out of scope) and **no admin
+  role granted yet**. Until a role is assigned the capability is inert, so
+  behaviour for beta testers is byte-for-byte unchanged.
+
+Remaining linter note: `0029 authenticated_security_definer_function_executable`
+for `has_role` is expected and required — RLS policies must be able to call it
+as `authenticated`. It leaks nothing (self-only answers, boolean return).
+
+### Audited, found healthy, left unchanged
+
+- Every server function in `coaching.functions.ts`, `matches.functions.ts`,
+  `riot.functions.ts`, `dashboard.functions.ts`, `profile.functions.ts`,
+  `feedback.functions.ts`, `account-security.functions.ts` is behind
+  `requireVerifiedSession`. No client-supplied user/profile id is trusted
+  anywhere; ownership always comes from `context.userId`.
+- `matchId` from the client is resolved against the caller's own rows
+  (`.eq("profile_id", userId)`), so there is no IDOR path into another user's
+  match, coaching or timeline data.
+- Riot proxy functions only return public Riot data and never expose
+  `RIOT_API_KEY`; the key stays in `*.server.ts`.
+- Riot timeline pipeline (5.6) unchanged: reuse, 429 handling, failure
+  cooldown, malformed degradation, PUUID-first matching, `ITEM_UNDO`,
+  evidence-based purchase timestamps — 18/18.
+- Coaching integrity unchanged: observed evidence / inferred pattern /
+  supporting history / counterfactual / practice goal remain distinct;
+  analytics is not a gate.
+- MFA: honest model kept exactly as-is (TOTP real, SMS `needs_config`, Email
+  explanatory). No client-side MFA flag.
+- Dependency pins re-verified in `bun.lock`: `brace-expansion 1.1.18`,
+  `nanoid 3.3.18`, `postcss 8.5.26`, `js-yaml 4.3.1`, `@babel/core 7.29.7`,
+  `esbuild 0.28.2`. No upgrades performed.
+- HIBP leaked-password protection: enabled in 5.10A, not re-toggled.
+
+### Test adjustment
+
+`feedback-5-8.ts` asserted exactly 2 gated server functions. Now that the
+module declares 4, the check asserts *every* declared `createServerFn` is
+gated (strictly stronger).
+
+### Journey validation
+
+Unauthenticated browser pass: `/dashboard`, `/matches`, `/settings`,
+`/coaching`, `/profile` render the intentional guest/demo shell with no user
+data and no console errors; `/welcome` redirects to `/auth`. Protected data is
+unreachable because every fetch requires a bearer token.
+
+**Authenticated browser walkthrough: NOT VERIFIED.** No signed-in preview
+session was available to the sandbox (`signed_out`), so `/auth → /welcome →
+Riot connect → sync → /dashboard → /matches/:id → /settings → MFA → feedback`
+is covered only by the deterministic suites, not by a live click-through.
+
+### Results (5.10B)
+
+coaching 49/49 · decision-chain 31/31 · beta-readiness 16/16 · 5.4 21/21 ·
+5.5 20/20 · 5.6 18/18 · 5.7 37/37 · 5.8 42/42 · 5.9 42/42 · typecheck clean ·
+production build succeeds.
+
+### Remaining external configuration
+
+1. SMS gateway + `external.phone = true` for real SMS MFA.
+2. Production Riot API key (development configuration left untouched).
+3. Grant the owner the `admin` role (backend-only action) before triage is usable.
