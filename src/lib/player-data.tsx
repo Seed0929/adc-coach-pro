@@ -12,9 +12,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSync } from "@/hooks/use-sync";
 import { supabase } from "@/integrations/supabase/client";
 import { getRiotDashboard, type DashboardData } from "@/lib/dashboard.functions";
-import champKaisa from "@/assets/champ-1.jpg";
-import champEzreal from "@/assets/champ-2.jpg";
 import heatmapImg from "@/assets/heatmap.jpg";
+import { championLoading } from "@/lib/league-data/asset-repository";
+
+// Official Riot (Data Dragon) champion art. Patch-independent URLs, so the
+// example profile always shows the correct champion for the correct name.
+const champKaisa = championLoading("Kai'Sa");
+const champEzreal = championLoading("Ezreal");
 
 // ---------------------------------------------------------------------------
 // Shared data contract
