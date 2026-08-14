@@ -7,8 +7,10 @@ import { MfaChallenge } from "@/components/mfa-challenge";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
-    typeof search.redirect === "string" ? { redirect: search.redirect } : {},
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; mode?: "signup" } => ({
+    ...(typeof search.redirect === "string" ? { redirect: search.redirect } : {}),
+    ...(search.mode === "signup" ? { mode: "signup" as const } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — BotDiff" },
@@ -52,7 +54,7 @@ function AuthPage() {
     mfaChallengeRequired,
   } = useAuth();
 
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>(search.mode === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
