@@ -36,6 +36,7 @@ import { useRiotSummary } from "@/hooks/use-riot-summary";
 import type { RiotAccountSummary } from "@/lib/riot.functions";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useSync, formatLastSynced } from "@/hooks/use-sync";
+import { LandingPage } from "@/components/landing-page";
 
 /** Live "Checking Riot..." / "Last synced: X ago" indicator for the hero. */
 function SyncStatus() {
@@ -70,23 +71,40 @@ function SyncStatus() {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BotDiff — Your Personal League Coach" },
+      { title: "BotDiff — Personal League of Legends Coaching" },
       {
         name: "description",
         content:
-          "BotDiff is an AI-powered personal coach for League of Legends. Get calm, focused, personalized analysis of your own gameplay and know exactly what to improve next.",
+          "Stats tell you what happened. BotDiff finds the decisions, habits and recurring patterns holding you back and turns them into personalized coaching and practice goals.",
       },
-      { property: "og:title", content: "BotDiff — Your Personal League Coach" },
+      { property: "og:title", content: "BotDiff — Personal League of Legends Coaching" },
       {
         property: "og:description",
         content:
-          "AI coaching that feels like sitting beside a Challenger coach after every ranked game.",
+          "Personalized League coaching built from your own matches: recurring patterns, real strengths and weaknesses, and practice goals that track your improvement.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DashboardPage,
+  component: HomeRoute,
 });
+
+/**
+ * "/" is the public BotDiff homepage for guests and the player's dashboard once
+ * signed in. Same visual language, same components — only the data differs.
+ */
+function HomeRoute() {
+  const { loading, isAuthenticated } = useAuth();
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background text-foreground">
+        <Loader2 className="size-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+  return isAuthenticated ? <DashboardInner /> : <LandingPage />;
+}
 
 function greeting(): string {
   const h = new Date().getHours();
