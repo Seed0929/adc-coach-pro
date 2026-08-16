@@ -7,7 +7,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, Target } from "lucide-react";
+import { ArrowUpRight,
+  ArrowDownRight, Target } from "lucide-react";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
 
@@ -31,7 +32,7 @@ function Progress() {
   const { isDemo, data } = useBotDiffData();
   const { trend, skills } = data;
   const delta = data.improvementDelta;
-  const trendTone = delta > 0 ? "success" : delta < 0 ? "warning" : "default";
+  const trendTone = delta > 0 ? "success" : delta < 0 ? "warning" : "neutral";
   const trendLabel = delta > 0 ? "Trending up" : delta < 0 ? "Trending down" : "Holding steady";
   return (
     <AppShell>
