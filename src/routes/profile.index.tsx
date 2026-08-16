@@ -280,19 +280,24 @@ function ProfilePage() {
           <div>
             <div className="font-display text-lg font-semibold">BotDiff Score</div>
             <p className="mt-1 max-w-[14rem] text-xs text-muted-foreground">
-              Your overall improvement rating across consistency, farming, vision, objectives, positioning & teamfighting.
+              A 5-game rolling average of your per-game coaching scores across consistency, farming, vision, objectives, positioning & teamfighting — so one outlier game never swings it.
             </p>
           </div>
         </div>
 
         <div className="glass rise rounded-3xl p-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile label="Current" value={score.current} delta={score.current - score.previous} />
-            <StatTile label="Previous" value={score.previous} />
-            <StatTile label="Weekly Change" value={score.current} delta={score.weeklyChange} />
-            <StatTile label="Monthly Change" value={score.current} delta={score.monthlyChange} />
-            <StatTile label="Best Ever" value={score.best} />
-            <StatTile label="Lowest" value={score.lowest} />
+            <StatTile
+              label="Current form"
+              value={score.current}
+              delta={score.current - score.previous}
+              sub={score.formLabel}
+            />
+            <StatTile label="Previous form" value={score.previous} sub={score.formLabel} />
+            <StatTile label="Weekly Change" value={score.current} delta={score.weeklyChange} sub={`vs form 7 days ago`} />
+            <StatTile label="Monthly Change" value={score.current} delta={score.monthlyChange} sub={`vs form 30 days ago`} />
+            <StatTile label="Best form" value={score.best} sub={`Best single game ${score.bestSingleGame}`} />
+            <StatTile label="Lowest form" value={score.lowest} sub={`Lowest single game ${score.lowestSingleGame}`} />
           </div>
           <div className="mt-5">
             <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Score Breakdown</div>
