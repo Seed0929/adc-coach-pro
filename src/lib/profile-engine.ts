@@ -301,6 +301,20 @@ const METRIC_DEFS: MetricDef[] = [
 ];
 
 /** Compute improvement-history trends over a window. `matches` is newest-first. */
+/**
+ * The player's own best rolling stretch for a metric — the evidence-derived
+ * personal target. Null when there aren't enough games (10+) to be honest.
+ */
+function bestStretch(values: number[], window: number, higherIsBetter: boolean): number | null {
+  if (values.length < 10) return null;
+  let best: number | null = null;
+  for (let i = 0; i + window <= values.length; i++) {
+    const a = avg(values.slice(i, i + window));
+    if (best == null || (higherIsBetter ? a > best : a < best)) best = a;
+  }
+  return best == null ? null : Math.round(best * 10) / 10;
+}
+
 export function computeTrends(matches: ProfileMatch[], window: TrendWindow): TrendMetric[] {
   const sliced = window === 0 ? matches : matches.slice(0, window);
   const chron = [...sliced].reverse();
