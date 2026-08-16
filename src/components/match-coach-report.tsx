@@ -233,7 +233,8 @@ function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Power spike timing unavailable until Riot timeline data is connected.
+          No purchase timeline for this match — BotDiff coaches the tempo habits behind this spike
+          instead of guessing a minute.
         </p>
       )}
     </div>
@@ -574,9 +575,8 @@ export function MatchCoachReport({
 
         {!report.plan.powerSpike.timelineAvailable && (
           <p className="mt-3 text-xs text-muted-foreground/70">
-            {report.plan.powerSpike.timelineUnavailableMessage} Until then, BotDiff coaches the
-            recall, farm, and rotation decisions that decide when your spikes come online — not
-            fabricated timestamps.
+            {report.plan.powerSpike.timelineUnavailableMessage} It coaches the recall, farm, and
+            rotation decisions that decide when your spikes come online instead.
           </p>
         )}
 
