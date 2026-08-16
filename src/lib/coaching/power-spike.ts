@@ -133,7 +133,7 @@ const mmss = (minutes: number) => {
 };
 export const formatSpikeTime = mmss;
 const TIMELINE_UNAVAILABLE =
-  "Power spike timing unavailable until Riot timeline data is connected.";
+  "Riot returned no item-purchase timeline for this match, so BotDiff coaches the tempo habits behind your spikes instead of inventing minutes.";
 
 // Cumulative gold to complete each core spike (first legendary, then +boots,
 // then +legendary). Kept broad — a Data Dragon hook can refine these later.
@@ -155,7 +155,11 @@ function coreItemNames(m: MatchAnalysisInput): string[] {
   // League Intelligence gate — archetype-correct core items only (never
   // Kraken Slayer on a mage, never mage items on a marksman). Callers should
   // already have suppressed the section for unknown champions.
-  const names = coreItemsFor(m.champion);
+  // Curated strings can carry "A / B" alternatives — never present an
+  // unvalidated alternative as a fact; keep the first, primary option only.
+  const names = coreItemsFor(m.champion).map((n) =>
+    String(n).split("/")[0]?.trim() ?? n,
+  );
   return [names[0] ?? "First core item", names[1] ?? "Second core item", names[2] ?? "Third core item"];
 }
 
@@ -201,18 +205,22 @@ function buildItems(m: MatchAnalysisInput): PowerSpikeItem[] {
   // nowhere near reaching this game.
   const gpm = m.goldPerMin > 0 ? m.goldPerMin : 350;
   const roughReach = (gold: number) => gold / (gpm * 0.82) + 3;
+  const GENERIC_SLOTS = ["First core item", "Second core item", "Third core item"];
   for (let slot = 0; slot < 3; slot++) {
     if (roughReach(CUMULATIVE_GOLD[slot]) > m.durationMin + 1.5) break;
     const base = ACTIVE_BASELINES[slot] ?? CURATED_BASELINES[slot];
     items.push({
       slot: slot + 1,
-      itemName: names[slot],
+      // Without purchase evidence BotDiff must not claim the player built a
+      // specific item — the slot label stays generic and honest.
+      itemName: GENERIC_SLOTS[slot] ?? `Core item ${slot + 1}`,
       timingAvailable: false,
       status: "onTrack",
       confidence: "low",
       baselineSource: base.source,
     });
   }
+  void names;
   return items;
 }
 
