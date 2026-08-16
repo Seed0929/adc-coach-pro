@@ -382,10 +382,19 @@ function buildGamePlan(m: MatchAnalysisInput): GamePlan {
   const ccHeavy = threat.cc >= 3;
   const pokeLane = oppTags.includes("poke") || oppTags.includes("ad") === false && oppTags.includes("ap");
 
-  // Summoner spells
+  // Summoner spells — BotDiff has no per-match summoner data from Riot yet, so
+  // this stays a decision principle, never a claim about what was taken.
   const spells: PlanItem = diveHeavy || ccHeavy
-    ? { label: "Summoner Spells", value: "Flash + Heal (consider Cleanse vs point-and-click CC)", why: "Against dive and heavy CC, a defensive summoner can be the difference between escaping and dying — Cleanse if they have suppress/stun-lock." }
-    : { label: "Summoner Spells", value: "Flash + Heal", why: "Standard bot-lane pairing; Heal is the strongest 2v2 and teamfight tempo tool." };
+    ? {
+        label: "Summoner Spells",
+        value: "Keep one defensive summoner for their engage (Cleanse vs point-and-click CC).",
+        why: "Against dive and heavy CC, a defensive summoner is the difference between escaping and dying — Cleanse if they have suppress or stun-lock.",
+      }
+    : {
+        label: "Summoner Spells",
+        value: "Take the pairing that matches how you want to win the lane.",
+        why: "With no single dominant threat, your second summoner should serve your lane plan (sustain to trade, mobility to roam) rather than a fixed template.",
+      };
 
   // Lane strategy vs opponent
   const laneStrategy: PlanItem = opp

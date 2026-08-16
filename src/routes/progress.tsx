@@ -7,7 +7,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, Target } from "lucide-react";
+import { ArrowUpRight,
+  ArrowDownRight, Target } from "lucide-react";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
 
@@ -30,6 +31,9 @@ export const Route = createFileRoute("/progress")({
 function Progress() {
   const { isDemo, data } = useBotDiffData();
   const { trend, skills } = data;
+  const delta = data.improvementDelta;
+  const trendTone = delta > 0 ? "success" : delta < 0 ? "warning" : "neutral";
+  const trendLabel = delta > 0 ? "Trending up" : delta < 0 ? "Trending down" : "Holding steady";
   return (
     <AppShell>
       {isDemo && <DemoModeBanner />}
@@ -45,10 +49,16 @@ function Progress() {
           <div>
             <div className="text-sm text-muted-foreground">Improvement Score</div>
             <div className="font-display text-3xl font-semibold tracking-tight">
-              {data.improvementScore} <span className="text-lg text-success">+{data.improvementDelta}</span>
+              {data.improvementScore}{" "}
+              <span className={`text-lg ${delta > 0 ? "text-success" : delta < 0 ? "text-warning" : "text-muted-foreground"}`}>
+                {delta > 0 ? "+" : ""}
+                {delta}
+              </span>
             </div>
           </div>
-          <Pill tone="success"><ArrowUpRight className="size-3.5" /> Trending up</Pill>
+          <Pill tone={trendTone}>
+            {delta >= 0 ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />} {trendLabel}
+          </Pill>
         </div>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">

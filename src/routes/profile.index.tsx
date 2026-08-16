@@ -79,8 +79,19 @@ function ScoreRing({ value }: { value: number }) {
   );
 }
 
-function Delta({ value, suffix = "" }: { value: number; suffix?: string }) {
-  const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "text-muted-foreground";
+function Delta({
+  value,
+  suffix = "",
+  higherIsBetter = true,
+}: {
+  value: number;
+  suffix?: string;
+  /** Deaths and other "lower is better" metrics invert the colour. */
+  higherIsBetter?: boolean;
+}) {
+  const good = higherIsBetter ? value > 0 : value < 0;
+  const bad = higherIsBetter ? value < 0 : value > 0;
+  const tone = good ? "text-success" : bad ? "text-destructive" : "text-muted-foreground";
   const Icon = value > 0 ? ArrowUpRight : value < 0 ? ArrowDownRight : Minus;
   return (
     <span className={`inline-flex items-center gap-0.5 text-sm font-medium ${tone}`}>
@@ -92,7 +103,17 @@ function Delta({ value, suffix = "" }: { value: number; suffix?: string }) {
   );
 }
 
-function StatTile({ label, value, delta }: { label: string; value: string | number; delta?: number }) {
+function StatTile({
+  label,
+  value,
+  delta,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  delta?: number;
+  sub?: string;
+}) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
@@ -100,6 +121,7 @@ function StatTile({ label, value, delta }: { label: string; value: string | numb
         <span className="font-display text-2xl font-semibold">{value}</span>
         {delta !== undefined && <Delta value={delta} />}
       </div>
+      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -143,11 +165,18 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
             <div key={t.key} className="rounded-2xl bg-white/[0.03] p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{t.label}</span>
-                <Delta value={t.delta} suffix={t.unit} />
+                <Delta value={t.delta} suffix={t.unit} higherIsBetter={t.higherIsBetter} />
               </div>
               <div className="mt-1 font-display text-2xl font-semibold">
                 {t.average}
                 <span className="ml-1 text-sm font-normal text-muted-foreground">{t.unit}</span>
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                {t.target != null
+                  ? `Your best 5-game stretch: ${t.target}${t.unit}${
+                      t.targetProgress != null ? ` · ${t.targetProgress}% there` : ""
+                    }`
+                  : "Personal target unlocks at 10 games"}
               </div>
               <div className="mt-2 h-12">
                 <ResponsiveContainer width="100%" height="100%">
@@ -251,19 +280,24 @@ function ProfilePage() {
           <div>
             <div className="font-display text-lg font-semibold">BotDiff Score</div>
             <p className="mt-1 max-w-[14rem] text-xs text-muted-foreground">
-              Your overall improvement rating across consistency, farming, vision, objectives, positioning & teamfighting.
+              A 5-game rolling average of your per-game coaching scores across consistency, farming, vision, objectives, positioning & teamfighting — so one outlier game never swings it.
             </p>
           </div>
         </div>
 
         <div className="glass rise rounded-3xl p-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile label="Current" value={score.current} delta={score.current - score.previous} />
-            <StatTile label="Previous" value={score.previous} />
-            <StatTile label="Weekly Change" value={score.current} delta={score.weeklyChange} />
-            <StatTile label="Monthly Change" value={score.current} delta={score.monthlyChange} />
-            <StatTile label="Best Ever" value={score.best} />
-            <StatTile label="Lowest" value={score.lowest} />
+            <StatTile
+              label="Current form"
+              value={score.current}
+              delta={score.current - score.previous}
+              sub={score.formLabel}
+            />
+            <StatTile label="Previous form" value={score.previous} sub={score.formLabel} />
+            <StatTile label="Weekly Change" value={score.current} delta={score.weeklyChange} sub={`vs form 7 days ago`} />
+            <StatTile label="Monthly Change" value={score.current} delta={score.monthlyChange} sub={`vs form 30 days ago`} />
+            <StatTile label="Best form" value={score.best} sub={`Best single game ${score.bestSingleGame}`} />
+            <StatTile label="Lowest form" value={score.lowest} sub={`Lowest single game ${score.lowestSingleGame}`} />
           </div>
           <div className="mt-5">
             <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Score Breakdown</div>

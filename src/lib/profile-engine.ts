@@ -85,6 +85,11 @@ export interface BotDiffScore {
   monthlyChange: number;
   best: number;
   lowest: number;
+  /** Best/lowest SINGLE game score — distinct from the 5-game form values. */
+  bestSingleGame: number;
+  lowestSingleGame: number;
+  /** Honest label for what `current`/`best`/`lowest` measure. */
+  formLabel: string;
   series: { label: string; score: number }[];
   breakdown: ScoreBreakdown[];
 }
@@ -99,6 +104,15 @@ export interface TrendMetric {
   delta: number; // change first-half -> second-half of the window
   direction: "up" | "down" | "flat";
   better: boolean; // is the direction an improvement?
+  /** True when a higher value is the goal (Deaths = false). */
+  higherIsBetter: boolean;
+  /**
+   * Personal target derived from the player's own best 5-game stretch.
+   * Null until there is enough evidence (10+ games) to set one honestly.
+   */
+  target: number | null;
+  /** Progress toward `target`, 0-100. Null when there is no target. */
+  targetProgress: number | null;
   points: { i: number; value: number }[]; // chronological
 }
 
@@ -219,6 +233,7 @@ function computeScore(chron: ProfileMatch[]): BotDiffScore {
   if (scores.length === 0) {
     return {
       current: 0, previous: 0, weeklyChange: 0, monthlyChange: 0, best: 0, lowest: 0,
+      bestSingleGame: 0, lowestSingleGame: 0, formLabel: "5-game average",
       series: [], breakdown: [],
     };
   }
@@ -256,6 +271,9 @@ function computeScore(chron: ProfileMatch[]): BotDiffScore {
 
   return {
     current, previous, weeklyChange, monthlyChange, best, lowest,
+    bestSingleGame: Math.max(...scores),
+    lowestSingleGame: Math.min(...scores),
+    formLabel: "5-game average",
     series: series.map((score, i) => ({ label: `G${i + 1}`, score })),
     breakdown,
   };
@@ -283,6 +301,20 @@ const METRIC_DEFS: MetricDef[] = [
 ];
 
 /** Compute improvement-history trends over a window. `matches` is newest-first. */
+/**
+ * The player's own best rolling stretch for a metric — the evidence-derived
+ * personal target. Null when there aren't enough games (10+) to be honest.
+ */
+function bestStretch(values: number[], window: number, higherIsBetter: boolean): number | null {
+  if (values.length < 10) return null;
+  let best: number | null = null;
+  for (let i = 0; i + window <= values.length; i++) {
+    const a = avg(values.slice(i, i + window));
+    if (best == null || (higherIsBetter ? a > best : a < best)) best = a;
+  }
+  return best == null ? null : Math.round(best * 10) / 10;
+}
+
 export function computeTrends(matches: ProfileMatch[], window: TrendWindow): TrendMetric[] {
   const sliced = window === 0 ? matches : matches.slice(0, window);
   const chron = [...sliced].reverse();
@@ -297,14 +329,29 @@ export function computeTrends(matches: ProfileMatch[], window: TrendWindow): Tre
     const direction: TrendMetric["direction"] =
       Math.abs(rawDelta) < 0.05 ? "flat" : rawDelta > 0 ? "up" : "down";
     const better = direction === "flat" ? true : def.higherIsBetter ? rawDelta > 0 : rawDelta < 0;
+    // Personal target = the player's own best 5-game stretch in this metric.
+    // Evidence-derived, never an invented benchmark, and only once we have
+    // enough games for the stretch to mean something.
+    const target = bestStretch(values, 5, def.higherIsBetter);
+    const average = Math.round(avg(values) * 10) / 10;
+    const recent = Math.round(avg(values.slice(-5)) * 10) / 10;
+    const targetProgress =
+      target == null || target === 0
+        ? null
+        : def.higherIsBetter
+          ? round(clamp((recent / target) * 100))
+          : round(clamp((target / Math.max(recent, 0.1)) * 100));
     return {
       key: def.key,
       label: def.label,
       unit: def.unit,
-      average: Math.round(avg(values) * 10) / 10,
+      average,
       delta,
       direction,
       better,
+      higherIsBetter: def.higherIsBetter,
+      target,
+      targetProgress,
       points: values.map((value, i) => ({ i, value })),
     };
   });
