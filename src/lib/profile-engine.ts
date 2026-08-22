@@ -83,6 +83,9 @@ export interface BotDiffScore {
   previous: number;
   weeklyChange: number;
   monthlyChange: number;
+  /** False when no dated game is older than the window — change is unknowable. */
+  weeklyChangeAvailable: boolean;
+  monthlyChangeAvailable: boolean;
   best: number;
   lowest: number;
   /** Best/lowest SINGLE game score — distinct from the 5-game form values. */
@@ -101,9 +104,15 @@ export interface TrendMetric {
   label: string;
   unit: string;
   average: number;
+  /** Most recent 5-game average — "where am I right now". */
+  current: number;
+  /** The 5-game average immediately before `current`. Null when unavailable. */
+  previous: number | null;
   delta: number; // change first-half -> second-half of the window
   direction: "up" | "down" | "flat";
   better: boolean; // is the direction an improvement?
+  /** Plain-language trend word respecting `higherIsBetter`. */
+  trendLabel: "Improving" | "Slipping" | "Holding steady";
   /** True when a higher value is the goal (Deaths = false). */
   higherIsBetter: boolean;
   /**
@@ -115,6 +124,7 @@ export interface TrendMetric {
   targetProgress: number | null;
   points: { i: number; value: number }[]; // chronological
 }
+
 
 export interface ChampionProgress {
   name: string;
