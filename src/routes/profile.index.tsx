@@ -158,49 +158,93 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
         </div>
       </div>
       {trends.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Play more games to unlock trend history.</p>
+        <p className="text-sm text-muted-foreground">
+          Import more of your games to unlock trend history.
+        </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {trends.map((t) => (
-            <div key={t.key} className="rounded-2xl bg-white/[0.03] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t.label}</span>
-                <Delta value={t.delta} suffix={t.unit} higherIsBetter={t.higherIsBetter} />
+          {trends.map((t) => {
+            const tone = t.direction === "flat" ? "neutral" : t.better ? "success" : "warning";
+            const stroke = t.better ? "var(--success)" : "var(--warning)";
+            return (
+              <div key={t.key} className="rounded-2xl bg-white/[0.03] p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted-foreground">{t.label}</span>
+                  <Pill tone={tone}>{t.trendLabel}</Pill>
+                </div>
+                <div className="mt-1 font-display text-2xl font-semibold">
+                  {t.current}
+                  <span className="ml-1 text-sm font-normal text-muted-foreground">{t.unit}</span>
+                </div>
+                <dl className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+                  <div className="flex justify-between gap-2">
+                    <dt>Current (last 5 games)</dt>
+                    <dd className="text-foreground">
+                      {t.current}
+                      {t.unit}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt>Previous 5 games</dt>
+                    <dd>{t.previous != null ? `${t.previous}${t.unit}` : "Not enough games yet"}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt>Personal target</dt>
+                    <dd>
+                      {t.target != null ? (
+                        `${t.target}${t.unit}`
+                      ) : (
+                        <span>Unavailable</span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {t.target != null
+                    ? `Your own best 5-game stretch${t.targetProgress != null ? ` · ${t.targetProgress}% of the way back to it` : ""}. ${
+                        t.higherIsBetter ? "Higher is better." : "Lower is better."
+                      }`
+                    : "Personal target unavailable — it needs 10+ imported games of your own to be honest."}
+                </p>
+                <div className="mt-2 h-14">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={t.points} margin={{ top: 4, bottom: 2, left: 0, right: 0 }}>
+                      <defs>
+                        <linearGradient id={`grad-${t.key}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={stroke} stopOpacity={0.4} />
+                          <stop offset="100%" stopColor={stroke} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <YAxis hide domain={["dataMin", "dataMax"]} />
+                      {t.target != null && (
+                        <ReferenceLine
+                          y={t.target}
+                          stroke="var(--primary)"
+                          strokeDasharray="3 3"
+                          strokeWidth={1}
+                        />
+                      )}
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke={stroke}
+                        strokeWidth={2}
+                        fill={`url(#grad-${t.key})`}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                {t.target != null && (
+                  <div className="text-[10px] text-muted-foreground">
+                    Dashed line = your personal target
+                  </div>
+                )}
               </div>
-              <div className="mt-1 font-display text-2xl font-semibold">
-                {t.average}
-                <span className="ml-1 text-sm font-normal text-muted-foreground">{t.unit}</span>
-              </div>
-              <div className="mt-1 text-[11px] text-muted-foreground">
-                {t.target != null
-                  ? `Your best 5-game stretch: ${t.target}${t.unit}${
-                      t.targetProgress != null ? ` · ${t.targetProgress}% there` : ""
-                    }`
-                  : "Personal target unlocks at 10 games"}
-              </div>
-              <div className="mt-2 h-12">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={t.points} margin={{ top: 2, bottom: 2, left: 0, right: 0 }}>
-                    <defs>
-                      <linearGradient id={`grad-${t.key}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={t.better ? "var(--success)" : "var(--warning)"} stopOpacity={0.4} />
-                        <stop offset="100%" stopColor={t.better ? "var(--success)" : "var(--warning)"} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke={t.better ? "var(--success)" : "var(--warning)"}
-                      strokeWidth={2}
-                      fill={`url(#grad-${t.key})`}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 }
