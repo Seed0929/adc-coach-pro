@@ -354,6 +354,11 @@ export function computeTrends(matches: ProfileMatch[], window: TrendWindow): Tre
     const target = bestStretch(values, 5, def.higherIsBetter);
     const average = Math.round(avg(values) * 10) / 10;
     const recent = Math.round(avg(values.slice(-5)) * 10) / 10;
+    // Previous window = the 5 games immediately before the current 5.
+    const prevSlice = values.slice(-10, -5);
+    const previous = prevSlice.length >= 3 ? Math.round(avg(prevSlice) * 10) / 10 : null;
+    const trendLabel: TrendMetric["trendLabel"] =
+      direction === "flat" ? "Holding steady" : better ? "Improving" : "Slipping";
     const targetProgress =
       target == null || target === 0
         ? null
@@ -365,14 +370,18 @@ export function computeTrends(matches: ProfileMatch[], window: TrendWindow): Tre
       label: def.label,
       unit: def.unit,
       average,
+      current: recent,
+      previous,
       delta,
       direction,
       better,
+      trendLabel,
       higherIsBetter: def.higherIsBetter,
       target,
       targetProgress,
       points: values.map((value, i) => ({ i, value })),
     };
+
   });
 }
 
