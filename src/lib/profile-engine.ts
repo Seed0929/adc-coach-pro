@@ -242,7 +242,9 @@ function computeScore(chron: ProfileMatch[]): BotDiffScore {
   const scores = chron.map((m) => m.botDiffScore);
   if (scores.length === 0) {
     return {
-      current: 0, previous: 0, weeklyChange: 0, monthlyChange: 0, best: 0, lowest: 0,
+      current: 0, previous: 0, weeklyChange: 0, monthlyChange: 0,
+      weeklyChangeAvailable: false, monthlyChangeAvailable: false,
+      best: 0, lowest: 0,
       bestSingleGame: 0, lowestSingleGame: 0, formLabel: "5-game average",
       series: [], breakdown: [],
     };
@@ -253,15 +255,18 @@ function computeScore(chron: ProfileMatch[]): BotDiffScore {
   const best = Math.max(...series);
   const lowest = Math.min(...series);
 
-  // Rolling value "as of" a cutoff date (or index fallback when no timestamps).
-  const asOf = (msAgo: number): number => {
+  // Rolling value "as of" a cutoff date. Returns null when the player has no
+  // dated game older than the cutoff — we refuse to invent a comparison.
+  const asOf = (msAgo: number): number | null => {
     const cutoff = Date.now() - msAgo;
     const upto = chron.filter((m) => m.gameCreation && new Date(m.gameCreation).getTime() <= cutoff);
-    const sub = upto.length ? upto.map((m) => m.botDiffScore) : scores.slice(0, 1);
-    return round(avg(sub.slice(-5)));
+    if (upto.length === 0) return null;
+    return round(avg(upto.map((m) => m.botDiffScore).slice(-5)));
   };
-  const weeklyChange = current - asOf(7 * 864e5);
-  const monthlyChange = current - asOf(30 * 864e5);
+  const weekAgo = asOf(7 * 864e5);
+  const monthAgo = asOf(30 * 864e5);
+  const weeklyChange = weekAgo == null ? 0 : current - weekAgo;
+  const monthlyChange = monthAgo == null ? 0 : current - monthAgo;
 
   // Breakdown across the loaded window (recent form).
   const recent = chron.slice(-10);
@@ -280,13 +285,17 @@ function computeScore(chron: ProfileMatch[]): BotDiffScore {
   ];
 
   return {
-    current, previous, weeklyChange, monthlyChange, best, lowest,
+    current, previous, weeklyChange, monthlyChange,
+    weeklyChangeAvailable: weekAgo != null,
+    monthlyChangeAvailable: monthAgo != null,
+    best, lowest,
     bestSingleGame: Math.max(...scores),
     lowestSingleGame: Math.min(...scores),
     formLabel: "5-game average",
     series: series.map((score, i) => ({ label: `G${i + 1}`, score })),
     breakdown,
   };
+
 }
 
 // --- improvement history ---------------------------------------------------
