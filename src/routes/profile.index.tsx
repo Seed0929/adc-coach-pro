@@ -1,11 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChangeTile, MetricGraphCard } from "@/components/metrics/metric-graphs";
-import {
-  monthlyChangeReading,
-  readingFromTrend,
-  weeklyChangeReading,
-} from "@/lib/metrics/metric-reading";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import { readingFromTrend } from "@/lib/metrics/metric-reading";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -150,29 +146,6 @@ function Delta({
   );
 }
 
-function StatTile({
-  label,
-  value,
-  delta,
-  sub,
-}: {
-  label: string;
-  value: string | number;
-  delta?: number;
-  sub?: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-white/[0.03] p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-2xl font-semibold">{value}</span>
-        {delta !== undefined && <Delta value={delta} />}
-      </div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
-    </div>
-  );
-}
-
 const WINDOWS: { label: string; value: TrendWindow }[] = [
   { label: "Last 10", value: 10 },
   { label: "Last 20", value: 20 },
@@ -228,7 +201,7 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
 function ProfilePage() {
   const { profile, loading } = usePlayerProfile();
   const { assets } = useRiotAssets();
-  const { overview, score, champions, achievements, sessionSummary, records } = profile;
+  const { overview, champions, achievements, sessionSummary, records } = profile;
   // Favorite champion (+ up to top 3) drive the profile's living backdrop.
   const topChampNames = overview.topChampions.slice(0, 3).map((c) => c.name);
 
@@ -352,8 +325,7 @@ function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Score {c.botDiffScore}</span>
-                  <Delta value={c.trend} />
+                  <span>{c.avgCs}/min CS · {c.avgKda} KDA</span>
                   <span className="inline-flex items-center gap-1 text-primary">
                     Details <ArrowRight className="size-3" />
                   </span>
