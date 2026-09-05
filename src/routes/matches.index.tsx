@@ -58,7 +58,7 @@ function CurveChart({
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">You vs rank avg</span>
+        <span className="text-xs text-muted-foreground">Your game</span>
       </div>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
@@ -82,15 +82,6 @@ function CurveChart({
               contentStyle={chartTooltip}
               labelFormatter={(m) => `Minute ${m}`}
               formatter={(value: number, name: string) => [Math.round(value).toLocaleString(), name]}
-            />
-            <Line
-              type="monotone"
-              dataKey={benchKey}
-              name="Rank avg"
-              stroke="var(--muted-foreground)"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
             />
             <Line
               type="monotone"
