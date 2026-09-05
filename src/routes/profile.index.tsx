@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { ChangeTile, MetricGraphCard } from "@/components/metrics/metric-graphs";
+import {
+  monthlyChangeReading,
+  readingFromTrend,
+  weeklyChangeReading,
+} from "@/lib/metrics/metric-reading";
 import {
   ArrowDownRight,
   ArrowRight,
