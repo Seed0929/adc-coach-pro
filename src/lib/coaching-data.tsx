@@ -461,13 +461,11 @@ export const statusTone: Record<GoalStatus, "neutral" | "primary" | "success" | 
   "In Progress": "warning",
   "On Track": "primary",
   Achieved: "success",
+  "Needs Work": "warning",
+  "New Focus": "primary",
+  "Needs More Data": "neutral",
 };
 
-/** Percentage complete for a goal, accounting for inverted (lower-is-better) metrics. */
-export function goalProgress(goal: ImprovementGoal): number {
-  if (goal.invert) {
-    // Assume a sensible worst-case start of target + 4 for inverted metrics.
-    const worst = goal.target + 4;
     const pct = ((worst - goal.current) / (worst - goal.target)) * 100;
     return Math.max(0, Math.min(100, Math.round(pct)));
   }
