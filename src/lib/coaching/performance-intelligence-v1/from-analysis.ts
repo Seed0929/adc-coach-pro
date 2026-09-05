@@ -7,13 +7,14 @@ import type { MatchAnalysisInput, MatchCoachingAnalysis } from "@/lib/coaching-e
 import type { ProfileMatch } from "@/lib/profile-engine";
 
 const EMPTY_GRADES: ProfileMatch["grades"] = {
+  laning: 0,
   farming: 0,
-  survivability: 0,
   vision: 0,
-  teamfighting: 0,
-  objectives: 0,
-  damage: 0,
+  objective: 0,
+  teamfight: 0,
+  consistency: 0,
 };
+
 
 export function toProfileMatch(
   m: MatchAnalysisInput,
