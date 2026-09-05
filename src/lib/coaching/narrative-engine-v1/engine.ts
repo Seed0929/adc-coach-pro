@@ -85,11 +85,11 @@ function difficultyFor(s: NarrativeSource): NarrativeDifficultyEstimate {
 function confidenceExplanationFor(s: NarrativeSource): string {
   const u = s.unified;
   if (s.habit) {
-    return `Coach assessment ${Math.round(s.habit.confidence)}/100 — seen in ${s.habit.frequency.occurrences} of ${s.habit.frequency.matchesObserved} recorded games (${s.habit.status}).`;
+    return `Seen in ${s.habit.frequency.occurrences} of ${s.habit.frequency.matchesObserved} recorded games (${s.habit.status}).`;
   }
   const scored = u.decisionPriority.scores?.confidence;
   if (scored !== undefined) {
-    return `Coach assessment ${Math.round(scored)}/100 — derived from this game's evidence and the ${u.roleIntelligence.roleLabel} decision priorities.`;
+    return `Derived from this game's evidence and the ${u.roleIntelligence.roleLabel} decision priorities.`;
   }
   return `Coach assessment is based on a single game of evidence for ${u.decision.label}. It sharpens as more matches are imported.`;
 }
@@ -107,7 +107,7 @@ function expectedImprovementFor(s: NarrativeSource): string {
   const base =
     u.decision.kind === "strength"
       ? `Leaning into this harder raises the ceiling of your best games rather than the floor.`
-      : `Closing this is worth ${priority}/100 of your current coaching priority.`;
+      : `Closing this is the highest-value change available to you right now.`;
   const measurable = target ? ` Target: ${target}` : "";
   const trendLine =
     trend === "improving"

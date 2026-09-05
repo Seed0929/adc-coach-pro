@@ -261,6 +261,36 @@ function DashboardInner() {
   const avatarUrl = profile?.avatar_url ?? profile?.profile_picture;
   const focus = data.todaysFocus;
   const co = data.coachingOverview;
+  // Real, measurable replacements for the old invented 0-100 scores.
+  const topConsistency = dossier.performanceConsistency.find((c) => c.available);
+  const consistencyCard = topConsistency
+    ? {
+        label: `${topConsistency.name} consistency`,
+        value: topConsistency.classification ?? "Needs more data",
+        sub: topConsistency.summary,
+      }
+    : {
+        label: "Performance consistency",
+        value: "Needs more data",
+        sub: "A few more comparable games and BotDiff can describe this.",
+      };
+  const topTrend = dossier.trends[0];
+  const trendCard = topTrend
+    ? {
+        label: topTrend.label,
+        value: topTrend.current,
+        sub: `Previously ${topTrend.previous}`,
+        tone: (topTrend.direction === "flat" ? "primary" : topTrend.improved ? "success" : "warning") as
+          | "primary"
+          | "success"
+          | "warning",
+      }
+    : {
+        label: "Recent change",
+        value: "Needs more data",
+        sub: "Import more games to compare windows.",
+        tone: "primary" as const,
+      };
   const po = data.performanceOverview;
   const rankPill = summary
     ? summary.rank
@@ -420,31 +450,34 @@ function DashboardInner() {
           icon={TrendingUp}
           tone="primary"
           eyebrow="Progress"
-          title={`Improvement trend +${co.improvementTrendPct}% this week`}
-          summary={`Consistency ${co.consistencyScore}% — how repeatable your play has been across recent games.`}
+          title={
+            dossier.trends[0]
+              ? `${dossier.trends[0].label}: ${dossier.trends[0].previous} → ${dossier.trends[0].current}`
+              : "Needs more data to show a trend"
+          }
+          summary={
+            dossier.performanceConsistency.find((c) => c.available)?.summary ??
+            "Not enough games yet to describe how predictable your play is."
+          }
           readTime="20 sec"
           fullAnalysisTo="/progress"
           fullAnalysisLabel="Open analytics"
         >
-          <div className="space-y-4">
-            {data.skills.map((s) => (
-              <div key={s.label}>
-                <div className="mb-1.5 flex items-center gap-2 text-sm">
-                  <span>{s.label}</span>
-                  <span
-                    className={`ml-auto inline-flex items-center gap-1 text-xs font-medium ${s.delta >= 0 ? "text-success" : "text-destructive"}`}
-                  >
-                    {s.delta >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                    {s.delta >= 0 ? "+" : ""}
-                    {s.delta}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-full rounded-full ${toneBar[s.tone]}`}
-                    style={{ width: `${s.value}%` }}
-                  />
-                </div>
+          <div className="space-y-3">
+            {dossier.trends.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Needs more data — import more ranked games to track changes.
+              </p>
+            )}
+            {dossier.trends.map((t) => (
+              <div key={t.key} className="flex items-baseline justify-between gap-3 text-sm">
+                <span>{t.label}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {t.previous} → <span className="text-foreground">{t.current}</span>
+                </span>
+                <Pill tone={t.direction === "flat" ? "neutral" : t.improved ? "success" : "warning"}>
+                  {t.direction === "flat" ? "Holding steady" : t.improved ? "Improving" : "Slipping"}
+                </Pill>
               </div>
             ))}
           </div>
@@ -525,17 +558,17 @@ function DashboardInner() {
         <StatCard
           icon={Gauge}
           tone="primary"
-          label="Consistency Score"
-          value={`${co.consistencyScore}%`}
-          sub="how repeatable your play is"
+          label={consistencyCard.label}
+          value={consistencyCard.value}
+          sub={consistencyCard.sub}
           delay={240}
         />
         <StatCard
           icon={TrendingUp}
-          tone="success"
-          label="Improvement Trend"
-          value={`+${co.improvementTrendPct}%`}
-          sub="over the last week"
+          tone={trendCard.tone}
+          label={trendCard.label}
+          value={trendCard.value}
+          sub={trendCard.sub}
           delay={300}
         />
       </div>

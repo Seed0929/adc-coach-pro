@@ -1,11 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChangeTile, MetricGraphCard } from "@/components/metrics/metric-graphs";
-import {
-  monthlyChangeReading,
-  readingFromTrend,
-  weeklyChangeReading,
-} from "@/lib/metrics/metric-reading";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import { readingFromTrend } from "@/lib/metrics/metric-reading";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -55,34 +51,76 @@ const ICONS: Record<string, LucideIcon> = {
   star: Star,
 };
 
-function ScoreRing({ value }: { value: number }) {
-  const r = 52;
-  const c = 2 * Math.PI * r;
-  const offset = c - (value / 100) * c;
+/**
+ * Recent form in the player's own statistics. There is deliberately no
+ * composite 0-100 score here: every number shown is a real game stat with a
+ * unit, its previous 5-game average, and a plain-language trend word.
+ */
+function CurrentForm({ profile }: { profile: PlayerProfile }) {
+  const trends = computeTrends(profile.matches, 10);
+  if (trends.length === 0) {
+    return (
+      <div className="glass rise mt-6 rounded-3xl p-6">
+        <h2 className="font-display text-lg font-semibold tracking-tight">Current form</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Needs more data — import a few ranked games and your recent averages appear here.
+        </p>
+      </div>
+    );
+  }
   return (
-    <div className="relative grid size-32 place-items-center">
-      <svg className="size-32 -rotate-90" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="var(--glass-border)" strokeWidth="8" />
-        <circle
-          cx="60"
-          cy="60"
-          r={r}
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 1s var(--ease-out-expo)" }}
-        />
-      </svg>
-      <div className="absolute text-center">
-        <div className="font-display text-4xl font-semibold leading-none">{value}</div>
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Score</div>
+    <div className="glass rise mt-6 rounded-3xl p-6">
+      <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-lg font-semibold tracking-tight">Current form</h2>
+        <span className="text-xs text-muted-foreground">
+          Recent 5-game averages vs the 5 games before them
+        </span>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {trends.map((t) => (
+          <div key={t.key} className="rounded-2xl bg-white/[0.03] p-4">
+            <div className="text-xs text-muted-foreground">{t.label}</div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-display text-2xl font-semibold tabular-nums">
+                {t.current}
+                <span className="ml-0.5 text-xs font-normal text-muted-foreground">{t.unit}</span>
+              </span>
+              {t.previous != null && (
+                <Delta
+                  value={Math.round((t.current - t.previous) * 10) / 10}
+                  higherIsBetter={t.higherIsBetter}
+                />
+              )}
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              {t.previous != null ? `Previous ${t.previous}${t.unit}` : "No earlier games to compare"}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <Pill
+                tone={
+                  t.trendLabel === "Improving"
+                    ? "success"
+                    : t.trendLabel === "Slipping"
+                      ? "warning"
+                      : "neutral"
+                }
+              >
+                {t.trendLabel}
+              </Pill>
+              {t.target != null && (
+                <span className="text-[11px] text-muted-foreground">
+                  Best sustained {t.target}
+                  {t.unit}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
 
 function Delta({
   value,
@@ -108,29 +146,6 @@ function Delta({
   );
 }
 
-function StatTile({
-  label,
-  value,
-  delta,
-  sub,
-}: {
-  label: string;
-  value: string | number;
-  delta?: number;
-  sub?: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-white/[0.03] p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-2xl font-semibold">{value}</span>
-        {delta !== undefined && <Delta value={delta} />}
-      </div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
-    </div>
-  );
-}
-
 const WINDOWS: { label: string; value: TrendWindow }[] = [
   { label: "Last 10", value: 10 },
   { label: "Last 20", value: 20 },
@@ -146,7 +161,9 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-semibold tracking-tight">Improvement History</h2>
-          <p className="text-sm text-muted-foreground">How each part of your game is trending.</p>
+          <p className="text-sm text-muted-foreground">
+            The same statistics you'll find in Analytics, kept here as your journal.
+          </p>
         </div>
         <div className="flex gap-1 rounded-full bg-white/[0.04] p-1">
           {WINDOWS.map((w) => (
@@ -186,7 +203,7 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
 function ProfilePage() {
   const { profile, loading } = usePlayerProfile();
   const { assets } = useRiotAssets();
-  const { overview, score, champions, achievements, sessionSummary, records } = profile;
+  const { overview, champions, achievements, sessionSummary, records } = profile;
   // Favorite champion (+ up to top 3) drive the profile's living backdrop.
   const topChampNames = overview.topChampions.slice(0, 3).map((c) => c.name);
 
@@ -251,55 +268,9 @@ function ProfilePage() {
         )}
       </div>
 
-      {/* BotDiff Score */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
-        <div className="glass rise grid place-items-center gap-4 rounded-3xl p-6 text-center">
-          <ScoreRing value={score.current} />
-          <div>
-            <div className="font-display text-lg font-semibold">BotDiff Score</div>
-            <p className="mt-1 max-w-[14rem] text-xs text-muted-foreground">
-              A 5-game rolling average of your per-game coaching scores across consistency, farming, vision, objectives, positioning & teamfighting — so one outlier game never swings it.
-            </p>
-          </div>
-        </div>
+      {/* Current form — real statistics only, no composite score. */}
+      <CurrentForm profile={profile} />
 
-        <div className="glass rise rounded-3xl p-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile
-              label="Current form"
-              value={score.current}
-              delta={score.current - score.previous}
-              sub={score.formLabel}
-            />
-            <StatTile label="Previous form" value={score.previous} sub={score.formLabel} />
-            <ChangeTile {...weeklyChangeReading(score)} />
-            <ChangeTile {...monthlyChangeReading(score)} />
-            <StatTile label="Best form" value={score.best} sub={`Best single game ${score.bestSingleGame}`} />
-            <StatTile label="Lowest form" value={score.lowest} sub={`Lowest single game ${score.lowestSingleGame}`} />
-          </div>
-          <div className="mt-5">
-            <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Score Breakdown</div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {score.breakdown.map((b) => (
-                <div key={b.label}>
-                  <div className="mb-1 flex justify-between text-sm">
-                    <span>{b.label}</span>
-                    <span className="text-muted-foreground">{b.value}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        b.value >= 70 ? "bg-success" : b.value >= 50 ? "bg-primary" : "bg-warning"
-                      }`}
-                      style={{ width: `${b.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Session summary */}
       {sessionSummary && (
@@ -356,8 +327,7 @@ function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Score {c.botDiffScore}</span>
-                  <Delta value={c.trend} />
+                  <span>{c.avgCs}/min CS · {c.avgKda} KDA</span>
                   <span className="inline-flex items-center gap-1 text-primary">
                     Details <ArrowRight className="size-3" />
                   </span>

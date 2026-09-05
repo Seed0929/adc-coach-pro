@@ -222,43 +222,6 @@ function interpretTrend(
   }
 }
 
-// --- BotDiff Behaviour Score ----------------------------------------------
-
-export const BOTDIFF_SCORE_NAME = "BotDiff Behaviour Score";
-
-/**
- * The main score reading. Current form = 5-game average, previous form = the
- * 5-game average before it. The target is the player's own best form; when the
- * current stretch IS their best, no target is shown.
- */
-export function readingFromScore(score: BotDiffScore, sourceLabel?: string): MetricReading {
-  const hasHistory = score.series.length > 0;
-  const previous = score.series.length > 1 ? score.previous : null;
-  const trend = hasHistory
-    ? classifyTrend(score.current, previous, "higher", 1)
-    : "insufficient_data";
-  const atBest = score.current >= score.best;
-  return {
-    key: "botdiff-score",
-    name: BOTDIFF_SCORE_NAME,
-    value: hasHistory ? score.current : null,
-    unit: "",
-    direction: "higher",
-    trend,
-    trendLabel: TREND_LABELS[trend],
-    previous,
-    comparison: previous == null ? "Not enough history for a comparison yet" : "vs your previous 5 games",
-    baseline: null,
-    target: atBest ? null : { value: score.best, label: "Your best form", kind: "target" },
-    targetNote: atBest ? "Current best stretch." : null,
-    interpretation: atBest
-      ? "You're currently performing at your best recent BotDiff Score level."
-      : interpretTrend(BOTDIFF_SCORE_NAME, trend, "higher", previous, ""),
-    points: score.series.map((s, i) => ({ index: i, value: s.score, label: `Game ${i + 1}` })),
-    sourceLabel,
-  };
-}
-
 /** Weekly / monthly change presented honestly — never a fake 0. */
 export interface ScoreChangeReading {
   label: string;

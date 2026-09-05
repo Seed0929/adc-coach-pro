@@ -2,7 +2,7 @@
 // BotDiff Player Profile & Progress engine (pure, client-safe).
 //
 // Turns the player's per-match coaching analyses + normalized inputs into a
-// long-term improvement journal: BotDiff Score, improvement history, champion
+// long-term improvement journal: current form, improvement history, champion
 // progress, achievements, session summary, and personal records.
 //
 // This module is PURE: no network, no database, no secrets. The server builds
@@ -506,14 +506,14 @@ function buildSessionSummary(chron: ProfileMatch[]): SessionSummary | null {
   const prevVision = mean(prev, (m) => m.visionScore);
   const visionPct = prevVision > 0 ? ((mean(last, (m) => m.visionScore) - prevVision) / prevVision) * 100 : 0;
   const deathDelta = mean(last, (m) => m.deaths) - mean(prev, (m) => m.deaths);
-  const scoreDelta = round(mean(last, (m) => m.botDiffScore) - mean(prev, (m) => m.botDiffScore));
+  const kdaDelta = mean(last, (m) => m.kda) - mean(prev, (m) => m.kda);
 
   const lines: SessionLine[] = [
     { label: "Wins", value: `${wins}W ${last.length - wins}L`, positive: wins >= last.length - wins },
     { label: "CS / min", value: `${csDelta >= 0 ? "+" : ""}${csDelta.toFixed(1)}`, positive: csDelta >= 0 },
     { label: "Vision", value: `${visionPct >= 0 ? "+" : ""}${round(visionPct)}%`, positive: visionPct >= 0 },
     { label: "Deaths", value: `${deathDelta >= 0 ? "+" : ""}${deathDelta.toFixed(1)}/game`, positive: deathDelta <= 0 },
-    { label: "BotDiff Score", value: `${scoreDelta >= 0 ? "+" : ""}${scoreDelta} pts`, positive: scoreDelta >= 0 },
+    { label: "KDA", value: `${kdaDelta >= 0 ? "+" : ""}${kdaDelta.toFixed(1)}`, positive: kdaDelta >= 0 },
   ];
   return { games: last.length, wins, losses: last.length - wins, lines };
 }

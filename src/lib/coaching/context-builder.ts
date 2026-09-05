@@ -62,7 +62,7 @@ function relevantStats(d: CoachDossier, routed: RoutedQuestion): Record<string, 
     if (kp) stats["Kill participation"] = kp.current;
   }
   if (want.has("consistency")) {
-    stats["Consistency"] = `${d.consistency.current}/100`;
+    stats["Game-to-game consistency"] = d.consistency.explanation;
   }
   return stats;
 }
