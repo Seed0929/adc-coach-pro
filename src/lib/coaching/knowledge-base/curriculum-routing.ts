@@ -278,7 +278,7 @@ export const CURRICULUM_ROUTING: CurriculumRoutingEntry[] = [
     importance: 4,
     roles: ["adc"],
     typicalElo: "silver-gold",
-    positiveExample: "You buy a control ward every recall and drop it before entering the river.",
+    positiveExample: "You place a control ward before entering the river after every recall.",
     negativeExample: "You walk into the river blind and get picked before the fight starts.",
     recoveryMethod: "Buy one control ward on your next recall and place it before your next rotation.",
     practiceDrill: "For 5 games: place ≥1 control ward per recall.",

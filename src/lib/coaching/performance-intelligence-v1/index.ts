@@ -22,11 +22,20 @@ export * from "./evaluation";
 export * from "./targets";
 export * from "./context";
 export * from "./graph";
+export * from "./issues";
+export * from "./consistency";
+export * from "./evidence";
+export * from "./item-policy";
+export * from "./plan";
+export * from "./from-analysis";
 
 import type { ProfileMatch } from "@/lib/profile-engine";
 import { evaluateAll } from "./evaluation";
 import { rankPriorities, reconcileTargets, emptySnapshot } from "./targets";
 import { buildCoachingContext } from "./context";
+import { buildCoachingPlan, type CoachingPlan } from "./plan";
+import { buildConsistencyPanel, type PerformanceConsistency } from "./consistency";
+import { sufficiencyFor } from "./evaluation";
 import type {
   CoachingIntelligenceContext,
   CoachingIntelligenceSnapshot,
@@ -42,6 +51,10 @@ export interface CoachingIntelligence {
   transitions: TargetTransition[];
   refusals: { metric: string; scopeId: string; reason: string }[];
   context: CoachingIntelligenceContext;
+  /** The single authoritative coaching queue shown to the player. */
+  plan: CoachingPlan;
+  /** Performance Consistency for every player-scope metric. */
+  consistency: PerformanceConsistency[];
 }
 
 /**
@@ -62,6 +75,7 @@ export function buildCoachingIntelligence(
     evaluations,
     { now, maxActive: options.maxActive },
   );
+  const sufficiency = sufficiencyFor(matches.length);
   return {
     evaluations,
     priorities,
@@ -73,5 +87,11 @@ export function buildCoachingIntelligence(
       now,
       priorities,
     }),
+    plan: buildCoachingPlan(evaluations, snapshot, priorities, {
+      now,
+      totalGames: matches.length,
+      sufficiency,
+    }),
+    consistency: buildConsistencyPanel(evaluations),
   };
 }

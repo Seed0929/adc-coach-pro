@@ -181,16 +181,23 @@ function phaseFor(seconds: number): GamePhase {
 }
 
 /**
- * Approximate game time for an event. Real Riot timeline data will replace
- * these estimates; until then we anchor to the phase and label it approximate.
+ * Phase anchor for an event. BotDiff does NOT hold event-level Riot timing for
+ * these detectors, so it never shows a clock it cannot prove: the label is the
+ * game phase, and the seconds are kept internally only for ordering.
  */
 function approxTime(m: MatchAnalysisInput, seconds: number) {
   const capped = Math.min(seconds, Math.max(60, m.durationMin * 60 - 30));
   return {
     seconds: capped,
-    label: `~ ${mmss(capped)}`,
+    label: PHASE_LABELS[phaseFor(capped)],
   };
 }
+
+const PHASE_LABELS: Record<GamePhase, string> = {
+  early: "Laning phase",
+  mid: "Mid game",
+  late: "Late game",
+};
 
 function anchor(m: MatchAnalysisInput, seconds: number): ReplayAnchor {
   return {

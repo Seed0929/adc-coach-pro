@@ -18,9 +18,15 @@ import {
   Flag,
 } from "lucide-react";
 import { AppShell, DemoModeBadge, Pill } from "@/components/app-shell";
+import {
+  ActiveFocusNote,
+  CoachingPlanPanel,
+  PerformanceConsistencyPanel,
+} from "@/components/coaching-plan";
+import { activeFocusReference } from "@/lib/coaching/performance-intelligence-v1";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useServerFn } from "@tanstack/react-start";
-import { coachAnswer, proactiveCoaching, followUpQuestion, buildPracticeProgram } from "@/lib/coaching";
+import { coachAnswer, proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 import { askCoach } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/coach")({
@@ -119,11 +125,8 @@ function Coach() {
     return <Cmp className={`size-3.5 ${improved ? "text-success" : "text-destructive"}`} />;
   };
 
-  const consistency = dossier.consistency;
-  const trendTone = (n: number) => (n > 0 ? "text-success" : n < 0 ? "text-destructive" : "text-muted-foreground");
   const proactive = useMemo(() => proactiveCoaching(dossier), [dossier]);
   const followUp = useMemo(() => followUpQuestion(dossier), [dossier]);
-  const program = useMemo(() => buildPracticeProgram(dossier), [dossier]);
 
   return (
     <AppShell>
@@ -277,7 +280,7 @@ function Coach() {
       </div>
 
       {/* Coaching priorities — the five things every player should always see. */}
-      <Section icon={ListChecks} title={`Coaching priorities · ${dossier.coachingPriority.roleLabel}`} className="mb-6">
+      <Section icon={ListChecks} title={`What BotDiff is seeing · ${dossier.coachingPriority.roleLabel}`} className="mb-6">
         <div className="grid gap-3 md:grid-cols-2">
           {[
             { label: "Biggest strength", item: dossier.coachingPriority.biggestStrength, tone: "text-success" },
@@ -293,13 +296,8 @@ function Coach() {
             </div>
           ))}
         </div>
-        <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
-          <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
-            <Target className="size-3.5" /> Current practice goal
-          </div>
-          <p className="text-sm text-foreground/90">{dossier.coachingPriority.currentPracticeGoal.title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{dossier.coachingPriority.currentPracticeGoal.why}</p>
-          <p className="mt-1.5 text-xs italic text-muted-foreground/80">{dossier.coachingPriority.currentPracticeGoal.evidence}</p>
+        <div className="mt-3">
+          <ActiveFocusNote text={activeFocusReference(dossier.plan)} />
         </div>
       </Section>
 
@@ -340,72 +338,22 @@ function Coach() {
         )}
       </Section>
 
-      {/* Improvement plan */}
-      <Section icon={Target} title="Personalized improvement plan" className="mb-6">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            { label: "Biggest growth opportunity", value: dossier.improvementPlan.biggestWeakness },
-            { label: "Practice goal", value: dossier.improvementPlan.practiceGoal },
-            { label: "Expected improvement", value: dossier.improvementPlan.expectedImprovement },
-            { label: "Long-term objective", value: dossier.improvementPlan.longTermObjective },
-          ].map((row) => (
-            <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
-              <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">{row.label}</div>
-              <p className="text-sm text-foreground/90">{row.value}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
-          <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
-            <Gauge className="size-3.5" /> Why it matters
-          </div>
-          <p className="text-sm text-foreground/90">{dossier.improvementPlan.why}</p>
-          <p className="mt-2 text-xs font-medium text-primary">{dossier.improvementPlan.estimatedImpact}</p>
-        </div>
+      {/* The single authoritative coaching plan */}
+      <Section icon={Target} title="Your Personalized Coaching Plan" className="mb-6">
+        <p className="mb-4 text-sm text-muted-foreground">
+          One priority at a time, measured against levels you have already produced. When Priority #1
+          is sustained, it moves to your completed focuses and the next one takes over.
+        </p>
+        <CoachingPlanPanel plan={dossier.plan} />
       </Section>
 
-      {/* Consistency */}
-      <Section icon={Gauge} title="Consistency" className="mb-6">
-        <div className="flex flex-wrap items-end gap-6">
-          <div>
-            <div className="font-display text-4xl font-semibold">{consistency.current}</div>
-            <div className="text-xs text-muted-foreground">Current (last 5)</div>
-          </div>
-          <div>
-            <div className="font-display text-2xl font-semibold text-muted-foreground">{consistency.previous}</div>
-            <div className="text-xs text-muted-foreground">Previous</div>
-          </div>
-          <div className="flex gap-4">
-            <div>
-              <div className={`text-sm font-semibold ${trendTone(consistency.weeklyTrend)}`}>
-                {consistency.weeklyTrend > 0 ? "+" : ""}
-                {consistency.weeklyTrend}
-              </div>
-              <div className="text-xs text-muted-foreground">Weekly</div>
-            </div>
-            <div>
-              <div className={`text-sm font-semibold ${trendTone(consistency.monthlyTrend)}`}>
-                {consistency.monthlyTrend > 0 ? "+" : ""}
-                {consistency.monthlyTrend}
-              </div>
-              <div className="text-xs text-muted-foreground">Monthly</div>
-            </div>
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-muted-foreground">{consistency.explanation}</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {consistency.dimensions.map((d) => (
-            <div key={d.label} className="rounded-2xl bg-white/[0.03] p-3">
-              <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-                <span>{d.label}</span>
-                <span>{d.score}</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${d.score}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Performance consistency — plain language, no abstract scores */}
+      <Section icon={Gauge} title="Performance consistency" className="mb-6">
+        <p className="mb-4 text-sm text-muted-foreground">
+          How repeatable your recent games have been: your average, the range you usually land in, and
+          how much that varies.
+        </p>
+        <PerformanceConsistencyPanel readings={dossier.performanceConsistency} />
       </Section>
 
       {/* Trends / weekly */}
@@ -449,61 +397,13 @@ function Coach() {
         </Section>
       )}
 
-      {/* Mental + practice + goal */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Section icon={HeartPulse} title="Mental & consistency notes">
-          <p className="text-sm leading-relaxed text-muted-foreground">{dossier.mentalNotes}</p>
-        </Section>
-        <Section icon={Flag} title="Future goal">
-          <p className="text-sm leading-relaxed text-muted-foreground">{dossier.futureGoal}</p>
-        </Section>
-      </div>
-
-      <Section icon={ListChecks} title="Your personal practice plan" className="mt-6">
-        <div className="mb-4">
-          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Top 3 priorities</div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {program.priorities.map((p, i) => (
-              <div key={i} className="rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
-                <div className="mb-1 text-sm font-medium text-primary">
-                  {i + 1}. {p.title}
-                </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">{p.why}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Practice drills</div>
-          <ul className="space-y-2">
-            {program.drills.map((p, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-primary/15 text-[10px] font-semibold text-primary">
-                  {i + 1}
-                </span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            { label: "Champion goal", value: program.championGoal },
-            { label: "Lane goal", value: program.laneGoal },
-            { label: "Mid-game goal", value: program.midGameGoal },
-            { label: "Teamfight goal", value: program.teamfightGoal },
-            { label: "What success looks like", value: program.successLooksLike },
-            { label: `Reevaluate after ${program.gamesUntilReevaluate} games`, value: program.timeline },
-          ].map((row) => (
-            <div key={row.label} className="rounded-2xl bg-white/[0.03] p-4">
-              <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">{row.label}</div>
-              <p className="text-sm text-foreground/90">{row.value}</p>
-            </div>
-          ))}
+      <Section icon={HeartPulse} title="Mental & focus notes">
+        <p className="text-sm leading-relaxed text-muted-foreground">{dossier.mentalNotes}</p>
+        <div className="mt-3">
+          <ActiveFocusNote text={activeFocusReference(dossier.plan)} />
         </div>
       </Section>
+
     </AppShell>
   );
 }

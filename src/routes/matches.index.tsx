@@ -46,19 +46,17 @@ const chartTooltip = {
 function CurveChart({
   match,
   dataKey,
-  benchKey,
   label,
 }: {
   match: Match;
   dataKey: "cs" | "gold" | "damage";
-  benchKey: "csBenchmark" | "goldBenchmark" | "damageBenchmark";
   label: string;
 }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">You vs rank avg</span>
+        <span className="text-xs text-muted-foreground">Your game</span>
       </div>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
@@ -82,15 +80,6 @@ function CurveChart({
               contentStyle={chartTooltip}
               labelFormatter={(m) => `Minute ${m}`}
               formatter={(value: number, name: string) => [Math.round(value).toLocaleString(), name]}
-            />
-            <Line
-              type="monotone"
-              dataKey={benchKey}
-              name="Rank avg"
-              stroke="var(--muted-foreground)"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
             />
             <Line
               type="monotone"
@@ -364,17 +353,15 @@ function DemoMatches() {
 
           {/* CS & gold curves */}
           <div className="grid gap-3 xl:grid-cols-3">
-            <CurveChart match={active} dataKey="cs" benchKey="csBenchmark" label="CS over time" />
+            <CurveChart match={active} dataKey="cs" label="CS over time" />
             <CurveChart
               match={active}
               dataKey="gold"
-              benchKey="goldBenchmark"
               label="Gold over time"
             />
             <CurveChart
               match={active}
               dataKey="damage"
-              benchKey="damageBenchmark"
               label="Damage over time"
             />
           </div>

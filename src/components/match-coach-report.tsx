@@ -20,7 +20,8 @@ import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type { MatchCoachingReport, CoachAssessment, TrendItem } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
-import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
+import type { PowerSpikeItem } from "@/lib/coaching/power-spike";
+import { sanitizeCoachingText } from "@/lib/coaching/performance-intelligence-v1";
 import type { MatchReportDecisionChain } from "@/lib/coaching/decision-chain-v1";
 import { validateCounterfactual } from "@/lib/coaching/coaching-validation-v1";
 
@@ -137,19 +138,24 @@ function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
         </div>
       )}
 
-      {/* Counterfactual — only when one exists; certainty is stated, never implied. */}
-      {counterfactual?.present && counterfactual.alternativeDecision && (
-        <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
-          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
-            The alternative{" "}
-            <span className="text-muted-foreground/70">
-              ({counterfactual.certainty.toLowerCase()})
-            </span>
-          </p>
-          <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
-          <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
-        </div>
-      )}
+      {/* Counterfactual — behavioural only, never itemization, omitted when unsupported. */}
+      {(() => {
+        if (!counterfactual?.present || !counterfactual.alternativeDecision) return null;
+        const alt = sanitizeCoachingText(counterfactual.alternativeDecision).text;
+        if (!alt) return null;
+        return (
+          <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
+            <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              What to do instead{" "}
+              <span className="text-muted-foreground/70">
+                ({counterfactual.certainty.toLowerCase()} — BotDiff's read, not observed)
+              </span>
+            </p>
+            <p className="text-sm font-medium">{alt}</p>
+            <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
+          </div>
+        );
+      })()}
 
       {/* Habit history is supporting context — explicitly not proof. */}
       {chain.habitNote && (
@@ -179,56 +185,22 @@ function verdictTone(v: PhaseReview["verdict"]): string {
   return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
 }
 
-function spikeTone(s: SpikeStatus): "success" | "warning" | "danger" {
-  return s === "ahead" ? "success" : s === "onTrack" ? "warning" : "danger";
-}
-
-function spikeStatusLabel(s: SpikeStatus): string {
-  return s === "ahead" ? "Ahead of baseline" : s === "onTrack" ? "On baseline" : "Behind baseline";
-}
-
 function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-medium">{i.itemName}</span>
-        {i.timingAvailable ? (
-          <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
-        ) : (
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-            Core spike
-          </span>
-        )}
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+          {i.timingAvailable ? "From your match timeline" : "Core spike"}
+        </span>
       </div>
       {i.timingAvailable ? (
-        <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You</div>
-            <div className="font-display text-sm font-semibold text-foreground tabular-nums">
-              {i.purchaseTime}
-            </div>
+        <div className="text-xs text-muted-foreground">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            You completed this at
           </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              Same rank
-            </div>
-            <div className="font-display text-sm font-semibold tabular-nums">{i.targetTime}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              High elo
-            </div>
-            <div className="font-display text-sm font-semibold tabular-nums">{i.highEloTime}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              Difference
-            </div>
-            <div
-              className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}
-            >
-              {i.differenceLabel}
-            </div>
+          <div className="font-display text-sm font-semibold text-foreground tabular-nums">
+            {i.purchaseTime}
           </div>
         </div>
       ) : (

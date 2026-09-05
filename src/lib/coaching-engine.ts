@@ -171,7 +171,7 @@ function pct(n: number): number {
 // --- scoring rules ---------------------------------------------------------
 
 function farmingScore(m: MatchAnalysisInput): number {
-  // ADC benchmark: ~8.0/min solid, 9.5+/min excellent, <6.5 weak.
+  // Scored against the farming band BotDiff uses internally, not shown as a benchmark.
   return scale(m.csPerMin, 4.5, 9.5);
 }
 
@@ -281,7 +281,7 @@ function collectTips(m: MatchAnalysisInput, g: CoachingGrades): string[] {
 
   if (m.csPerMin < 7.5) {
     t.push({
-      text: `You averaged ${m.csPerMin.toFixed(1)} CS/min — below the ~8.0/min coaching benchmark for your role. Catch side waves before grouping to close the gap.`,
+      text: `You averaged ${m.csPerMin.toFixed(1)} CS/min — which left gold on the map this game. Catch side waves before grouping to close the gap.`,
       priority: 100 - g.farming,
     });
   }
@@ -606,7 +606,7 @@ function buildStrengths(m: MatchAnalysisInput, g: CoachingGrades): CoachStrength
   if (m.csPerMin >= 8) {
     s.push({
       title: "Excellent CSing",
-      why: `You farmed ${fix1(m.csPerMin)} CS/min (${m.cs} total), at or above the strong ~8.0/min benchmark for ${roleLabel(m.champion).toLowerCase()} — that's a steady item lead.`,
+      why: `You farmed ${fix1(m.csPerMin)} CS/min (${m.cs} total), a strong farming game for ${roleLabel(m.champion).toLowerCase()} — that's a steady gold lead.`,
       priority: g.farming + 5,
     });
   }
@@ -699,7 +699,7 @@ function buildMistakes(m: MatchAnalysisInput, g: CoachingGrades): CoachMistake[]
   if (m.csPerMin < 7) {
     w.push({
       title: "Weak wave management / CS",
-      what: `You averaged ${fix1(m.csPerMin)} CS/min (${m.cs} total), below the ~8.0/min benchmark.`,
+      what: `You averaged ${fix1(m.csPerMin)} CS/min (${m.cs} total), below the farming level your other games show you can hold.`,
       why: "Missed minions are missed gold — over 30 minutes that's often a full item you didn't have in the fights you lost.",
       fix: "Catch side waves before grouping and last-hit the first three waves without using abilities to keep tempo.",
       priority: 100 - g.farming,

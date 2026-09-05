@@ -24,6 +24,12 @@ import {
   buildLayeredPlayerMemory,
   type LayeredPlayerMemory,
 } from "./coaching/player-memory-model";
+import {
+  buildCoachingIntelligence,
+  toProfileMatches,
+  type CoachingPlan,
+  type PerformanceConsistency,
+} from "./coaching/performance-intelligence-v1";
 
 export const PLAYER_MEMORY_VERSION = 1;
 
@@ -137,6 +143,17 @@ export interface CoachDossier {
 
   improvementPlan: ImprovementPlan;
   consistency: ConsistencyMetric;
+  /**
+   * The single authoritative coaching queue (Priority #1 ACTIVE, #2 NEXT,
+   * #3 LATER) with personalized targets and completed-focus history. Every
+   * coaching surface renders THIS instead of inventing its own plan.
+   */
+  plan: CoachingPlan;
+  /**
+   * Performance Consistency in plain language (recent average, typical range,
+   * variability classification) — replaces abstract consistency scores.
+   */
+  performanceConsistency: PerformanceConsistency[];
   championAdvice: ChampionAdvice[];
 
   mentalNotes: string;
@@ -277,7 +294,7 @@ const WEAKNESS_DEFS: PatternDef[] = [
     title: "Inconsistent farming",
     test: (m) => m.csPerMin < 6.8,
     detail: (a) =>
-      `Your CS averages ${one(a.csPerMin)}/min, under the ~8.0 benchmark. Catch side waves between objectives so your gold curve never flattens after 15 minutes.`,
+      `Your CS averages ${one(a.csPerMin)}/min, below the level your own better games show you can hold. Catch side waves between objectives so your gold curve never flattens after 15 minutes.`,
   },
   {
     id: "low-vision",
@@ -644,6 +661,9 @@ export function buildCoachDossier(
 
   const habits = detectHabits(inputs);
   const coachingPriority = buildCoachingPriority(inputs, habits, trends);
+  // One intelligence pass drives the plan, its targets and the graph target
+  // lines, so nothing downstream can disagree about what the player is working on.
+  const intelligence = buildCoachingIntelligence(toProfileMatches(inputs, analyses));
 
   return {
     isDemo,
@@ -672,6 +692,8 @@ export function buildCoachDossier(
     weeklySummary,
     improvementPlan,
     consistency,
+    plan: intelligence.plan,
+    performanceConsistency: intelligence.consistency,
     championAdvice,
     mentalNotes,
     practicePlan,

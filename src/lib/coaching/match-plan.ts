@@ -74,20 +74,12 @@ export interface GamePlan {
   splitVsGroup: PlanItem;
 }
 
-// Item Review — a single, light itemization nudge (never a full build guide).
-export interface ItemReview {
-  hasCoaching: boolean;
-  headline: string; // <= 2 sentences
-  detail: string; // reasoning for "Learn More"
-}
-
 export interface MatchPlan {
   phases: PhaseReview[];
   mistakeTimeline: TimelineMistake[];
   turningPoint: string;
   winCondition: string;
   practiceGoal: string;
-  itemReview: ItemReview;
   /** Power Spike Timing — decision-first replacement for Build Review (Sprint 1.9). */
   powerSpike: PowerSpikeReview;
   gamePlan: GamePlan;
@@ -176,19 +168,7 @@ function recallReview(m: MatchAnalysisInput): PhaseReview {
     headline: clean ? "You controlled your first back" : "Your first back timing can improve",
     detail: clean
       ? "Your early numbers suggest you backed with a gold advantage and no death — that's the ideal: crash the wave, recall, come back with an item lead."
-      : "Aim to recall on a wave crash with enough gold for a component + control ward, and use your health/mana reset to re-enter lane even or ahead rather than backing on low HP mid-wave.",
-  };
-}
-
-function itemReviewPhase(m: MatchAnalysisInput): PhaseReview {
-  const r = buildItemReview(m);
-  return {
-    phase: "Item Review",
-    verdict: "mixed",
-    headline: r.hasCoaching ? r.headline : "No itemization notes",
-    detail: r.hasCoaching
-      ? r.detail
-      : "No significant itemization coaching detected for this match — your item choices fit the game.",
+      : "Aim to recall on a wave crash rather than on low HP mid-wave, and use your health/mana reset to re-enter lane even or ahead rather than backing on low HP mid-wave.",
   };
 }
 
@@ -265,7 +245,6 @@ function buildPhases(m: MatchAnalysisInput): PhaseReview[] {
     laneReview(m),
     waveReview(m),
     recallReview(m),
-    itemReviewPhase(m),
     objectiveReview(m),
     midReview(m),
     lateReview(m),
@@ -484,82 +463,6 @@ function matchupSummaryFor(
   return `You played ${m.champion} into ${opp}${enemyList}. ${summary.reason}`;
 }
 
-// --- Item Review (one light suggestion, never a full build) -----------------
-
-// A single contextual item suggestion, validated against League Knowledge so
-// BotDiff never recommends an impossible item (e.g. an AD item for an AP
-// champion, or a crit item for a poke mage). Defensive categories are valid for
-// any profile; offensive categories must match the champion's damage profile.
-function contextualSuggestion(
-  profile: DamageProfile,
-  category: ItemCategory,
-  headline: string,
-  detail: string,
-): ItemReview | null {
-  if (!isItemCategoryCompatible(category, profile)) return null;
-  return { hasCoaching: true, headline, detail };
-}
-
-function buildItemReview(m: MatchAnalysisInput): ItemReview {
-  // Sprint 2.1 — never fabricate itemization. The Champion facade tells us
-  // whether we know the champion well enough to reason about items; if not,
-  // we say nothing rather than risk an impossible recommendation.
-  const champProfile = getChampionProfile(m.champion);
-  const profile = championDamageProfile(m.champion);
-  if (!champProfile.canCoachItems || !canCoachItemization(m.champion) || profile === "unknown") {
-    return {
-      hasCoaching: false,
-      headline: "No meaningful item optimization was identified for this match.",
-      detail:
-        "BotDiff only coaches itemization when League Intelligence can confidently identify your champion's damage profile and item ecosystem. It would rather stay quiet than risk pointing you toward the wrong item.",
-    };
-  }
-
-  const enemies = m.enemies ?? [];
-  const threat = threatProfile(enemies);
-  const heals = healThreatCount(enemies);
-  const tankHeavy = threat.tank >= 2;
-  const apHeavy = threat.ap >= 3;
-  const diveHeavy = threat.dive >= 2;
-
-  // One light, contextual suggestion — most impactful tradeoff first. Framed as
-  // guidance, never a command, never a full build, never a win-rate build.
-  // Each candidate is validated against the champion's damage profile; if it
-  // isn't a valid category for this champion, we skip to the next cue.
-  const candidates: ItemReview[] = [];
-  const push = (c: ItemReview | null) => { if (c) candidates.push(c); };
-
-  if (heals >= 2) {
-    push(contextualSuggestion(profile, "anti-heal",
-      "A Grievous Wounds pickup may have created more value against their sustain.",
-      `The enemy team had ${heals} champions with meaningful healing. Anti-heal is worth considering here — it's a tradeoff against raw damage, so only reach for it if their healing was actually keeping targets alive.`));
-  }
-  if (tankHeavy) {
-    const cat: ItemCategory = profile === "AD" || profile === "hybrid" ? "armor-pen" : "magic-pen";
-    push(contextualSuggestion(profile, cat,
-      "Earlier penetration may have helped against the enemy frontline.",
-      `They fielded ${threat.tank} tanky champions. Reaching a percentage-penetration item a little sooner is one option to keep your damage relevant — it's a tradeoff versus raw scaling, so weigh it against how fed their frontline actually was.`));
-  }
-  if (apHeavy) {
-    push(contextualSuggestion(profile, "magic-resist",
-      "A magic-resist option may have created more value against their AP damage.",
-      "Most of their threat was magic damage. A defensive pickup (Mercury's Treads or an MR item) is one way to survive their burst — only reach for it if you were actually getting deleted, since it trades away some of your own damage."));
-  }
-  if (diveHeavy) {
-    push(contextualSuggestion(profile, "survivability",
-      "A survivability item may have bought you time against their dive.",
-      "They had multiple ways to reach you. An anti-burst or survivability item is worth considering — a tradeoff that buys seconds to keep attacking rather than dying on contact."));
-  }
-
-  if (candidates.length > 0) return candidates[0];
-
-  return {
-    hasCoaching: true,
-    headline: "Your item choices fit this game well.",
-    detail: "Nothing about the enemy composition demanded a reactive item this game — sticking to your damage path was a reasonable call.",
-  };
-}
-
 // --- archetype-aware game-plan pieces --------------------------------------
 
 function tradingPatternFor(profile: ChampionProfile): PlanItem {
@@ -686,7 +589,7 @@ function practiceGoalOf(m: MatchAnalysisInput): string {
   if (m.deaths >= 6) return `Next game: keep total deaths under 5 (you had ${m.deaths}).`;
   if (m.laneMinions10 > 0 && m.laneMinions10 < 65) return `Next game: reach 75 CS by 10:00 (you had ${Math.round(m.laneMinions10)}).`;
   if (m.csPerMin < 7) return `Next game: crash before your first recall — target ${one(m.csPerMin + 1)}+ CS/min by catching one side wave between every objective.`;
-  if (m.controlWardsPlaced < 2) return `Next game: buy a control ward every recall — place at least 4 across the game (you placed ${m.controlWardsPlaced}).`;
+  if (m.controlWardsPlaced < 2) return `Next game: place a control ward after every recall — at least 4 across the game (you placed ${m.controlWardsPlaced}).`;
   if (m.killParticipation < 0.5) return `Next game: arrive 30 seconds before every dragon spawn — target 60%+ kill participation (you had ${pct(m.killParticipation)}).`;
   if (objectivesOf(m) <= 1 && m.durationMin >= 22) return "Next game: be at the pit with vision 60 seconds before the first two dragons spawn.";
   return `Next game: never recall with more than 1200 gold — spend before every back to keep item spikes on tempo.`;
@@ -722,7 +625,6 @@ export function buildMatchPlan(
     turningPoint: turningPointOf(m),
     winCondition: winConditionOf(m),
     practiceGoal: practiceGoalOf(m),
-    itemReview: buildItemReview(m),
     powerSpike: buildPowerSpikeReview(m),
     gamePlan: buildGamePlan(m),
     timeline,

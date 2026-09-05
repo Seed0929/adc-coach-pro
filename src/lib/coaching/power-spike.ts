@@ -258,7 +258,7 @@ function tempoFactors(m: MatchAnalysisInput): TempoFactor[] {
   if (m.laneMinions10 > 0 && m.laneMinions10 < 70) {
     out.push({
       cause: "Missed early farm",
-      detail: `Only ~${Math.round(m.laneMinions10)} CS at 10:00 (baseline ~75) — missed last-hits are missed item gold.`,
+      detail: `Only ~${Math.round(m.laneMinions10)} CS by 10:00 — every missed last-hit is gold that never reached your next power spike.`,
     });
   }
   if (m.csPerMin < 7) {
