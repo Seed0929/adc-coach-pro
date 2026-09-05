@@ -151,7 +151,10 @@ export function buildMatchDecisionChain(
   const evidenceByDecisionId: Record<string, DecisionEvidence[]> = {};
   const timestampsByDecisionId: Record<string, number> = {};
   for (const e of tl.events) {
-    const seconds = e.replayAnchor.approxTimeSeconds ?? null;
+    // Only Riot timeline-anchored events may claim a timestamp. Phase-estimated
+    // anchors stay untimed rather than presenting false precision.
+    const timelineAnchored = e.replayAnchor.anchorReady === true;
+    const seconds = timelineAnchored ? (e.replayAnchor.approxTimeSeconds ?? null) : null;
     if (typeof seconds === "number") timestampsByDecisionId[e.id] = seconds;
     const list: DecisionEvidence[] = [];
     if (e.evidence) {
@@ -178,7 +181,7 @@ export function buildMatchDecisionChain(
       list.push({
         id: `${e.id}:clock`,
         kind: "timestamp",
-        statement: `Observed around ${e.gameTime.replace(/^~\s*/, "")} of the game.`,
+        statement: `Observed at ${e.gameTime.replace(/^~\s*/, "")} in your match timeline.`,
         source: "riot-data",
         observed: true,
         timestampSeconds: seconds,
