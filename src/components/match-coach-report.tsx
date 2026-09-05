@@ -183,52 +183,22 @@ function spikeTone(s: SpikeStatus): "success" | "warning" | "danger" {
   return s === "ahead" ? "success" : s === "onTrack" ? "warning" : "danger";
 }
 
-function spikeStatusLabel(s: SpikeStatus): string {
-  return s === "ahead" ? "Ahead of baseline" : s === "onTrack" ? "On baseline" : "Behind baseline";
-}
-
 function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-medium">{i.itemName}</span>
-        {i.timingAvailable ? (
-          <Pill tone={spikeTone(i.status)}>{spikeStatusLabel(i.status)}</Pill>
-        ) : (
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-            Core spike
-          </span>
-        )}
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+          {i.timingAvailable ? "From your match timeline" : "Core spike"}
+        </span>
       </div>
       {i.timingAvailable ? (
-        <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">You</div>
-            <div className="font-display text-sm font-semibold text-foreground tabular-nums">
-              {i.purchaseTime}
-            </div>
+        <div className="text-xs text-muted-foreground">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            You completed this at
           </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              Same rank
-            </div>
-            <div className="font-display text-sm font-semibold tabular-nums">{i.targetTime}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              High elo
-            </div>
-            <div className="font-display text-sm font-semibold tabular-nums">{i.highEloTime}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-              Difference
-            </div>
-            <div
-              className={`font-display text-sm font-semibold tabular-nums ${i.status === "ahead" ? "text-success" : i.status === "behind" ? "text-destructive" : "text-warning"}`}
-            >
-              {i.differenceLabel}
-            </div>
+          <div className="font-display text-sm font-semibold text-foreground tabular-nums">
+            {i.purchaseTime}
           </div>
         </div>
       ) : (
