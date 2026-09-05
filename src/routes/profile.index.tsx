@@ -272,8 +272,8 @@ function ProfilePage() {
               sub={score.formLabel}
             />
             <StatTile label="Previous form" value={score.previous} sub={score.formLabel} />
-            <StatTile label="Weekly Change" value={score.current} delta={score.weeklyChange} sub={`vs form 7 days ago`} />
-            <StatTile label="Monthly Change" value={score.current} delta={score.monthlyChange} sub={`vs form 30 days ago`} />
+            <ChangeTile {...weeklyChangeReading(score)} />
+            <ChangeTile {...monthlyChangeReading(score)} />
             <StatTile label="Best form" value={score.best} sub={`Best single game ${score.bestSingleGame}`} />
             <StatTile label="Lowest form" value={score.lowest} sub={`Lowest single game ${score.lowestSingleGame}`} />
           </div>
