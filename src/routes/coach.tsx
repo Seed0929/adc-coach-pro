@@ -26,7 +26,7 @@ import {
 import { activeFocusReference } from "@/lib/coaching/performance-intelligence-v1";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useServerFn } from "@tanstack/react-start";
-import { coachAnswer, proactiveCoaching, followUpQuestion, buildPracticeProgram } from "@/lib/coaching";
+import { coachAnswer, proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 import { askCoach } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/coach")({
@@ -125,11 +125,8 @@ function Coach() {
     return <Cmp className={`size-3.5 ${improved ? "text-success" : "text-destructive"}`} />;
   };
 
-  const consistency = dossier.consistency;
-  const trendTone = (n: number) => (n > 0 ? "text-success" : n < 0 ? "text-destructive" : "text-muted-foreground");
   const proactive = useMemo(() => proactiveCoaching(dossier), [dossier]);
   const followUp = useMemo(() => followUpQuestion(dossier), [dossier]);
-  const program = useMemo(() => buildPracticeProgram(dossier), [dossier]);
 
   return (
     <AppShell>
@@ -283,7 +280,7 @@ function Coach() {
       </div>
 
       {/* Coaching priorities — the five things every player should always see. */}
-      <Section icon={ListChecks} title={`Coaching priorities · ${dossier.coachingPriority.roleLabel}`} className="mb-6">
+      <Section icon={ListChecks} title={`What BotDiff is seeing · ${dossier.coachingPriority.roleLabel}`} className="mb-6">
         <div className="grid gap-3 md:grid-cols-2">
           {[
             { label: "Biggest strength", item: dossier.coachingPriority.biggestStrength, tone: "text-success" },
@@ -299,13 +296,8 @@ function Coach() {
             </div>
           ))}
         </div>
-        <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
-          <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
-            <Target className="size-3.5" /> Current practice goal
-          </div>
-          <p className="text-sm text-foreground/90">{dossier.coachingPriority.currentPracticeGoal.title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{dossier.coachingPriority.currentPracticeGoal.why}</p>
-          <p className="mt-1.5 text-xs italic text-muted-foreground/80">{dossier.coachingPriority.currentPracticeGoal.evidence}</p>
+        <div className="mt-3">
+          <ActiveFocusNote text={activeFocusReference(dossier.plan)} />
         </div>
       </Section>
 
