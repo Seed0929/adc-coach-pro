@@ -209,7 +209,8 @@ check("Flat player at their own ceiling gets an explicit refusal, not a fake tar
 });
 
 check("High-variance player still gets an evidence-backed, reachable target", () => {
-  const swings = [4, 9, 5, 8, 4.5, 9.5, 5, 8.5, 4, 9, 5.5, 8, 4.5, 9, 5, 8.5, 4, 9, 5, 8];
+  // Genuinely swingy, but with a proven strong stretch earlier in the history.
+  const swings = [7.5, 9, 8, 9.5, 8.5, 4, 9, 5, 8, 4.5, 5, 8, 4, 6, 5, 7, 4, 6.5, 5, 6];
   const matches = makeMatches(20, (i) => ({ csPerMin: swings[i] }));
   const evaluation = findEvaluation(evaluateAll(matches), "cs")!;
   const proposal = proposeTarget(evaluation, { now: NOW });
@@ -368,7 +369,8 @@ check("Every target records traceable evidence and a claim kind", () => {
 });
 
 check("Coaching context separates observed fact, trend, inference, recommendation", () => {
-  const matches = makeMatches(24, (i) => ({ csPerMin: i < 12 ? 8 : 6, deaths: i < 12 ? 2 : 7 }));
+  // Last 10 games decline so a trend exists; earlier games prove the headroom.
+  const matches = makeMatches(24, (i) => ({ csPerMin: i < 14 ? 8 : i < 19 ? 7 : 5.5, deaths: i < 12 ? 2 : 7 }));
   const ctx = buildCoachingIntelligence(matches, undefined, { now: NOW }).context;
   const kinds = new Set([
     ...ctx.monitoredOnly.map((f) => f.claim),
