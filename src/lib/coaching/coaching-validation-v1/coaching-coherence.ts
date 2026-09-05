@@ -338,7 +338,7 @@ check("Match plan no longer produces an item review", () => {
   const plan = buildMatchPlan(makeInputs(1)[0]);
   return (
     !/itemReview|ItemReview|Grievous Wounds/.test(s) &&
-    !("itemReview" in (plan as Record<string, unknown>))
+    !("itemReview" in (plan as unknown as Record<string, unknown>))
   );
 });
 
