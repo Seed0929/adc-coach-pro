@@ -465,9 +465,3 @@ export const statusTone: Record<GoalStatus, "neutral" | "primary" | "success" | 
   "New Focus": "primary",
   "Needs More Data": "neutral",
 };
-
-    const pct = ((worst - goal.current) / (worst - goal.target)) * 100;
-    return Math.max(0, Math.min(100, Math.round(pct)));
-  }
-  return Math.max(0, Math.min(100, Math.round((goal.current / goal.target) * 100)));
-}
