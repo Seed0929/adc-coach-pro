@@ -189,8 +189,8 @@ check("dedupeByIssue collapses restatements of the same problem", () => {
 
 check("identifyIssue maps farming and death language to stable identities", () => {
   return (
-    identifyIssue("missed last hits and low CS per minute")?.id === "FARMING_CONSISTENCY" &&
-    identifyIssue("you died 9 times")?.id === "DEATH_REDUCTION"
+    identifyIssue("missed last hits and low CS per minute") === "FARMING_CONSISTENCY" &&
+    identifyIssue("you died 9 times") === "DEATH_REDUCTION"
   );
 });
 
@@ -338,7 +338,7 @@ check("Match plan no longer produces an item review", () => {
   const plan = buildMatchPlan(makeInputs(1)[0]);
   return (
     !/itemReview|ItemReview|Grievous Wounds/.test(s) &&
-    !("itemReview" in (plan as Record<string, unknown>))
+    !("itemReview" in (plan as unknown as Record<string, unknown>))
   );
 });
 
