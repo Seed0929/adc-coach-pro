@@ -277,7 +277,7 @@ const WEAKNESS_DEFS: PatternDef[] = [
     title: "Inconsistent farming",
     test: (m) => m.csPerMin < 6.8,
     detail: (a) =>
-      `Your CS averages ${one(a.csPerMin)}/min, under the ~8.0 benchmark. Catch side waves between objectives so your gold curve never flattens after 15 minutes.`,
+      `Your CS averages ${one(a.csPerMin)}/min, below the level your own better games show you can hold. Catch side waves between objectives so your gold curve never flattens after 15 minutes.`,
   },
   {
     id: "low-vision",
