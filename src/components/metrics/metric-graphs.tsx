@@ -141,7 +141,9 @@ function MetricLine({
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            width={38}
+            width={44}
+            tickCount={4}
+            allowDecimals={false}
           />
           <XAxis dataKey="label" hide />
           {showAxes && (

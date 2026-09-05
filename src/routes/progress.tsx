@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ArrowUpRight,
-  ArrowDownRight, Target } from "lucide-react";
-import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
+import { Target } from "lucide-react";
+import { AppShell, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import {
+  BOTDIFF_SCORE_NAME,
+  TREND_LABELS,
+  classifyTrend,
+  type MetricReading,
+} from "@/lib/metrics/metric-reading";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -32,8 +30,29 @@ function Progress() {
   const { isDemo, data } = useBotDiffData();
   const { trend, skills } = data;
   const delta = data.improvementDelta;
-  const trendTone = delta > 0 ? "success" : delta < 0 ? "warning" : "neutral";
-  const trendLabel = delta > 0 ? "Trending up" : delta < 0 ? "Trending down" : "Holding steady";
+  const previous = trend.length > 1 ? data.improvementScore - delta : null;
+  const scoreTrend = classifyTrend(data.improvementScore, previous, "higher", 1);
+  const best = trend.length ? Math.max(...trend.map((t) => t.score)) : data.improvementScore;
+  const atBest = data.improvementScore >= best;
+  const reading: MetricReading = {
+    key: "progress-score",
+    name: BOTDIFF_SCORE_NAME,
+    value: trend.length ? data.improvementScore : null,
+    unit: "",
+    direction: "higher",
+    trend: scoreTrend,
+    trendLabel: TREND_LABELS[scoreTrend],
+    previous,
+    comparison: previous == null ? "Not enough history for a comparison yet" : "vs your previous window",
+    baseline: null,
+    target: atBest ? null : { value: best, label: "Your best form", kind: "target" },
+    targetNote: atBest ? "Current best stretch." : null,
+    interpretation: atBest
+      ? "You're performing at your best recent level — hold this shape."
+      : "This line is your coaching score across your recent games, not your rank.",
+    points: trend.map((t, i) => ({ index: i, value: t.score, label: t.week })),
+    sourceLabel: isDemo ? "Sample data" : "Your imported ranked games",
+  };
   return (
     <AppShell>
       {isDemo && <DemoModeBanner />}
@@ -44,46 +63,7 @@ function Progress() {
       />
 
       {/* Trend */}
-      <div className="glass rise rounded-3xl p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm text-muted-foreground">Improvement Score</div>
-            <div className="font-display text-3xl font-semibold tracking-tight">
-              {data.improvementScore}{" "}
-              <span className={`text-lg ${delta > 0 ? "text-success" : delta < 0 ? "text-warning" : "text-muted-foreground"}`}>
-                {delta > 0 ? "+" : ""}
-                {delta}
-              </span>
-            </div>
-          </div>
-          <Pill tone={trendTone}>
-            {delta >= 0 ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />} {trendLabel}
-          </Pill>
-        </div>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trend} margin={{ left: -20, right: 8, top: 8 }}>
-              <defs>
-                <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="week" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} domain={[50, 90]} />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  color: "var(--foreground)",
-                }}
-              />
-              <Area type="monotone" dataKey="score" stroke="var(--primary)" strokeWidth={2.5} fill="url(#g)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <MetricGraphCard reading={reading} height={224} />
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         {/* Skills */}

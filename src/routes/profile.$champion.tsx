@@ -1,10 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Minus, ShieldAlert, Sparkles } from "lucide-react";
 import { AppShell, Pill, DemoModeBanner } from "@/components/app-shell";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import {
+  BOTDIFF_SCORE_NAME,
+  TREND_LABELS,
+  classifyTrend,
+  type MetricReading,
+} from "@/lib/metrics/metric-reading";
+
+function championReading(
+  name: string,
+  chron: { game: string; score: number }[],
+  isDemo: boolean,
+): MetricReading {
+  const current = chron[chron.length - 1].score;
+  const previous = chron.length > 1 ? chron[chron.length - 2].score : null;
+  const trend = classifyTrend(current, previous, "higher", 1);
+  const best = Math.max(...chron.map((c) => c.score));
+  const atBest = current >= best;
+  return {
+    key: `champ-${name}`,
+    name: `${name} — ${BOTDIFF_SCORE_NAME}`,
+    value: current,
+    unit: "",
+    direction: "higher",
+    trend,
+    trendLabel: TREND_LABELS[trend],
+    previous,
+    comparison: previous == null ? "Not enough games on this champion yet" : "vs your previous game",
+    baseline: null,
+    target: atBest ? null : { value: best, label: `Your best ${name} game`, kind: "target" },
+    targetNote: atBest ? "This is your best game on this champion." : null,
+    interpretation: `How your coaching score has moved across your ${name} games.`,
+    points: chron.map((c, i) => ({ index: i, value: c.score, label: c.game })),
+    sourceLabel: isDemo ? "Sample data" : "Your imported ranked games",
+  };
+}
 
 export const Route = createFileRoute("/profile/$champion")({
   component: ChampionProgressPage,
@@ -79,36 +114,14 @@ function ChampionProgressPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="glass rise rounded-3xl p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">BotDiff Score over time</h2>
-          {chron.length > 1 ? (
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chron} margin={{ left: -20, right: 8, top: 8 }}>
-                  <defs>
-                    <linearGradient id="champGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="game" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                      color: "var(--foreground)",
-                    }}
-                  />
-                  <Area type="monotone" dataKey="score" stroke="var(--primary)" strokeWidth={2.5} fill="url(#champGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
+        {chron.length > 1 ? (
+          <MetricGraphCard reading={championReading(champ.name, chron, profile.isDemo)} height={200} />
+        ) : (
+          <div className="glass rise rounded-3xl p-6">
+            <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">BotDiff Score over time</h2>
             <p className="text-sm text-muted-foreground">Play more games on {champ.name} to see a trend.</p>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-6">
           <div className="glass rise rounded-3xl p-6">

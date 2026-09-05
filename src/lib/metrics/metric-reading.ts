@@ -290,7 +290,7 @@ function changeReading(
       change: 0,
       trend: "insufficient_data",
       trendLabel: TREND_LABELS.insufficient_data,
-      detail: `Not enough history yet — needs games older than ${days} days.`,
+      detail: `Needs games older than ${days} days.`,
     };
   }
   const trend = classifyTrend(change, 0, "higher", 1);
