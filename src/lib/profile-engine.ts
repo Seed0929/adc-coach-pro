@@ -2,7 +2,7 @@
 // BotDiff Player Profile & Progress engine (pure, client-safe).
 //
 // Turns the player's per-match coaching analyses + normalized inputs into a
-// long-term improvement journal: BotDiff Score, improvement history, champion
+// long-term improvement journal: current form, improvement history, champion
 // progress, achievements, session summary, and personal records.
 //
 // This module is PURE: no network, no database, no secrets. The server builds

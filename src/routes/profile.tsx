@@ -7,7 +7,7 @@ export const Route = createFileRoute("/profile")({
       {
         name: "description",
         content:
-          "Your BotDiff improvement journal: BotDiff Score, improvement history, champion progress, achievements, and personal records.",
+          "Your BotDiff improvement journal: current form in real stats, champion progress, achievements, and personal records.",
       },
       { property: "og:title", content: "Player Profile — BotDiff" },
       { property: "og:description", content: "Track your long-term improvement across every ranked game." },

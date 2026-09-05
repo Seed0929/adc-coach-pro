@@ -161,7 +161,7 @@ function ChampionProgressPage() {
                 <span className="w-20 text-muted-foreground">{m.kills}/{m.deaths}/{m.assists}</span>
                 <span className="w-20 text-muted-foreground">{m.csPerMin.toFixed(1)} cs/min</span>
                 <span className="w-24 text-muted-foreground">{m.visionScore} vision</span>
-                <span className="ml-auto font-display font-semibold text-primary">{m.botDiffScore}</span>
+                <span className="ml-auto text-muted-foreground">{m.durationMin} min</span>
               </div>
             ))}
           </div>
