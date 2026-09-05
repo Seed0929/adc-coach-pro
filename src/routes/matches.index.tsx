@@ -78,7 +78,11 @@ function CurveChart({
               axisLine={false}
               width={44}
             />
-            <Tooltip contentStyle={chartTooltip} />
+            <Tooltip
+              contentStyle={chartTooltip}
+              labelFormatter={(m) => `Minute ${m}`}
+              formatter={(value: number, name: string) => [Math.round(value).toLocaleString(), name]}
+            />
             <Line
               type="monotone"
               dataKey={benchKey}
