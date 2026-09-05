@@ -251,55 +251,9 @@ function ProfilePage() {
         )}
       </div>
 
-      {/* BotDiff Score */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
-        <div className="glass rise grid place-items-center gap-4 rounded-3xl p-6 text-center">
-          <ScoreRing value={score.current} />
-          <div>
-            <div className="font-display text-lg font-semibold">BotDiff Score</div>
-            <p className="mt-1 max-w-[14rem] text-xs text-muted-foreground">
-              A 5-game rolling average of your per-game coaching scores across consistency, farming, vision, objectives, positioning & teamfighting — so one outlier game never swings it.
-            </p>
-          </div>
-        </div>
+      {/* Current form — real statistics only, no composite score. */}
+      <CurrentForm profile={profile} />
 
-        <div className="glass rise rounded-3xl p-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatTile
-              label="Current form"
-              value={score.current}
-              delta={score.current - score.previous}
-              sub={score.formLabel}
-            />
-            <StatTile label="Previous form" value={score.previous} sub={score.formLabel} />
-            <ChangeTile {...weeklyChangeReading(score)} />
-            <ChangeTile {...monthlyChangeReading(score)} />
-            <StatTile label="Best form" value={score.best} sub={`Best single game ${score.bestSingleGame}`} />
-            <StatTile label="Lowest form" value={score.lowest} sub={`Lowest single game ${score.lowestSingleGame}`} />
-          </div>
-          <div className="mt-5">
-            <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Score Breakdown</div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {score.breakdown.map((b) => (
-                <div key={b.label}>
-                  <div className="mb-1 flex justify-between text-sm">
-                    <span>{b.label}</span>
-                    <span className="text-muted-foreground">{b.value}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        b.value >= 70 ? "bg-success" : b.value >= 50 ? "bg-primary" : "bg-warning"
-                      }`}
-                      style={{ width: `${b.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Session summary */}
       {sessionSummary && (
