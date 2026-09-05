@@ -1,10 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Minus, ShieldAlert, Sparkles } from "lucide-react";
 import { AppShell, Pill, DemoModeBanner } from "@/components/app-shell";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import {
+  BOTDIFF_SCORE_NAME,
+  TREND_LABELS,
+  classifyTrend,
+  type MetricReading,
+} from "@/lib/metrics/metric-reading";
+
+function championReading(
+  name: string,
+  chron: { game: string; score: number }[],
+  isDemo: boolean,
+): MetricReading {
+  const current = chron[chron.length - 1].score;
+  const previous = chron.length > 1 ? chron[chron.length - 2].score : null;
+  const trend = classifyTrend(current, previous, "higher", 1);
+  const best = Math.max(...chron.map((c) => c.score));
+  const atBest = current >= best;
+  return {
+    key: `champ-${name}`,
+    name: `${name} — ${BOTDIFF_SCORE_NAME}`,
+    value: current,
+    unit: "",
+    direction: "higher",
+    trend,
+    trendLabel: TREND_LABELS[trend],
+    previous,
+    comparison: previous == null ? "Not enough games on this champion yet" : "vs your previous game",
+    baseline: null,
+    target: atBest ? null : { value: best, label: `Your best ${name} game`, kind: "target" },
+    targetNote: atBest ? "This is your best game on this champion." : null,
+    interpretation: `How your coaching score has moved across your ${name} games.`,
+    points: chron.map((c, i) => ({ index: i, value: c.score, label: c.game })),
+    sourceLabel: isDemo ? "Sample data" : "Your imported ranked games",
+  };
+}
 
 export const Route = createFileRoute("/profile/$champion")({
   component: ChampionProgressPage,
