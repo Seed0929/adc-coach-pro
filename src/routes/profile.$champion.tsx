@@ -5,28 +5,27 @@ import { usePlayerProfile } from "@/hooks/use-player-profile";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
 import { MetricGraphCard } from "@/components/metrics/metric-graphs";
-import {
-  BOTDIFF_SCORE_NAME,
-  TREND_LABELS,
-  classifyTrend,
-  type MetricReading,
-} from "@/lib/metrics/metric-reading";
+import { TREND_LABELS, classifyTrend, type MetricReading } from "@/lib/metrics/metric-reading";
 
+/**
+ * Champion graph — a real, measurable statistic (CS per minute) across the
+ * player's games on this champion. No composite score, no benchmarks.
+ */
 function championReading(
   name: string,
-  chron: { game: string; score: number }[],
+  chron: { game: string; value: number }[],
   isDemo: boolean,
 ): MetricReading {
-  const current = chron[chron.length - 1].score;
-  const previous = chron.length > 1 ? chron[chron.length - 2].score : null;
-  const trend = classifyTrend(current, previous, "higher", 1);
-  const best = Math.max(...chron.map((c) => c.score));
+  const current = chron[chron.length - 1].value;
+  const previous = chron.length > 1 ? chron[chron.length - 2].value : null;
+  const trend = classifyTrend(current, previous, "higher", 0.3);
+  const best = Math.max(...chron.map((c) => c.value));
   const atBest = current >= best;
   return {
-    key: `champ-${name}`,
-    name: `${name} — ${BOTDIFF_SCORE_NAME}`,
+    key: `champ-${name}-cs`,
+    name: `${name} — CS per minute`,
     value: current,
-    unit: "",
+    unit: "/min",
     direction: "higher",
     trend,
     trendLabel: TREND_LABELS[trend],
@@ -34,9 +33,9 @@ function championReading(
     comparison: previous == null ? "Not enough games on this champion yet" : "vs your previous game",
     baseline: null,
     target: atBest ? null : { value: best, label: `Your best ${name} game`, kind: "target" },
-    targetNote: atBest ? "This is your best game on this champion." : null,
-    interpretation: `How your coaching score has moved across your ${name} games.`,
-    points: chron.map((c, i) => ({ index: i, value: c.score, label: c.game })),
+    targetNote: atBest ? "This is your best farming game on this champion." : null,
+    interpretation: `Your farming rate across your ${name} games, measured in creeps per minute.`,
+    points: chron.map((c, i) => ({ index: i, value: c.value, label: c.game })),
     sourceLabel: isDemo ? "Sample data" : "Your imported ranked games",
   };
 }
@@ -65,18 +64,25 @@ function ChampionProgressPage() {
     );
   }
 
-  const chron = [...matches].reverse().map((m, i) => ({ game: `G${i + 1}`, score: m.botDiffScore }));
-  const TrendIcon = champ.trend > 0 ? ArrowUpRight : champ.trend < 0 ? ArrowDownRight : Minus;
-  const trendTone = champ.trend > 0 ? "text-success" : champ.trend < 0 ? "text-destructive" : "text-muted-foreground";
+  const chron = [...matches].reverse().map((m, i) => ({ game: `G${i + 1}`, value: m.csPerMin }));
+  const recent = chron.slice(-5).map((c) => c.value);
+  const earlier = chron.slice(-10, -5).map((c) => c.value);
+  const avg = (v: number[]) => (v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0);
+  const csDelta = earlier.length ? Math.round((avg(recent) - avg(earlier)) * 10) / 10 : null;
+  const TrendIcon = csDelta == null || csDelta === 0 ? Minus : csDelta > 0 ? ArrowUpRight : ArrowDownRight;
+  const trendTone =
+    csDelta == null || csDelta === 0
+      ? "text-muted-foreground"
+      : csDelta > 0
+        ? "text-success"
+        : "text-destructive";
 
   const stats: { label: string; value: string }[] = [
     { label: "Games Played", value: `${champ.games}` },
     { label: "Win Rate", value: `${champ.winRate}%` },
-    { label: "Average Grade", value: champ.avgGradeLetter },
     { label: "Average CS", value: `${champ.avgCs}/min` },
     { label: "Average Vision", value: `${champ.avgVision}` },
     { label: "Average KDA", value: `${champ.avgKda} : 1` },
-    { label: "BotDiff Score", value: `${champ.botDiffScore}` },
   ];
 
   return (
@@ -94,17 +100,19 @@ function ChampionProgressPage() {
         <div className="flex-1">
           <h1 className="font-display text-3xl font-semibold tracking-tight">{champ.name}</h1>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Improvement trend</span>
+            <span>CS / min, last 5 games vs the 5 before</span>
             <span className={`inline-flex items-center gap-0.5 font-medium ${trendTone}`}>
               <TrendIcon className="size-4" />
-              {champ.trend > 0 ? "+" : ""}{champ.trend} pts
+              {csDelta == null
+                ? "Needs more data"
+                : `${csDelta > 0 ? "+" : ""}${csDelta.toFixed(1)}/min`}
             </span>
           </div>
         </div>
-        <span className="font-display text-4xl font-semibold text-primary">{champ.avgGradeLetter}</span>
+        <span className="font-display text-4xl font-semibold text-primary">{champ.winRate}%</span>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className="glass rise rounded-2xl p-4">
             <div className="text-xs text-muted-foreground">{s.label}</div>
@@ -118,7 +126,7 @@ function ChampionProgressPage() {
           <MetricGraphCard reading={championReading(champ.name, chron, profile.isDemo)} height={200} />
         ) : (
           <div className="glass rise rounded-3xl p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">BotDiff Score over time</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">CS per minute over time</h2>
             <p className="text-sm text-muted-foreground">Play more games on {champ.name} to see a trend.</p>
           </div>
         )}
