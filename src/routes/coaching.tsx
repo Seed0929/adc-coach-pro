@@ -237,7 +237,6 @@ function TaskRow({ task, checked, onToggle }: { task: PracticeTask; checked: boo
 }
 
 function GoalCard({ goal }: { goal: ImprovementGoal }) {
-  const pct = goalProgress(goal);
   return (
     <div className="glass rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
@@ -247,27 +246,42 @@ function GoalCard({ goal }: { goal: ImprovementGoal }) {
         </div>
         <Pill tone={statusTone[goal.status]}>{goal.status}</Pill>
       </div>
-      <div className="mt-4 flex items-end justify-between">
-        <div className="font-display text-2xl font-semibold">{pct}%</div>
-        <div className="text-right text-xs text-muted-foreground">
-          {goal.current} / {goal.target} {goal.unit}
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <div className="text-[11px] text-muted-foreground">{goal.measureLabel} now</div>
+          <div className="font-display text-2xl font-semibold">{goal.currentLabel}</div>
         </div>
+        {goal.goalLabel ? (
+          <div className="text-right">
+            <div className="text-[11px] text-muted-foreground">Coach target</div>
+            <div className="font-display text-lg font-semibold text-primary">{goal.goalLabel}</div>
+          </div>
+        ) : (
+          <p className="max-w-[60%] text-right text-xs text-muted-foreground">
+            Not enough games yet for a target you have already proven.
+          </p>
+        )}
       </div>
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-primary-dim transition-[width] duration-700"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="mt-3">
-        <Pill tone={trendTone[goal.trend]}>
-          <TrendIcon trend={goal.trend} />
-          {goal.trend}
-        </Pill>
-      </div>
+      {goal.progress != null && (
+        <div className="mt-2">
+          <ProgressBar progress={goal.progress} />
+        </div>
+      )}
+      {goal.evaluation && (
+        <p className="mt-2 text-[11px] text-muted-foreground">{goal.evaluation}</p>
+      )}
+      {goal.trend && (
+        <div className="mt-3">
+          <Pill tone={trendTone[goal.trend]}>
+            <TrendIcon trend={goal.trend} />
+            {goal.trend}
+          </Pill>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function Coaching() {
   const { isDemo } = useBotDiffData();
