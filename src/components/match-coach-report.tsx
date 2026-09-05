@@ -179,10 +179,6 @@ function verdictTone(v: PhaseReview["verdict"]): string {
   return v === "good" ? "text-success" : v === "bad" ? "text-destructive" : "text-warning";
 }
 
-function spikeTone(s: SpikeStatus): "success" | "warning" | "danger" {
-  return s === "ahead" ? "success" : s === "onTrack" ? "warning" : "danger";
-}
-
 function PowerSpikeRow({ i }: { i: PowerSpikeItem }) {
   return (
     <div className="rounded-2xl bg-white/[0.03] p-4">
