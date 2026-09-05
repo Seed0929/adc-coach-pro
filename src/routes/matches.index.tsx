@@ -46,12 +46,10 @@ const chartTooltip = {
 function CurveChart({
   match,
   dataKey,
-  benchKey,
   label,
 }: {
   match: Match;
   dataKey: "cs" | "gold" | "damage";
-  benchKey: "csBenchmark" | "goldBenchmark" | "damageBenchmark";
   label: string;
 }) {
   return (
@@ -355,17 +353,15 @@ function DemoMatches() {
 
           {/* CS & gold curves */}
           <div className="grid gap-3 xl:grid-cols-3">
-            <CurveChart match={active} dataKey="cs" benchKey="csBenchmark" label="CS over time" />
+            <CurveChart match={active} dataKey="cs" label="CS over time" />
             <CurveChart
               match={active}
               dataKey="gold"
-              benchKey="goldBenchmark"
               label="Gold over time"
             />
             <CurveChart
               match={active}
               dataKey="damage"
-              benchKey="damageBenchmark"
               label="Damage over time"
             />
           </div>

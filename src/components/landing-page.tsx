@@ -227,7 +227,7 @@ function ProductPreview() {
           tone="primary"
           eyebrow="Progress"
           title={`Improvement trend +${co.improvementTrendPct}% this week`}
-          summary={`Consistency ${co.consistencyScore}% — how repeatable your play has been across recent games.`}
+          summary="How repeatable your recent games have been — your typical range, in plain language, not a score."
           readTime="20 sec"
         >
           <div className="space-y-4">
