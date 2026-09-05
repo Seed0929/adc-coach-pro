@@ -79,36 +79,14 @@ function ChampionProgressPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="glass rise rounded-3xl p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">BotDiff Score over time</h2>
-          {chron.length > 1 ? (
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chron} margin={{ left: -20, right: 8, top: 8 }}>
-                  <defs>
-                    <linearGradient id="champGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="game" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                      color: "var(--foreground)",
-                    }}
-                  />
-                  <Area type="monotone" dataKey="score" stroke="var(--primary)" strokeWidth={2.5} fill="url(#champGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
+        {chron.length > 1 ? (
+          <MetricGraphCard reading={championReading(champ.name, chron, profile.isDemo)} height={200} />
+        ) : (
+          <div className="glass rise rounded-3xl p-6">
+            <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">BotDiff Score over time</h2>
             <p className="text-sm text-muted-foreground">Play more games on {champ.name} to see a trend.</p>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-6">
           <div className="glass rise rounded-3xl p-6">
