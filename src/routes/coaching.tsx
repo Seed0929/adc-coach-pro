@@ -21,15 +21,16 @@ import {
   useCoachingData,
   useTodaysFocusInsight,
   groupInsightsByCategory,
-  goalProgress,
   severityTone,
   trendTone,
   statusTone,
   type CoachInsight,
   type ImprovementGoal,
+  type InsightTracking,
   type PracticeTask,
   type ProgressTrend,
 } from "@/lib/coaching-data";
+
 
 export const Route = createFileRoute("/coaching")({
   head: () => ({
