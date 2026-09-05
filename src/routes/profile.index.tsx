@@ -161,7 +161,9 @@ function ImprovementHistory({ profile }: { profile: PlayerProfile }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-semibold tracking-tight">Improvement History</h2>
-          <p className="text-sm text-muted-foreground">How each part of your game is trending.</p>
+          <p className="text-sm text-muted-foreground">
+            The same statistics you'll find in Analytics, kept here as your journal.
+          </p>
         </div>
         <div className="flex gap-1 rounded-full bg-white/[0.04] p-1">
           {WINDOWS.map((w) => (
