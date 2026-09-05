@@ -903,7 +903,7 @@ export function answerQuickAsk(d: CoachDossier, prompt: string): string {
     const h = d.recurringHabits.find((x) => x.kind === "weakness");
     return formatReport({
       problem: h ? `One habit is capping your LP: "${h.title.toLowerCase()}".` : "You don't have one dominant leak — your ceiling right now is consistency.",
-      evidence: h ? evidence(h) : `Consistency is ${d.consistency.current}/100 across your last ${d.matchesAnalyzed} games.`,
+      evidence: h ? evidence(h) : d.consistency.explanation,
       why: `${d.rankAssessment} ${d.rankPotential}`,
       goal: d.improvementPlan.practiceGoal,
       expected: d.improvementPlan.expectedImprovement + " " + d.improvementPlan.estimatedImpact,
@@ -929,7 +929,7 @@ export function answerQuickAsk(d: CoachDossier, prompt: string): string {
     const down = d.trends.find((t) => !t.improved && t.direction !== "flat");
     return formatReport({
       problem: `You're at a ${d.winRate}% win rate over your last ${d.matchesAnalyzed} games.`,
-      evidence: down ? `The biggest mover is your ${down.label.toLowerCase()} (${down.previous} → ${down.current}).` : `Your core stats are steady; consistency is ${d.consistency.current}/100.`,
+      evidence: down ? `The biggest mover is your ${down.label.toLowerCase()} (${down.previous} → ${down.current}).` : `Your core stats are steady across your last ${d.matchesAnalyzed} games. ${d.consistency.explanation}`,
       why: down ? down.note : "Steady stats with swinging results usually means variance or mental, not mechanics.",
       goal: d.improvementPlan.practiceGoal,
       expected: "A tighter, more predictable LP curve.",

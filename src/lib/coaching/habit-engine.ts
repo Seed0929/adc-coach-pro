@@ -305,7 +305,7 @@ export function buildCoachingPriority(
     ? {
         title: top.label,
         why: `${top.cause} ${top.why}`,
-        evidence: `Impact score ${top.impact}/100 — ${top.evidence.sentences[0].toLowerCase()}`,
+        evidence: top.evidence.sentences[0],
       }
     : biggestWeakness;
 

@@ -664,10 +664,10 @@ function buildStrengths(m: MatchAnalysisInput, g: CoachingGrades): CoachStrength
   // Guarantee three by surfacing the player's relatively best areas.
   if (s.length < 3) {
     const areas: RankedStrength[] = [
-      { title: "Farming", why: `Your farming graded ${g.farming}/100 this game — your most reliable lever.`, priority: g.farming },
-      { title: "Teamfighting", why: `Your teamfight impact graded ${g.teamfight}/100 relative to the lobby.`, priority: g.teamfight },
-      { title: "Laning", why: `Your laning phase graded ${g.laning}/100.`, priority: g.laning },
-      { title: "Staying alive", why: `Your consistency graded ${g.consistency}/100 — deaths kept in check.`, priority: g.consistency },
+      { title: "Farming", why: `Farming was your most reliable lever this game.`, priority: g.farming },
+      { title: "Teamfighting", why: `Your teamfight impact held up relative to the rest of the lobby.`, priority: g.teamfight },
+      { title: "Laning", why: `Your laning phase was one of the steadier parts of this game.`, priority: g.laning },
+      { title: "Staying alive", why: `You kept your deaths in check for most of this game.`, priority: g.consistency },
     ].sort((a, b) => b.priority - a.priority);
     for (const area of areas) {
       if (s.length >= 3) break;
