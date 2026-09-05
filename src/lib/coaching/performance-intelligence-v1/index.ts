@@ -27,6 +27,7 @@ export * from "./consistency";
 export * from "./evidence";
 export * from "./item-policy";
 export * from "./plan";
+export * from "./from-analysis";
 
 import type { ProfileMatch } from "@/lib/profile-engine";
 import { evaluateAll } from "./evaluation";
