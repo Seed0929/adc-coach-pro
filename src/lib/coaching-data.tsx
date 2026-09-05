@@ -44,7 +44,14 @@ export const COACHING_CATEGORIES: CoachingCategory[] = [
 
 export type Severity = "Low" | "Medium" | "High";
 export type Difficulty = "Easy" | "Medium" | "Hard";
-export type GoalStatus = "Not Started" | "In Progress" | "On Track" | "Achieved";
+export type GoalStatus =
+  | "Not Started"
+  | "In Progress"
+  | "On Track"
+  | "Achieved"
+  | "Needs Work"
+  | "New Focus"
+  | "Needs More Data";
 export type ProgressTrend = "Improving" | "Steady" | "Declining";
 
 /**
@@ -77,10 +84,22 @@ export interface CoachInsight {
   isTopPriority?: boolean;
 }
 
+/**
+ * Player-readable tracking. Every field is either a real measured metric or an
+ * observed occurrence count — never an abstract 0-100 rating.
+ */
 export interface InsightTracking {
-  currentScore: number; // 0-100
-  goalScore: number; // 0-100
-  trend: ProgressTrend;
+  /** What the player is doing now, e.g. "5.5 CS/min" or "4 of last 6 games". */
+  currentLabel: string;
+  /** The next achievable goal, or null when BotDiff cannot set one honestly. */
+  goalLabel: string | null;
+  /** What the current measurement is called, e.g. "CS / min". */
+  measureLabel: string;
+  /** 0-1 progress, only when it is mathematically explainable. */
+  progress: number | null;
+  /** When BotDiff will look at this again. */
+  evaluation: string | null;
+  trend?: ProgressTrend;
   status: GoalStatus;
 }
 
@@ -99,15 +118,20 @@ export interface ImprovementGoal {
   title: string;
   detail: string;
   category: CoachingCategory;
-  current: number;
-  target: number;
-  /** Unit label, e.g. "CS/min", "LP", "deaths". */
-  unit: string;
-  trend: ProgressTrend;
+  /** What the measurement is called, e.g. "Deaths / game". */
+  measureLabel: string;
+  /** e.g. "9.0/game" or "Recurring in recent matches". */
+  currentLabel: string;
+  /** e.g. "≤ 7.0/game" — null when no honest goal exists yet. */
+  goalLabel: string | null;
+  /** e.g. "Next 5 comparable games". */
+  evaluation: string | null;
+  /** 0-1, only when the movement baseline → goal is explainable. */
+  progress: number | null;
+  trend?: ProgressTrend;
   status: GoalStatus;
-  /** Lower numbers are better for this metric (e.g. deaths). */
-  invert?: boolean;
 }
+
 
 /**
  * A point-in-time coaching report. Today these are hand-authored demo reports;
