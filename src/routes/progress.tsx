@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ArrowUpRight,
-  ArrowDownRight, Target } from "lucide-react";
-import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
+import { Target } from "lucide-react";
+import { AppShell, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
+import { MetricGraphCard } from "@/components/metrics/metric-graphs";
+import {
+  BOTDIFF_SCORE_NAME,
+  TREND_LABELS,
+  classifyTrend,
+  type MetricReading,
+} from "@/lib/metrics/metric-reading";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
