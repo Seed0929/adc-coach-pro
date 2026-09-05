@@ -44,7 +44,14 @@ export const COACHING_CATEGORIES: CoachingCategory[] = [
 
 export type Severity = "Low" | "Medium" | "High";
 export type Difficulty = "Easy" | "Medium" | "Hard";
-export type GoalStatus = "Not Started" | "In Progress" | "On Track" | "Achieved";
+export type GoalStatus =
+  | "Not Started"
+  | "In Progress"
+  | "On Track"
+  | "Achieved"
+  | "Needs Work"
+  | "New Focus"
+  | "Needs More Data";
 export type ProgressTrend = "Improving" | "Steady" | "Declining";
 
 /**
@@ -77,10 +84,22 @@ export interface CoachInsight {
   isTopPriority?: boolean;
 }
 
+/**
+ * Player-readable tracking. Every field is either a real measured metric or an
+ * observed occurrence count — never an abstract 0-100 rating.
+ */
 export interface InsightTracking {
-  currentScore: number; // 0-100
-  goalScore: number; // 0-100
-  trend: ProgressTrend;
+  /** What the player is doing now, e.g. "5.5 CS/min" or "4 of last 6 games". */
+  currentLabel: string;
+  /** The next achievable goal, or null when BotDiff cannot set one honestly. */
+  goalLabel: string | null;
+  /** What the current measurement is called, e.g. "CS / min". */
+  measureLabel: string;
+  /** 0-1 progress, only when it is mathematically explainable. */
+  progress: number | null;
+  /** When BotDiff will look at this again. */
+  evaluation: string | null;
+  trend?: ProgressTrend;
   status: GoalStatus;
 }
 
@@ -99,15 +118,20 @@ export interface ImprovementGoal {
   title: string;
   detail: string;
   category: CoachingCategory;
-  current: number;
-  target: number;
-  /** Unit label, e.g. "CS/min", "LP", "deaths". */
-  unit: string;
-  trend: ProgressTrend;
+  /** What the measurement is called, e.g. "Deaths / game". */
+  measureLabel: string;
+  /** e.g. "9.0/game" or "Recurring in recent matches". */
+  currentLabel: string;
+  /** e.g. "≤ 7.0/game" — null when no honest goal exists yet. */
+  goalLabel: string | null;
+  /** e.g. "Next 5 comparable games". */
+  evaluation: string | null;
+  /** 0-1, only when the movement baseline → goal is explainable. */
+  progress: number | null;
+  trend?: ProgressTrend;
   status: GoalStatus;
-  /** Lower numbers are better for this metric (e.g. deaths). */
-  invert?: boolean;
 }
+
 
 /**
  * A point-in-time coaching report. Today these are hand-authored demo reports;
@@ -167,9 +191,70 @@ function gradeFromWinRate(wr: number): string {
   return "C";
 }
 
+/** Real coaching metrics → player-readable League categories. */
+const METRIC_CATEGORY: Record<string, CoachingCategory> = {
+  cs: "Farming",
+  gold: "Farming",
+  deaths: "Positioning",
+  kda: "Team Fighting",
+  kp: "Team Fighting",
+  damage: "Team Fighting",
+  vision: "Vision",
+  objective: "Dragon & Baron Prep",
+};
+
+/** Occurrence goal: cut a repeating habit to at most this many of the next 5 games. */
+function occurrenceGoal(count: number): number {
+  return Math.max(0, Math.min(1, Math.floor(count / 3)));
+}
+
+/** The plan entry (if any) that already measures this pattern with a real metric. */
+function planEntryFor(p: CoachPattern, d: CoachDossier) {
+  return d.plan.queue.find(
+    (e) =>
+      e.issueLabel.toLowerCase() === p.title.toLowerCase() ||
+      METRIC_CATEGORY[e.metric] === (CATEGORY_MAP[p.category] ?? "Macro"),
+  );
+}
+
+function trackingFromPattern(p: CoachPattern, d: CoachDossier): InsightTracking {
+  const entry = planEntryFor(p, d);
+  // A real measured metric always wins over an occurrence estimate.
+  if (entry?.target) {
+    return {
+      measureLabel: entry.metricName,
+      currentLabel: `${entry.baseline}${entry.unit}`,
+      goalLabel: `${entry.target.direction === "lower" ? "≤ " : ""}${entry.target.value}${entry.target.unit}`,
+      progress: entry.target.progress,
+      evaluation: entry.target.evaluationWindow,
+      trend: p.streak >= 3 ? "Declining" : "Steady",
+      status: entry.target.progress >= 1 ? "Achieved" : entry.slot === "active" ? "In Progress" : "Not Started",
+    };
+  }
+  if (entry) {
+    return {
+      measureLabel: entry.metricName,
+      currentLabel: `${entry.baseline}${entry.unit}`,
+      goalLabel: null,
+      progress: null,
+      evaluation: null,
+      status: "Needs More Data",
+    };
+  }
+  // No supporting metric — coach the observed occurrences instead, never a rating.
+  return {
+    measureLabel: "Observed",
+    currentLabel: `${p.count} of last ${d.matchesAnalyzed} games`,
+    goalLabel: `≤ ${occurrenceGoal(p.count)} of your next 5 games`,
+    progress: null,
+    evaluation: "Reviewed after your next 5 games",
+    trend: p.streak >= 3 ? "Declining" : "Steady",
+    status: p.streak >= 3 ? "Needs Work" : "In Progress",
+  };
+}
+
 function insightFromPattern(p: CoachPattern, d: CoachDossier, top: boolean): CoachInsight {
   const isPlanTarget = d.improvementPlan.biggestWeakness === p.title;
-  const currentScore = Math.max(10, Math.round(100 - p.rate * 70));
   return {
     id: p.id,
     title: p.title,
@@ -194,14 +279,50 @@ function insightFromPattern(p: CoachPattern, d: CoachDossier, top: boolean): Coa
       ...(p.streak >= 2 ? [`Current streak: ${p.streak} games in a row.`] : []),
     ],
     aiNotes: isPlanTarget ? d.improvementPlan.why : undefined,
-    tracking: {
-      currentScore,
-      goalScore: Math.min(100, currentScore + 20),
-      trend: p.streak >= 3 ? "Declining" : "Steady",
-      status: "In Progress",
-    },
+    tracking: trackingFromPattern(p, d),
     isTopPriority: top,
   };
+}
+
+/** Coaching goals come from the authoritative plan queue — real metrics only. */
+function goalsFromPlan(d: CoachDossier): ImprovementGoal[] {
+  const active: ImprovementGoal[] = d.plan.queue.map((e) => ({
+    id: `goal-${e.metric}-${e.scopeId}`,
+    title: e.issueLabel,
+    detail: e.headline,
+    category: METRIC_CATEGORY[e.metric] ?? "Macro",
+    measureLabel: e.metricName,
+    currentLabel: `${e.baseline}${e.unit}`,
+    goalLabel: e.target
+      ? `${e.target.direction === "lower" ? "≤ " : ""}${e.target.value}${e.target.unit}`
+      : null,
+    evaluation: e.target?.evaluationWindow ?? null,
+    progress: e.target ? e.target.progress : null,
+    status: e.target
+      ? e.target.progress >= 1
+        ? "Achieved"
+        : e.slot === "active"
+          ? "In Progress"
+          : e.slot === "next"
+            ? "New Focus"
+            : "Not Started"
+      : "Needs More Data",
+  }));
+
+  const completed: ImprovementGoal[] = d.plan.history.slice(0, 3).map((h, i) => ({
+    id: `goal-done-${h.metric}-${i}`,
+    title: h.issueLabel,
+    detail: `${h.scopeLabel} · ${h.sampleSize} games`,
+    category: METRIC_CATEGORY[h.metric] ?? "Macro",
+    measureLabel: h.metricName,
+    currentLabel: h.journey,
+    goalLabel: null,
+    evaluation: null,
+    progress: 1,
+    status: "Achieved",
+  }));
+
+  return [...active, ...completed];
 }
 
 function deriveCoachingData(d: CoachDossier): CoachingEngineData {
@@ -212,26 +333,46 @@ function deriveCoachingData(d: CoachDossier): CoachingEngineData {
   const insights: CoachInsight[] = patterns.map((p, i) => insightFromPattern(p, d, i === 0));
 
   if (insights.length === 0) {
+    const consistency = d.performanceConsistency.find((c) => c.available && c.typicalRange);
     insights.push({
       id: "consistency",
-      title: "Consistency is your climb ceiling",
+      title: consistency
+        ? `Your ${consistency.name.toLowerCase()} swings game to game`
+        : "Not enough games yet to name a focus",
       category: "Reliable Play",
       severity: "Medium",
       confidence: 70,
-      description: d.improvementPlan.why,
-      whyItMatters: d.consistency.explanation,
+      description: consistency?.summary ?? d.improvementPlan.why,
+      whyItMatters: consistency
+        ? `Steady ${consistency.name.toLowerCase()} is what turns a good game into a good week — right now your games look very different from each other.`
+        : "BotDiff waits for enough comparable games before naming a focus, rather than guessing.",
       recommendedAction: d.improvementPlan.practiceGoal,
       expectedImprovement: d.improvementPlan.expectedImprovement,
       estimatedLpImpact: "High",
       practiceDifficulty: "Medium",
       estimatedPracticeTime: "Ongoing",
-      examples: [`Consistency is ${d.consistency.current}/100 across your last ${d.matchesAnalyzed} games.`],
-      tracking: {
-        currentScore: d.consistency.current,
-        goalScore: 85,
-        trend: d.consistency.weeklyTrend > 2 ? "Improving" : d.consistency.weeklyTrend < -2 ? "Declining" : "Steady",
-        status: "In Progress",
-      },
+      examples: consistency?.typicalRange
+        ? [
+            `Recent range: ${consistency.typicalRange.low}${consistency.unit} – ${consistency.typicalRange.high}${consistency.unit} across ${consistency.sampleSize} games.`,
+          ]
+        : ["BotDiff needs more comparable games before it can measure this."],
+      tracking: consistency?.typicalRange
+        ? {
+            measureLabel: consistency.name,
+            currentLabel: `${consistency.average}${consistency.unit} (typically ${consistency.typicalRange.low}–${consistency.typicalRange.high}${consistency.unit})`,
+            goalLabel: `Stay at or above ${consistency.average}${consistency.unit} in 4 of your next 5 games`,
+            progress: null,
+            evaluation: "Reviewed after your next 5 games",
+            status: "In Progress",
+          }
+        : {
+            measureLabel: "Status",
+            currentLabel: "Needs more data",
+            goalLabel: null,
+            progress: null,
+            evaluation: null,
+            status: "Needs More Data",
+          },
       isTopPriority: true,
     });
   }
@@ -247,49 +388,7 @@ function deriveCoachingData(d: CoachDossier): CoachingEngineData {
     done: false,
   }));
 
-  const consistencyTrend: ProgressTrend =
-    d.consistency.weeklyTrend > 2 ? "Improving" : d.consistency.weeklyTrend < -2 ? "Declining" : "Steady";
-  const wrTrend: ProgressTrend =
-    d.winRate >= 55 ? "Improving" : d.winRate <= 45 ? "Declining" : "Steady";
-
-  const goals: ImprovementGoal[] = [
-    {
-      id: "goal-consistency",
-      title: "Raise your consistency",
-      detail: d.consistency.explanation,
-      category: "Reliable Play",
-      current: d.consistency.current,
-      target: 85,
-      unit: "/100",
-      trend: consistencyTrend,
-      status: d.consistency.current >= 85 ? "Achieved" : "In Progress",
-    },
-    {
-      id: "goal-winrate",
-      title: "Reach a 55% win rate",
-      detail: `Currently ${d.winRate}% over ${d.matchesAnalyzed} games.`,
-      category: "Macro",
-      current: d.winRate,
-      target: 55,
-      unit: "% WR",
-      trend: wrTrend,
-      status: d.winRate >= 55 ? "Achieved" : "In Progress",
-    },
-    ...patterns.slice(0, 3).map((p) => {
-      const cur = Math.max(10, Math.round(100 - p.rate * 70));
-      return {
-        id: `goal-${p.id}`,
-        title: `Fix: ${p.title}`,
-        detail: p.detail,
-        category: CATEGORY_MAP[p.category] ?? "Macro",
-        current: cur,
-        target: Math.min(100, cur + 20),
-        unit: "rating",
-        trend: (p.streak >= 3 ? "Declining" : "Improving") as ProgressTrend,
-        status: "In Progress" as GoalStatus,
-      };
-    }),
-  ];
+  const goals = goalsFromPlan(d);
 
   const upTrends = d.trends.filter((t) => t.improved && t.direction !== "flat");
   const downTrends = d.trends.filter((t) => !t.improved && t.direction !== "flat");
@@ -316,6 +415,7 @@ function deriveCoachingData(d: CoachDossier): CoachingEngineData {
 
   return { insights, tasks, goals, reports };
 }
+
 
 // --- Hooks -----------------------------------------------------------------
 
@@ -361,15 +461,7 @@ export const statusTone: Record<GoalStatus, "neutral" | "primary" | "success" | 
   "In Progress": "warning",
   "On Track": "primary",
   Achieved: "success",
+  "Needs Work": "warning",
+  "New Focus": "primary",
+  "Needs More Data": "neutral",
 };
-
-/** Percentage complete for a goal, accounting for inverted (lower-is-better) metrics. */
-export function goalProgress(goal: ImprovementGoal): number {
-  if (goal.invert) {
-    // Assume a sensible worst-case start of target + 4 for inverted metrics.
-    const worst = goal.target + 4;
-    const pct = ((worst - goal.current) / (worst - goal.target)) * 100;
-    return Math.max(0, Math.min(100, Math.round(pct)));
-  }
-  return Math.max(0, Math.min(100, Math.round((goal.current / goal.target) * 100)));
-}

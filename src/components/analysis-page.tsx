@@ -281,7 +281,10 @@ function PracticeHistory() {
           tone="primary"
           eyebrow="Goal"
           title={g.title}
-          summary={`${g.detail} — ${g.current} / ${g.target} ${g.unit}`}
+          summary={`${g.detail} — ${g.measureLabel} now ${g.currentLabel}${
+            g.goalLabel ? `, target ${g.goalLabel}` : " (no proven target yet)"
+          }`}
+
           readTime="20 sec"
           headerRight={<Pill tone="primary">{g.status}</Pill>}
         />

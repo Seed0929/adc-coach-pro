@@ -21,15 +21,16 @@ import {
   useCoachingData,
   useTodaysFocusInsight,
   groupInsightsByCategory,
-  goalProgress,
   severityTone,
   trendTone,
   statusTone,
   type CoachInsight,
   type ImprovementGoal,
+  type InsightTracking,
   type PracticeTask,
   type ProgressTrend,
 } from "@/lib/coaching-data";
+
 
 export const Route = createFileRoute("/coaching")({
   head: () => ({
@@ -63,14 +64,46 @@ function assessmentLabel(n: number): string {
   return "Coach's early read";
 }
 
-function ScoreBar({ current, goal }: { current: number; goal: number }) {
-  const pct = Math.max(0, Math.min(100, Math.round((current / goal) * 100)));
+/** Only shown when the movement from baseline to goal is honestly calculable. */
+function ProgressBar({ progress }: { progress: number }) {
+  const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
       <div
         className="h-full rounded-full bg-gradient-to-r from-primary to-primary-dim transition-[width] duration-700"
         style={{ width: `${pct}%` }}
       />
+    </div>
+  );
+}
+
+/** Current → goal in the player's own real numbers, never an abstract rating. */
+function MeasureRow({ tracking }: { tracking: InsightTracking }) {
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+        <span className="text-muted-foreground">
+          <span className="text-foreground/60">{tracking.measureLabel}:</span>{" "}
+          <span className="font-medium text-foreground">{tracking.currentLabel}</span>
+        </span>
+        {tracking.goalLabel && (
+          <span className="text-muted-foreground">
+            <span className="text-foreground/60">Goal:</span>{" "}
+            <span className="font-medium text-primary">{tracking.goalLabel}</span>
+          </span>
+        )}
+        <Pill tone={statusTone[tracking.status]}>{tracking.status}</Pill>
+        {tracking.trend && (
+          <Pill tone={trendTone[tracking.trend]}>
+            <TrendIcon trend={tracking.trend} />
+            {tracking.trend}
+          </Pill>
+        )}
+      </div>
+      {tracking.progress != null && <ProgressBar progress={tracking.progress} />}
+      {tracking.evaluation && (
+        <p className="text-[11px] text-muted-foreground">{tracking.evaluation}</p>
+      )}
     </div>
   );
 }
@@ -93,19 +126,9 @@ function InsightCard({ insight }: { insight: CoachInsight }) {
             <Pill tone="neutral">{assessmentLabel(insight.confidence)}</Pill>
           </div>
           <div className="font-medium leading-snug">{insight.title}</div>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
-              {t.currentScore} → {t.goalScore}
-            </span>
-            <div className="flex-1">
-              <ScoreBar current={t.currentScore} goal={t.goalScore} />
-            </div>
-            <Pill tone={trendTone[t.trend]}>
-              <TrendIcon trend={t.trend} />
-              {t.trend}
-            </Pill>
-          </div>
+          <MeasureRow tracking={t} />
         </div>
+
         <ChevronDown
           className={`mt-1 size-4 shrink-0 text-muted-foreground transition-transform duration-300 ${
             open ? "rotate-180" : ""
@@ -215,7 +238,6 @@ function TaskRow({ task, checked, onToggle }: { task: PracticeTask; checked: boo
 }
 
 function GoalCard({ goal }: { goal: ImprovementGoal }) {
-  const pct = goalProgress(goal);
   return (
     <div className="glass rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
@@ -225,27 +247,42 @@ function GoalCard({ goal }: { goal: ImprovementGoal }) {
         </div>
         <Pill tone={statusTone[goal.status]}>{goal.status}</Pill>
       </div>
-      <div className="mt-4 flex items-end justify-between">
-        <div className="font-display text-2xl font-semibold">{pct}%</div>
-        <div className="text-right text-xs text-muted-foreground">
-          {goal.current} / {goal.target} {goal.unit}
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <div className="text-[11px] text-muted-foreground">{goal.measureLabel} now</div>
+          <div className="font-display text-2xl font-semibold">{goal.currentLabel}</div>
         </div>
+        {goal.goalLabel ? (
+          <div className="text-right">
+            <div className="text-[11px] text-muted-foreground">Coach target</div>
+            <div className="font-display text-lg font-semibold text-primary">{goal.goalLabel}</div>
+          </div>
+        ) : (
+          <p className="max-w-[60%] text-right text-xs text-muted-foreground">
+            Not enough games yet for a target you have already proven.
+          </p>
+        )}
       </div>
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-primary-dim transition-[width] duration-700"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="mt-3">
-        <Pill tone={trendTone[goal.trend]}>
-          <TrendIcon trend={goal.trend} />
-          {goal.trend}
-        </Pill>
-      </div>
+      {goal.progress != null && (
+        <div className="mt-2">
+          <ProgressBar progress={goal.progress} />
+        </div>
+      )}
+      {goal.evaluation && (
+        <p className="mt-2 text-[11px] text-muted-foreground">{goal.evaluation}</p>
+      )}
+      {goal.trend && (
+        <div className="mt-3">
+          <Pill tone={trendTone[goal.trend]}>
+            <TrendIcon trend={goal.trend} />
+            {goal.trend}
+          </Pill>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function Coaching() {
   const { isDemo } = useBotDiffData();
