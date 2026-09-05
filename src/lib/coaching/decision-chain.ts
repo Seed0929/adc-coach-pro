@@ -166,13 +166,8 @@ function withHabit(ev: CoachableEvent, history: MatchAnalysisInput[]): Coachable
 
 // --- helpers ---------------------------------------------------------------
 
-const mmss = (seconds: number) => {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-};
-
 const pct = (n: number) => `${Math.round(n * 100)}%`;
+
 
 function phaseFor(seconds: number): GamePhase {
   if (seconds <= 14 * 60) return "early";
