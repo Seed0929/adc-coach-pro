@@ -20,7 +20,8 @@ import { useRiotAssets } from "@/hooks/use-riot-assets";
 import type { MatchCoachingReport, CoachAssessment, TrendItem } from "@/lib/coaching-engine";
 import type { PhaseReview, PlanItem } from "@/lib/coaching/match-plan";
 import type { CoachableEvent, ImpactLevel } from "@/lib/coaching/decision-chain";
-import type { PowerSpikeItem, SpikeStatus } from "@/lib/coaching/power-spike";
+import type { PowerSpikeItem } from "@/lib/coaching/power-spike";
+import { sanitizeCoachingText } from "@/lib/coaching/performance-intelligence-v1";
 import type { MatchReportDecisionChain } from "@/lib/coaching/decision-chain-v1";
 import { validateCounterfactual } from "@/lib/coaching/coaching-validation-v1";
 
@@ -137,19 +138,24 @@ function DecisionChainCard({ chain }: { chain: MatchReportDecisionChain }) {
         </div>
       )}
 
-      {/* Counterfactual — only when one exists; certainty is stated, never implied. */}
-      {counterfactual?.present && counterfactual.alternativeDecision && (
-        <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
-          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
-            The alternative{" "}
-            <span className="text-muted-foreground/70">
-              ({counterfactual.certainty.toLowerCase()})
-            </span>
-          </p>
-          <p className="text-sm font-medium">{counterfactual.alternativeDecision}</p>
-          <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
-        </div>
-      )}
+      {/* Counterfactual — behavioural only, never itemization, omitted when unsupported. */}
+      {(() => {
+        if (!counterfactual?.present || !counterfactual.alternativeDecision) return null;
+        const alt = sanitizeCoachingText(counterfactual.alternativeDecision).text;
+        if (!alt) return null;
+        return (
+          <div className="mt-4 rounded-2xl bg-white/[0.03] p-4">
+            <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              What to do instead{" "}
+              <span className="text-muted-foreground/70">
+                ({counterfactual.certainty.toLowerCase()} — BotDiff's read, not observed)
+              </span>
+            </p>
+            <p className="text-sm font-medium">{alt}</p>
+            <p className="mt-1 text-xs text-muted-foreground/80">{counterfactual.uncertainty}</p>
+          </div>
+        );
+      })()}
 
       {/* Habit history is supporting context — explicitly not proof. */}
       {chain.habitNote && (
