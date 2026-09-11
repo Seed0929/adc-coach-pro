@@ -28,9 +28,10 @@ export function PlanSettings() {
           <Sparkles className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="font-medium">Current Plan</div>
+          <div className="font-medium">{isOwner ? "Owner Access" : "Current Plan"}</div>
           <div className="text-sm text-muted-foreground">
             {planLabel(state.plan)}
+            {isOwner && " · full access, no allowance"}
             {!isPro && state.fullReports.limit > 0 && (
               <>
                 {" · "}
