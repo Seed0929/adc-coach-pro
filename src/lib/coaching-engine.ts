@@ -949,7 +949,7 @@ export function buildMatchReport(
     coachAssessment: assessment.level,
     assessmentReason: assessment.reason,
     plan,
-    history: buildHistory(m, prev, analysis.overallScore, prevAnalysis?.overallScore ?? null),
+    history: buildHistory(m, prev),
     comparedMatchId: prev?.matchId ?? null,
     engineVersion: COACHING_ENGINE_VERSION,
     source: "rule-based",
