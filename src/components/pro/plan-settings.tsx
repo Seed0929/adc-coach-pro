@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Sparkles, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useEntitlements } from "@/hooks/use-entitlements";
@@ -32,6 +33,7 @@ export function PlanSettings() {
           <div className="text-sm text-muted-foreground">
             {planLabel(state.plan)}
             {isOwner && " · full access, no allowance"}
+            {!isPro && ` · ${state.fullReports.limit} coaching reports/week`}
             {!isPro && state.fullReports.limit > 0 && (
               <>
                 {" · "}
@@ -43,6 +45,14 @@ export function PlanSettings() {
             )}
           </div>
         </div>
+        {!isPro && (
+          <Link
+            to="/pricing"
+            className="rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Pricing
+          </Link>
+        )}
         <UpgradeDialog
           trigger={
             <button

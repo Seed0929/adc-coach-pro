@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Lock, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Pill } from "@/components/app-shell";
 import { UpgradeButton, UpgradeDialog } from "@/components/pro/upgrade-dialog";
 import { useEntitlements } from "@/hooks/use-entitlements";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import {
   planLabel,
   resetLabel,
@@ -190,6 +193,10 @@ export function AllowanceExhausted({
   resetsAt: string | null;
   limit: number;
 }) {
+  useEffect(() => {
+    trackBetaEvent(BETA_EVENTS.freeLimitReached, { surface: "coaching-allowance" });
+  }, []);
+
   return (
     <div className="glass relative overflow-hidden rounded-3xl p-6">
       <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary/20 blur-[90px]" />
@@ -206,7 +213,13 @@ export function AllowanceExhausted({
           {resetLabel(resetsAt) ? ` — ${resetLabel(resetsAt).toLowerCase()}` : ""}.
         </p>
         <p className="mt-3 text-sm text-muted-foreground">Want BotDiff coaching after every game?</p>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Link
+            to="/coaching"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium transition-colors hover:bg-white/[0.08]"
+          >
+            Review my coaching
+          </Link>
           <UpgradeButton label="Explore BotDiff Pro" />
         </div>
       </div>
