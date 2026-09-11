@@ -8,6 +8,13 @@
       "when": 1789159531601,
       "tag": "0000_add_owner_role",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789159772933,
+      "tag": "0001_harden_privilege_grants",
+      "breakpoints": true
     }
   ]
 }
