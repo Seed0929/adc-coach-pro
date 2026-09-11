@@ -311,7 +311,7 @@ function decisionChain(m: MatchAnalysisInput, items: PowerSpikeItem[]): string[]
   const clean = m.deaths <= 3 && m.csPerMin >= 7.5;
   if (overstay) {
     return [
-      "Stayed for one extra wave after the crash",
+      "Likely stayed for an extra wave after the crash",
       "Recalled late — lost tempo",
       "Next item delayed",
       "Arrived at the next objective without your spike",
