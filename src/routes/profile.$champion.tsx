@@ -4,6 +4,7 @@ import { AppShell, Pill, DemoModeBanner } from "@/components/app-shell";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
 import { useRiotAssets } from "@/hooks/use-riot-assets";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
+import { ProContextNote } from "@/components/pro/pro-lock";
 import { MetricGraphCard } from "@/components/metrics/metric-graphs";
 import { TREND_LABELS, classifyTrend, type MetricReading } from "@/lib/metrics/metric-reading";
 
@@ -111,6 +112,8 @@ function ChampionProgressPage() {
         </div>
         <span className="font-display text-4xl font-semibold text-primary">{champ.winRate}%</span>
       </div>
+
+      <ProContextNote surface="champion" className="mt-3" />
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {stats.map((s) => (

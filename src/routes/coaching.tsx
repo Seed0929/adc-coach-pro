@@ -18,7 +18,7 @@ import {
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
-import { LockedInsights, FreeUsageMeter } from "@/components/pro/pro-lock";
+import { LockedInsights, FreeAllowanceCard, ProContextNote } from "@/components/pro/pro-lock";
 import {
   useCoachingData,
   useTodaysFocusInsight,
@@ -416,7 +416,8 @@ function Coaching() {
       </div>
 
       <LockedInsights insights={dossier.lockedInsights} total={dossier.lockedInsightCount} />
-      <FreeUsageMeter className="mt-6" />
+      <ProContextNote surface="coaching" className="mt-6" />
+      <FreeAllowanceCard className="mt-3" />
     </AppShell>
   );
 }

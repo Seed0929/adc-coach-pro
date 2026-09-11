@@ -10,6 +10,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Target } from "lucide-react";
 import { AppShell, PageHeader, DemoModeBanner, Pill } from "@/components/app-shell";
+import { ProContextNote } from "@/components/pro/pro-lock";
 import { MetricGraphCard } from "@/components/metrics/metric-graphs";
 import { readingFromTrend } from "@/lib/metrics/metric-reading";
 import { usePlayerProfile } from "@/hooks/use-player-profile";
@@ -59,6 +60,7 @@ function Progress() {
         title="Am I actually improving?"
         subtitle="Your real statistics over time — recent averages measured against your earlier games."
       />
+      <ProContextNote surface="analytics" className="-mt-2 mb-6" />
 
       <div className="glass rise rounded-3xl p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">

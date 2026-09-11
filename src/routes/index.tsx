@@ -37,7 +37,7 @@ import type { RiotAccountSummary } from "@/lib/riot.functions";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
 import { useSync, formatLastSynced } from "@/hooks/use-sync";
 import { LandingPage } from "@/components/landing-page";
-import { LockedInsights, FreeUsageMeter } from "@/components/pro/pro-lock";
+import { LockedInsights, FreeAllowanceCard } from "@/components/pro/pro-lock";
 
 /** Live "Checking Riot..." / "Last synced: X ago" indicator for the hero. */
 function SyncStatus() {
@@ -821,7 +821,7 @@ function CoachingAnalysisSection() {
         insights={dossier.lockedInsights}
         total={dossier.lockedInsightCount}
       />
-      <FreeUsageMeter className="mt-4" />
+      <FreeAllowanceCard className="mt-4" />
     </section>
   );
 }
