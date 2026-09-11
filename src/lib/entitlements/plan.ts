@@ -9,7 +9,33 @@
 // Pure + client-safe: no server imports, no Supabase, no side effects.
 // ---------------------------------------------------------------------------
 
-export type BillingPlan = "free" | "pro";
+/**
+ * Access levels, lowest to highest: free < pro < owner.
+ *
+ * `owner` is NOT a customer subscription. It is an internal, server-authorized
+ * access level for BotDiff ownership/development accounts. It satisfies every
+ * Pro capability check automatically, never expires, and is completely
+ * independent of any future billing state.
+ */
+export type AccessLevel = "free" | "pro" | "owner";
+
+/** Historic name kept so existing call sites keep compiling. */
+export type BillingPlan = AccessLevel;
+
+/** Customer-facing plans only — the two levels users ever see or choose. */
+export const PUBLIC_PLANS: readonly AccessLevel[] = ["free", "pro"] as const;
+
+/** Ranking used for "at least Pro" style checks. Owner always wins. */
+const LEVEL_RANK: Record<AccessLevel, number> = { free: 0, pro: 1, owner: 2 };
+
+/** True for pro AND owner — the single test for "has premium capabilities". */
+export function isProOrAbove(level: AccessLevel): boolean {
+  return LEVEL_RANK[level] >= LEVEL_RANK.pro;
+}
+
+export function isOwnerLevel(level: AccessLevel): boolean {
+  return level === "owner";
+}
 
 export const PLAN_CONFIG = {
   /** Full AI match coaching reports a Free member may unlock per period. */
@@ -53,7 +79,7 @@ export type Capability =
  * complete reports; the difference is the metered allowance, enforced
  * separately by the entitlement server layer.
  */
-export const CAPABILITIES: Record<BillingPlan, Record<Capability, boolean>> = {
+export const CAPABILITIES: Record<AccessLevel, Record<Capability, boolean>> = {
   free: {
     canViewBasicStats: true,
     canViewMatchHistory: true,
