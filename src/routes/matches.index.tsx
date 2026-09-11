@@ -369,7 +369,7 @@ function DemoMatches() {
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
               { icon: Crosshair, label: "CS/min", value: active.stats.csPerMin },
-              { icon: Eye, label: "Vision", value: active.stats.visionScore },
+              { icon: Eye, label: "Vision score (Riot)", value: active.stats.visionScore },
               { icon: Sword, label: "DMG Share", value: active.stats.damageShare },
               { icon: ArrowUpRight, label: "LP Impact", value: active.lp },
             ].map((s) => (

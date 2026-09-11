@@ -168,12 +168,14 @@ export function buildMatchDecisionChain(
         matchId: m.matchId,
       });
     }
+    // The outcome sentence is BotDiff's *interpretation* of those stats, not an
+    // event Riot reported. It must never render as observed evidence.
     list.push({
       id: `${e.id}:outcome`,
       kind: "match-event",
       statement: e.outcome,
-      source: "riot-data",
-      observed: true,
+      source: "league-intelligence",
+      observed: false,
       timestampSeconds: seconds ?? undefined,
       matchId: m.matchId,
     });

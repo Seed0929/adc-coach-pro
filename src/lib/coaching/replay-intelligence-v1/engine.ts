@@ -67,6 +67,11 @@ function mmss(seconds: number): string {
   return `${m}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** Player-facing name for a phase — used wherever no real clock anchor exists. */
+function phaseLabel(phase: GamePhase): string {
+  return phase === "early" ? "Laning phase" : phase === "mid" ? "Mid game" : "Late game";
+}
+
 function phaseOf(seconds: number): GamePhase {
   if (seconds < 14 * 60) return "early";
   if (seconds < 25 * 60) return "mid";
@@ -177,16 +182,18 @@ function timestampFor(
       estimated: false,
     };
   }
-  // Spread the timeline evenly across the known (or a standard 30 min) game,
-  // starting after the first wave so early-game decisions land in lane phase.
+  // No Riot timeline anchor for this decision. We still need a stable ordering,
+  // so we spread decisions across the game — but the *label* is the game phase,
+  // never a clock time. BotDiff does not invent minute:second precision.
   const duration = input.gameDurationSeconds ?? 30 * 60;
   const start = 90;
   const step = total > 1 ? (duration - start) / (total + 1) : (duration - start) / 2;
   const seconds = Math.round(start + step * (sequence + 1));
+  const phase = phaseOf(seconds);
   return {
     seconds,
-    label: mmss(seconds),
-    phase: phaseOf(seconds),
+    label: phaseLabel(phase),
+    phase,
     sequence,
     estimated: true,
   };
@@ -319,7 +326,7 @@ function buildMoment(
     narrative?.summary,
     league?.summary,
     topic?.definition,
-    `${c.roleIntelligence.roleLabel} decision around ${fundamental.label.toLowerCase()} at ${timestamp.label}.`,
+    `${c.roleIntelligence.roleLabel} decision around ${fundamental.label.toLowerCase()} during ${timestamp.label.toLowerCase()}.`,
   );
   traces.push(
     trace(
@@ -573,14 +580,14 @@ export function buildTimeline(input: ReplayInput): ReplayTimeline {
   );
 
   const headline = primary
-    ? `${roleLabel}: the game turned on ${primary.curriculumTopicLabel.toLowerCase()} around ${primary.timestamp.label}.`
+    ? `${roleLabel}: the game turned on ${primary.curriculumTopicLabel.toLowerCase()} during ${primary.timestamp.label.toLowerCase()}.`
     : `${roleLabel}: a clean timeline — nothing decided this game against you.`;
 
   const gameDevelopment = [
     `Here is how the game developed for you as ${roleLabel}.`,
     ...moments
       .slice(0, 4)
-      .map((m) => `At ${m.timestamp.label}, ${m.situationSummary} ${m.tempoImpact}`.trim()),
+      .map((m) => `During ${m.timestamp.label.toLowerCase()}, ${m.situationSummary} ${m.tempoImpact}`.trim()),
     primary ? `The decision that mattered most: ${primary.whyItMattered}` : "",
   ]
     .filter((s) => s.length > 0)
@@ -681,7 +688,13 @@ export function safeFallback(role: RoleId = "adc", now?: string): ReplayTimeline
 
   const base: ReplayMoment = {
     id: `0:${fundamentalId}`,
-    timestamp: { seconds, label: mmss(seconds), phase: phaseOf(seconds), sequence: 0, estimated: true },
+    timestamp: {
+      seconds,
+      label: phaseLabel(phaseOf(seconds)),
+      phase: phaseOf(seconds),
+      sequence: 0,
+      estimated: true,
+    },
     decisionId: fundamentalId,
     leagueFundamental: fundamentalId,
     leagueFundamentalLabel: fundamental.label,

@@ -226,7 +226,7 @@ function laneEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: "Started the mid game a component behind.",
       impact: m.laneMinions10 < 55 ? "high" : "medium",
-      evidence: `Only ${Math.round(m.laneMinions10)} CS at 10 minutes (target ~75+).`,
+      evidence: `Only ${Math.round(m.laneMinions10)} CS at 10 minutes.`,
       explanation:
         "Every missed minion is gold you don't have at your next recall. Over the first ten minutes it compounds into a delayed first item, which is the difference between winning and losing your level-6 trade.",
       practiceTakeaway: "Last-hit the first three waves without using abilities and aim for 75+ CS at 10:00.",
@@ -271,7 +271,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Recall Timing",
       fundamental: "Recall Timing",
       tone: "negative",
-      decision: "Stayed for one extra wave instead of recalling",
+      decision: "Likely stayed for extra waves instead of recalling",
       why: "Backing on the crash means you return with an item, full HP/mana, and a control ward. Backing one wave later means you return without the spike AND miss the setup for the next objective — one decision loses a whole map cycle.",
       chain: [
         "Overstayed on the wave",
@@ -297,7 +297,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Wave Management",
       fundamental: "Wave Management",
       tone: "negative",
-      decision: "Grouped without catching a crashing side wave",
+      decision: "Likely grouped without catching crashing side waves",
       why: "Free side waves are the highest gold-per-second on the map after 15 minutes. Ignoring them means the enemy laner scales past you while your team fights 4v5 without a carry.",
       chain: [
         "Left a side wave uncollected",
@@ -323,7 +323,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Wave Management",
       fundamental: "Wave Management",
       tone: "negative",
-      decision: "Rotated to a fight before resetting your wave",
+      decision: "Likely rotated to fights before resetting your wave",
       why: "Fighting with an unresolved wave means you win the skirmish and still lose gold to a wave crashing under enemy tower — or lose the skirmish and lose both. The wave has to work for you while you're gone.",
       chain: [
         "Left a bouncing wave behind you",
@@ -348,7 +348,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Vision Setup",
       fundamental: "Vision",
       tone: "negative",
-      decision: "Skipped a control ward on your recall",
+      decision: "Likely skipped control wards on your recalls",
       why: "A control ward is 75g for information that decides where fights start. Skipping it means every objective is a coin-flip — you're guessing where the enemy is instead of seeing it.",
       chain: [
         "Backed without a control ward",
@@ -473,7 +473,7 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: `Only ${pct(m.killParticipation)} kill participation.`,
       impact: "medium",
-      evidence: `Kill participation of ${pct(m.killParticipation)} — below the ~55% you want.`,
+      evidence: `Kill participation of ${pct(m.killParticipation)}.`,
       explanation:
         "After you crash a wave, the next play is usually a group or an objective, not a fourth wave alone. Being absent means your team takes fights a member down, which quietly loses the mid game.",
       practiceTakeaway: "Rotate to the next play after every wave crash — keep kill participation above 55%.",
@@ -507,7 +507,7 @@ function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: `Reached ${Math.round(m.laneMinions10)} CS at 10:00 — ahead of curve.`,
       impact: "medium",
-      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes (target 75+).`,
+      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes.`,
       explanation:
         "This is the fundamental every carry role is built on. Repeating this CS number is what turns a lane win into a game win — keep pairing it with a wave-crash recall.",
       practiceTakeaway: "Bank this: same opening pattern next game — trades only when they miss a cooldown.",
@@ -530,7 +530,7 @@ function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
         "Fights started on your read",
         "Objectives contested with info",
       ],
-      outcome: `${m.controlWardsPlaced} control wards placed — Challenger-tier habit.`,
+      outcome: `${m.controlWardsPlaced} control wards placed.`,
       impact: "medium",
       evidence: `${m.controlWardsPlaced} control wards purchased.`,
       explanation:

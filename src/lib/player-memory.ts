@@ -78,12 +78,23 @@ export interface CoachTrend {
   note: string;
 }
 
+/**
+ * One real Riot statistic described in plain language: what the player averages,
+ * the range they actually landed in, and how repeatable that is. BotDiff never
+ * turns this into an invented 0-100 rating.
+ */
 export interface ConsistencyDimension {
   label: string;
-  score: number; // 0-100 (higher = more stable)
+  /** Recent average, already formatted with its unit. */
+  average: string;
+  /** Lowest → highest single game in the window, formatted. */
+  range: string;
+  /** Plain-language repeatability, or "Needs more data". */
+  variability: string;
 }
 
 export interface ConsistencyMetric {
+  /** INTERNAL ONLY — repeatability index used to pick coaching tone. Never displayed. */
   current: number;
   previous: number;
   weeklyTrend: number; // signed change vs previous window
@@ -439,55 +450,104 @@ function buildIdentity(agg: Agg): { traits: string[]; summary: string } {
 }
 
 // --- rank assessment -------------------------------------------------------
+// BotDiff does NOT predict a rank ceiling — no statistic it holds supports that.
+// It describes the player's own averages and names what would move them most.
 
 function rankAssessment(agg: Agg): { assessment: string; potential: string } {
-  const skill =
-    agg.csPerMin * 5 +
-    (1 - Math.min(agg.deaths, 10) / 10) * 25 +
-    agg.damageShare * 60 +
-    agg.killParticipation * 25 +
-    agg.winRate * 20;
-  const assessment =
-    skill >= 90
-      ? "Your mechanics and decision-making are already ahead of your current bracket — inconsistency is what's holding your LP back, not skill."
-      : skill >= 70
-        ? "You have solid fundamentals for your rank. Cleaning up one recurring habit is what separates you from the next tier."
-        : "Your fundamentals still have clear gaps. Tightening farming, deaths, and fight timing will move you up quickly.";
-  const potential =
-    skill >= 90 ? "Emerald+" : skill >= 70 ? "Platinum / Emerald" : "Gold";
-  return { assessment, potential: `Estimated ceiling: ${potential} if your biggest leak is fixed.` };
+  const assessment = `Across these games you average ${one(agg.csPerMin)} CS/min, ${one(agg.deaths)} deaths, ${pct(agg.killParticipation)} kill participation and ${pct(agg.damageShare)} damage share, with a ${Math.round(agg.winRate * 100)}% win rate.`;
+  const leak =
+    agg.deaths >= 6
+      ? "cutting deaths"
+      : agg.csPerMin < 6.5
+        ? "raising CS/min"
+        : agg.killParticipation < 0.5
+          ? "being present for more fights"
+          : "holding these numbers more consistently";
+  return {
+    assessment,
+    potential: `The single biggest lever in your own numbers right now is ${leak}.`,
+  };
 }
 
 // --- consistency -----------------------------------------------------------
+// Every dimension is a real Riot statistic reported as average + observed range
+// + a plain-language repeatability word. The numeric repeatability index stays
+// internal (it only picks coaching tone) and is never shown to the player.
+
+interface StatDef {
+  label: string;
+  get: (m: MatchAnalysisInput) => number;
+  fmt: (n: number) => string;
+}
+
+const CONSISTENCY_STATS: StatDef[] = [
+  { label: "CS / min", get: (m) => m.csPerMin, fmt: one },
+  { label: "Deaths", get: (m) => m.deaths, fmt: one },
+  { label: "Damage share", get: (m) => m.damageShare, fmt: pct },
+  { label: "Wards placed", get: (m) => m.wardsPlaced, fmt: (n) => `${Math.round(n)}` },
+  { label: "Objective takedowns", get: (m) => objectivesOf(m), fmt: one },
+  { label: "Kill participation", get: (m) => m.killParticipation, fmt: pct },
+];
+
+/** Plain-language repeatability from the player's own spread — never a rating. */
+function variabilityWord(values: number[]): string {
+  if (values.length < 3) return "Needs more data";
+  const mean = avg(values);
+  if (mean === 0) return "Needs more data";
+  const sd = Math.sqrt(avg(values.map((v) => (v - mean) ** 2)));
+  const cv = sd / Math.abs(mean);
+  if (cv <= 0.1) return "Very repeatable";
+  if (cv <= 0.2) return "Repeatable";
+  if (cv <= 0.35) return "Somewhat swingy";
+  return "Very swingy";
+}
 
 function buildConsistency(inputs: MatchAnalysisInput[]): ConsistencyMetric {
-  const dims = (ms: MatchAnalysisInput[]): ConsistencyDimension[] => [
-    { label: "CS stability", score: stabilityFromValues(ms.map((m) => m.csPerMin)) },
-    { label: "Death stability", score: stabilityFromValues(ms.map((m) => m.deaths + 1)) },
-    { label: "Damage stability", score: stabilityFromValues(ms.map((m) => m.damageShare)) },
-    { label: "Vision stability", score: stabilityFromValues(ms.map((m) => m.visionScore + 1)) },
-    { label: "Objective participation", score: stabilityFromValues(ms.map((m) => objectivesOf(m) + 1)) },
-    { label: "Kill participation", score: stabilityFromValues(ms.map((m) => m.killParticipation)) },
-  ];
-  const scoreOf = (ms: MatchAnalysisInput[]) =>
-    ms.length ? round(avg(dims(ms).map((d) => d.score))) : 0;
+  const dims = (ms: MatchAnalysisInput[]): ConsistencyDimension[] =>
+    CONSISTENCY_STATS.map((s) => {
+      const values = ms.map(s.get);
+      if (values.length === 0) {
+        return { label: s.label, average: "—", range: "—", variability: "Needs more data" };
+      }
+      return {
+        label: s.label,
+        average: s.fmt(avg(values)),
+        range:
+          values.length < 2
+            ? s.fmt(values[0])
+            : `${s.fmt(Math.min(...values))} – ${s.fmt(Math.max(...values))}`,
+        variability: variabilityWord(values),
+      };
+    });
+  // Internal repeatability index only — drives tone, never rendered.
+  const indexOf = (ms: MatchAnalysisInput[]) =>
+    ms.length
+      ? round(
+          avg(
+            CONSISTENCY_STATS.map((s) =>
+              stabilityFromValues(ms.map((m) => s.get(m) + 0.001)),
+            ),
+          ),
+        )
+      : 0;
 
   const recent = inputs.slice(0, 5);
   const prior = inputs.slice(5, 10);
-  const current = scoreOf(recent.length ? recent : inputs);
-  const previous = prior.length ? scoreOf(prior) : current;
-  const monthly = current - scoreOf(inputs);
+  const current = indexOf(recent.length ? recent : inputs);
+  const previous = prior.length ? indexOf(prior) : current;
+  const monthly = current - indexOf(inputs);
 
   const dimList = dims(recent.length ? recent : inputs);
-  const worst = [...dimList].sort((a, b) => a.score - b.score)[0];
-  const best = [...dimList].sort((a, b) => b.score - a.score)[0];
+  const swingiest =
+    dimList.find((d) => d.variability === "Very swingy") ??
+    dimList.find((d) => d.variability === "Somewhat swingy");
   const weeklyTrend = current - previous;
   const explanation =
-    weeklyTrend > 3
-      ? `Consistency is up ${weeklyTrend} points — your ${best?.label.toLowerCase()} steadied over your recent games.`
-      : weeklyTrend < -3
-        ? `Consistency dropped ${Math.abs(weeklyTrend)} points, driven mostly by swings in your ${worst?.label.toLowerCase()}.`
-        : `Consistency is holding steady. Your biggest source of variance is ${worst?.label.toLowerCase()}.`;
+    dimList.every((d) => d.variability === "Needs more data")
+      ? "Needs more data — play a few more games and BotDiff can describe how repeatable your play is."
+      : swingiest
+        ? `Your ${swingiest.label.toLowerCase()} moves around the most: ${swingiest.average} on average, ranging ${swingiest.range} across these games.`
+        : "Your core statistics land in a tight range from game to game.";
 
   return {
     current,

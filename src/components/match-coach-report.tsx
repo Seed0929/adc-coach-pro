@@ -389,12 +389,6 @@ export function MatchCoachReport({
             className="size-14 rounded-2xl object-cover ring-1 ring-white/10"
             loading="lazy"
           />
-          <div className="text-center">
-            <div className="font-display text-5xl font-semibold text-primary leading-none">
-              {report.overallGrade}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">Grade</div>
-          </div>
           <div className="flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="font-medium">{report.champion}</span>
@@ -505,10 +499,11 @@ export function MatchCoachReport({
       </div>
 
       {/* Decision Chain timeline — how one decision influences the next. */}
-      <Card icon={Clock} title="Match Timeline">
+      <Card icon={Clock} title="Decision Sequence">
         <p className="mb-4 text-xs text-muted-foreground">
-          How one decision led to the next. Times are approximate until interactive replay is
-          connected.
+          BotDiff's read of how one decision led to the next, ordered by game phase. These are
+          coaching interpretations of your match statistics, not observed timeline events, so no
+          exact clock times are shown.
         </p>
         <div className="space-y-3">
           {report.plan.timeline.events.map((e) => (

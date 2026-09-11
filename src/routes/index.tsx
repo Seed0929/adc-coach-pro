@@ -524,7 +524,9 @@ function DashboardInner() {
             {dossier.consistency.dimensions.map((d) => (
               <div key={d.label} className="rounded-xl bg-white/[0.03] p-3">
                 <div className="text-[11px] text-muted-foreground">{d.label}</div>
-                <div className="mt-0.5 font-display text-lg font-semibold">{d.score}</div>
+                <div className="mt-0.5 font-display text-lg font-semibold">{d.average}</div>
+                <div className="text-[11px] text-muted-foreground">{d.range}</div>
+                <div className="mt-0.5 text-[11px] text-foreground/70">{d.variability}</div>
               </div>
             ))}
           </div>
@@ -693,27 +695,6 @@ function DashboardInner() {
   );
 }
 
-function scoreTone(value: number): Tone {
-  if (value >= 75) return "success";
-  if (value >= 55) return "primary";
-  if (value >= 40) return "warning";
-  return "danger";
-}
-
-function ScoreMeter({ label, value, tone, sub }: { label: string; value: number; tone: Tone; sub: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className={`font-display text-lg font-semibold ${toneText[tone]}`}>{value}</span>
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <div className={`h-full rounded-full ${toneBar[tone]}`} style={{ width: `${value}%` }} />
-      </div>
-      <div className="mt-1.5 text-[11px] text-muted-foreground">{sub}</div>
-    </div>
-  );
-}
 
 function CoachingAnalysisSection() {
   const { dossier, loading } = useCoachDossier();
@@ -762,13 +743,12 @@ function CoachingAnalysisSection() {
         {/* Consistency dimensions */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {dossier.consistency.dimensions.map((d) => (
-            <ScoreMeter
-              key={d.label}
-              label={d.label}
-              value={d.score}
-              tone={scoreTone(d.score)}
-              sub="stability"
-            />
+            <div key={d.label} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className="text-[11px] text-muted-foreground">{d.label}</div>
+              <div className="mt-0.5 font-display text-xl font-semibold">{d.average}</div>
+              <div className="text-[11px] text-muted-foreground">range {d.range}</div>
+              <div className="mt-1 text-[11px] text-foreground/70">{d.variability}</div>
+            </div>
           ))}
         </div>
 
@@ -957,7 +937,7 @@ function MatchCard({ match }: { match: Match }) {
         <div className="animate-fade-in space-y-3 border-t border-white/[0.06] px-5 py-4 text-sm">
           <div className="grid grid-cols-3 gap-3">
             <MiniStat label="CS / min" value={match.stats.csPerMin} />
-            <MiniStat label="Vision" value={match.stats.visionScore} />
+            <MiniStat label="Vision (Riot)" value={match.stats.visionScore} />
             <MiniStat label="Damage share" value={match.stats.damageShare} />
           </div>
           <p className="text-success/90">
