@@ -192,7 +192,9 @@ function CoachMemory() {
           {dossier.consistency.dimensions.map((d) => (
             <div key={d.label} className="rounded-xl bg-white/[0.03] p-3">
               <div className="text-[11px] text-muted-foreground">{d.label}</div>
-              <div className="mt-0.5 font-display text-lg font-semibold">{d.score}</div>
+              <div className="mt-0.5 font-display text-lg font-semibold">{d.average}</div>
+              <div className="text-[11px] text-muted-foreground">{d.range}</div>
+              <div className="mt-0.5 text-[11px] text-foreground/70">{d.variability}</div>
             </div>
           ))}
         </div>
