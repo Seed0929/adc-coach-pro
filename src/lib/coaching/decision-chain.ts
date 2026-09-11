@@ -271,7 +271,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Recall Timing",
       fundamental: "Recall Timing",
       tone: "negative",
-      decision: "Stayed for one extra wave instead of recalling",
+      decision: "Likely stayed for extra waves instead of recalling",
       why: "Backing on the crash means you return with an item, full HP/mana, and a control ward. Backing one wave later means you return without the spike AND miss the setup for the next objective — one decision loses a whole map cycle.",
       chain: [
         "Overstayed on the wave",
@@ -297,7 +297,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Wave Management",
       fundamental: "Wave Management",
       tone: "negative",
-      decision: "Grouped without catching a crashing side wave",
+      decision: "Likely grouped without catching crashing side waves",
       why: "Free side waves are the highest gold-per-second on the map after 15 minutes. Ignoring them means the enemy laner scales past you while your team fights 4v5 without a carry.",
       chain: [
         "Left a side wave uncollected",
@@ -323,7 +323,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Wave Management",
       fundamental: "Wave Management",
       tone: "negative",
-      decision: "Rotated to a fight before resetting your wave",
+      decision: "Likely rotated to fights before resetting your wave",
       why: "Fighting with an unresolved wave means you win the skirmish and still lose gold to a wave crashing under enemy tower — or lose the skirmish and lose both. The wave has to work for you while you're gone.",
       chain: [
         "Left a bouncing wave behind you",
@@ -348,7 +348,7 @@ function recallAndWaveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       category: "Vision Setup",
       fundamental: "Vision",
       tone: "negative",
-      decision: "Skipped a control ward on your recall",
+      decision: "Likely skipped control wards on your recalls",
       why: "A control ward is 75g for information that decides where fights start. Skipping it means every objective is a coin-flip — you're guessing where the enemy is instead of seeing it.",
       chain: [
         "Backed without a control ward",
