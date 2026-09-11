@@ -60,6 +60,11 @@ export function PlanSettings() {
           <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-warning">
             <FlaskConical className="size-3" /> Internal · payments not yet enabled
           </div>
+          {isOwner && (
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Owner access always applies, so this switch won't restrict your account.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {(["free", "pro"] as const).map((p) => (
               <button
