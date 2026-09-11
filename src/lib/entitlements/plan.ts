@@ -350,3 +350,74 @@ export const PRO_FEATURES: { title: string; detail: string }[] = [
 
 export const FREE_SUMMARY = "Learn what BotDiff can do.";
 export const PRO_SUMMARY = "Build a coach that learns how YOU play.";
+
+// --- pricing page copy ------------------------------------------------------
+
+/**
+ * Free plan bullets. Every line describes something Free ALREADY receives —
+ * nothing aspirational, nothing invented.
+ */
+export const FREE_PLAN_POINTS: readonly string[] = [
+  `${PLAN_CONFIG.freeFullReportsPerPeriod} personalized coaching reports every week`,
+  "Riot account connection and match sync",
+  "Dashboard, profile, match history and champion pages",
+  "Your real observed match statistics",
+  "Today's Focus with the evidence behind it",
+  "Previously generated coaching reports stay readable",
+];
+
+/** Pro bullets — each maps to a capability that already exists in BotDiff. */
+export const PRO_PLAN_POINTS: readonly string[] = [
+  "Everything in Free",
+  "Unlimited personalized coaching reports",
+  "Cross-match recurring pattern detection",
+  "Deeper habit tracking across your games",
+  "Champion-specific coaching",
+  "Your full coaching priority queue",
+  "Complete coaching history",
+  "Long-term progression tracking",
+  "Deeper Coaching Intelligence, plus new Pro capabilities as they ship",
+];
+
+/** The BotDiff coaching loop Pro keeps running for you. */
+export const COACHING_LOOP: readonly string[] = [
+  "Observe",
+  "Identify pattern",
+  "Prioritize",
+  "Practice",
+  "Measure",
+  "Adapt",
+];
+
+export const PRICING_FAQ: readonly { q: string; a: string }[] = [
+  {
+    q: "Is BotDiff Free actually free?",
+    a: `Yes. Free members get the core BotDiff experience and ${PLAN_CONFIG.freeFullReportsPerPeriod} personalized coaching reports each week. No credit card, ever.`,
+  },
+  {
+    q: `What happens after I use my ${PLAN_CONFIG.freeFullReportsPerPeriod} reports?`,
+    a: "Nothing you already have goes away. Your matches keep syncing, every report BotDiff wrote for you stays readable, and your weekly allowance resets on its normal schedule.",
+  },
+  {
+    q: "What does Pro add?",
+    a: "Unlimited coaching reports, plus the parts of coaching that only exist across games: recurring patterns, habit tracking, your coaching priority queue, champion-specific coaching, full history and long-term progression.",
+  },
+  {
+    q: "Do I need a credit card for Free?",
+    a: "No.",
+  },
+  {
+    q: "Am I paying for Riot data?",
+    a: "No. BotDiff's subscription is for its own analysis, coaching and practice system. BotDiff is not endorsed by Riot Games.",
+  },
+];
+
+export const PRICING_HEADLINE = "Start improving for free. Go Pro when you're ready to go deeper.";
+export const PRICING_SUBHEAD =
+  "BotDiff Free gives you real personalized coaching every week. Pro turns that coaching into a continuous system that follows your patterns, priorities and progress across your games.";
+
+/** Shown when the Pro CTA is used while billing is not live. */
+export const PRO_COMING_SOON = {
+  title: "BotDiff Pro is coming soon",
+  body: "We're finishing the last pieces of BotDiff Pro before subscriptions open. Your Free account already gives you real personalized coaching while you wait.",
+} as const;
