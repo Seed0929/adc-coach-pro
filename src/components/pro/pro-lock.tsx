@@ -2,7 +2,15 @@ import { Lock, Sparkles } from "lucide-react";
 import { Pill } from "@/components/app-shell";
 import { UpgradeButton, UpgradeDialog } from "@/components/pro/upgrade-dialog";
 import { useEntitlements } from "@/hooks/use-entitlements";
-import { planLabel, resetLabel, type LockedInsight } from "@/lib/entitlements/plan";
+import {
+  planLabel,
+  resetLabel,
+  resetDateLabel,
+  resetCountdownLabel,
+  PRO_CONTEXT_NOTES,
+  type ProContextSurface,
+  type LockedInsight,
+} from "@/lib/entitlements/plan";
 
 /** Small plan badge — used in Settings and the upgrade surfaces. */
 export function PlanBadge() {
@@ -33,6 +41,67 @@ export function FreeUsageMeter({ className = "" }: { className?: string }) {
 }
 
 /**
+ * The clear weekly-allowance card: real counts and the real calculated reset
+ * date, never a fake countdown. Free members only; Pro sees nothing.
+ */
+export function FreeAllowanceCard({ className = "" }: { className?: string }) {
+  const { state, isPro, resolved } = useEntitlements();
+  if (isPro || !resolved) return null;
+  const { used, remaining, limit, resetsAt } = state.fullReports;
+  const empty = remaining === 0;
+  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+
+  return (
+    <section className={`glass relative overflow-hidden rounded-2xl p-5 ${className}`}>
+      <div className="pointer-events-none absolute -right-12 -top-16 size-40 rounded-full bg-primary/12 blur-[80px]" />
+      <div className="relative flex flex-wrap items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+            Free coaching
+          </div>
+          <div className="mt-1 font-display text-lg font-semibold">
+            {remaining} / {limit} reports remaining this week
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {empty
+              ? "Your existing reports remain available, and your matches keep syncing."
+              : "A full BotDiff coaching report — the same coaching Pro members read."}
+            {resetDateLabel(resetsAt)
+              ? ` Reset: ${resetDateLabel(resetsAt)} (${resetCountdownLabel(resetsAt)}).`
+              : ""}
+          </p>
+          <div className="mt-3 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+        <UpgradeButton label={empty ? "See what Pro adds" : "What Pro adds"} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * One short line explaining what Pro adds on THIS page, at the moment the extra
+ * capability is relevant. Hidden for Pro members.
+ */
+export function ProContextNote({
+  surface,
+  className = "",
+}: {
+  surface: ProContextSurface;
+  className?: string;
+}) {
+  const { isPro } = useEntitlements();
+  if (isPro) return null;
+  return (
+    <p className={`text-xs text-muted-foreground ${className}`}>
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">Pro</span>{" "}
+      {PRO_CONTEXT_NOTES[surface]}
+    </p>
+  );
+}
+
+/**
  * Locked cross-match pattern. The full analysis is withheld on the server —
  * only the area and the player's own observed game count reach the browser.
  */
@@ -42,21 +111,28 @@ export function LockedInsightCard({ insight }: { insight: LockedInsight }) {
       trigger={
         <button
           type="button"
-          className="glass w-full rounded-2xl p-5 text-left transition-colors hover:bg-white/[0.05]"
+          className="glass group relative w-full overflow-hidden rounded-2xl border border-primary/20 p-5 text-left transition-colors hover:bg-primary/[0.05]"
         >
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate font-medium">{insight.title}</span>
-            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-primary">
-              <Lock className="size-3" /> Pro
+          <div className="pointer-events-none absolute -right-10 -top-14 size-36 rounded-full bg-primary/15 blur-[70px]" />
+          <div className="relative">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+                Pro · Long-term pattern
+              </span>
+              <Lock className="size-3 shrink-0 text-primary/80" />
+            </div>
+            <div className="truncate font-medium">{insight.title}</div>
+            <p className="mt-1 text-sm text-muted-foreground">{insight.preview}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+              Unlock with BotDiff Pro
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{insight.preview}</p>
-          <p className="mt-2 text-[11px] text-primary">Unlock the full pattern analysis with Pro</p>
         </button>
       }
     />
   );
 }
+
 
 /**
  * The "BotDiff detected N additional recurring patterns" block. Renders only
