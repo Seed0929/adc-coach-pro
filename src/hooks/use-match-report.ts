@@ -11,6 +11,8 @@ interface MatchReportState {
   loading: boolean;
   error: string | null;
   isDemo: boolean;
+  /** Set when the Free coaching allowance is exhausted for this match. */
+  locked: { limit: number; resetsAt: string } | null;
   /** Re-request this match's report after a recoverable failure. */
   retry: () => void;
 }
@@ -26,6 +28,7 @@ export function useMatchReport(matchId: string): MatchReportState {
   const [report, setReport] = useState<MatchCoachingReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [locked, setLocked] = useState<{ limit: number; resetsAt: string } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
@@ -47,6 +50,7 @@ export function useMatchReport(matchId: string): MatchReportState {
       const idx = isDemoMatch ? Number(matchId.slice(5)) || 0 : 0;
       setReport(buildDemoMatchReport(idx));
       setError(null);
+      setLocked(null);
       setLoading(false);
       return;
     }
@@ -59,6 +63,7 @@ export function useMatchReport(matchId: string): MatchReportState {
         if (result.ok) {
           setReport(result.report);
           setError(null);
+          setLocked(null);
           trackBetaEvent(BETA_EVENTS.matchReportViewed, {
             surface: "match-report",
             degraded: !result.report.decisionChain,
@@ -70,9 +75,18 @@ export function useMatchReport(matchId: string): MatchReportState {
               degraded: true,
             });
           }
+        } else if (result.code === "plan_limit" && result.allowance) {
+          setReport(null);
+          setError(null);
+          setLocked(result.allowance);
+          trackBetaEvent(BETA_EVENTS.degradedDataState, {
+            surface: "match-report",
+            reason: "plan_limit",
+          });
         } else {
           setReport(null);
           setError(result.message);
+          setLocked(null);
           trackBetaEvent(
             result.code === "not_found" ? BETA_EVENTS.noMatchState : BETA_EVENTS.recoverableError,
             { surface: "match-report", reason: result.code },
@@ -97,5 +111,5 @@ export function useMatchReport(matchId: string): MatchReportState {
     };
   }, [matchId, linked, isDemoMatch, fetchReport, version, attempt]);
 
-  return { report, loading, error, isDemo: isDemoMatch || !linked, retry };
+  return { report, loading, error, isDemo: isDemoMatch || !linked, locked, retry };
 }

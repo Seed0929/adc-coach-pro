@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { AppShell, Pill, PageHeader, DemoModeBanner } from "@/components/app-shell";
 import { useBotDiffData } from "@/lib/player-data";
+import { useCoachDossier } from "@/hooks/use-coach-dossier";
+import { LockedInsights, FreeUsageMeter } from "@/components/pro/pro-lock";
 import {
   useCoachingData,
   useTodaysFocusInsight,
@@ -286,6 +288,7 @@ function GoalCard({ goal }: { goal: ImprovementGoal }) {
 
 function Coaching() {
   const { isDemo } = useBotDiffData();
+  const { dossier } = useCoachDossier();
   const { insights, tasks, goals } = useCoachingData();
   const focus = useTodaysFocusInsight();
   const grouped = groupInsightsByCategory(insights);
@@ -411,6 +414,9 @@ function Coaching() {
           </Link>
         </div>
       </div>
+
+      <LockedInsights insights={dossier.lockedInsights} total={dossier.lockedInsightCount} />
+      <FreeUsageMeter className="mt-6" />
     </AppShell>
   );
 }

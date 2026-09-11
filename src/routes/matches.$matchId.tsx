@@ -5,6 +5,7 @@ import { MatchCoachReport } from "@/components/match-coach-report";
 import { useMatchReport } from "@/hooks/use-match-report";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { AllowanceExhausted, FreeUsageMeter } from "@/components/pro/pro-lock";
 
 export const Route = createFileRoute("/matches/$matchId")({
   head: () => ({
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/matches/$matchId")({
 
 function MatchReportPage() {
   const { matchId } = Route.useParams();
-  const { report, loading, error, isDemo, retry } = useMatchReport(matchId);
+  const { report, loading, error, isDemo, locked, retry } = useMatchReport(matchId);
 
   return (
     <AppShell>
@@ -79,6 +80,8 @@ function MatchReportPage() {
         <div className="glass flex items-center gap-3 rounded-3xl p-8 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> Analyzing this match…
         </div>
+      ) : locked ? (
+        <AllowanceExhausted resetsAt={locked.resetsAt} limit={locked.limit} />
       ) : error || !report ? (
         <div className="glass rounded-3xl p-8 text-center">
           <p className="text-sm text-muted-foreground">
@@ -100,7 +103,10 @@ function MatchReportPage() {
           </div>
         </div>
       ) : (
-        <MatchCoachReport report={report} isDemo={isDemo} />
+        <>
+          <MatchCoachReport report={report} isDemo={isDemo} />
+          <FreeUsageMeter className="mt-4" />
+        </>
       )}
     </AppShell>
   );
