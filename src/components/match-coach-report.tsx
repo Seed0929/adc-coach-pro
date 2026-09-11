@@ -389,12 +389,6 @@ export function MatchCoachReport({
             className="size-14 rounded-2xl object-cover ring-1 ring-white/10"
             loading="lazy"
           />
-          <div className="text-center">
-            <div className="font-display text-5xl font-semibold text-primary leading-none">
-              {report.overallGrade}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">Grade</div>
-          </div>
           <div className="flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="font-medium">{report.champion}</span>
