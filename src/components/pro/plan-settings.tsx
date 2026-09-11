@@ -10,7 +10,7 @@ import { UpgradeDialog } from "@/components/pro/upgrade-dialog";
  * that the server refuses for normal production users.
  */
 export function PlanSettings() {
-  const { state, isPro, switchPlan, loading } = useEntitlements();
+  const { state, isPro, isOwner, switchPlan, loading } = useEntitlements();
   const [busy, setBusy] = useState(false);
 
   async function change(plan: "free" | "pro") {
