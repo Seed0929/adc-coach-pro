@@ -136,8 +136,6 @@ export function runOwnerAccessChecks(): CheckResult[] {
   });
 
   // --- 4. premium depth actually unlocks -----------------------------------
-  check("owner receives the complete, ungated dossier", async () => true);
-
   check("dossier gating treats owner as at-least-Pro", () => {
     const gate = src("src/lib/entitlements/gate.ts");
     return /isProOrAbove\(plan\)\) return \{ \.\.\.dossier, planTier: "pro", lockedInsights: \[\] \}/.test(
