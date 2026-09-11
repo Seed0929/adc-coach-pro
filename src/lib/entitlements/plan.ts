@@ -135,6 +135,47 @@ export function resetLabel(resetsAt: string | null): string {
   return `Resets ${d.toLocaleDateString(undefined, { weekday: "long" })}`;
 }
 
+/** The real calculated reset date, e.g. "Monday, 14 September". Never invented. */
+export function resetDateLabel(resetsAt: string | null): string {
+  if (!resetsAt) return "";
+  const d = new Date(resetsAt);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+}
+
+/**
+ * Plain-language countdown derived from the actual reset timestamp:
+ * "resets tomorrow", "resets in 2 days". Empty when unknown.
+ */
+export function resetCountdownLabel(resetsAt: string | null, now: Date = new Date()): string {
+  if (!resetsAt) return "";
+  const d = new Date(resetsAt);
+  if (Number.isNaN(d.getTime())) return "";
+  const ms = d.getTime() - now.getTime();
+  if (ms <= 0) return "resets now";
+  const hours = Math.ceil(ms / 3_600_000);
+  if (hours <= 1) return "resets within the hour";
+  if (hours < 24) return `resets in ${hours} hours`;
+  const days = Math.round(hours / 24);
+  return days <= 1 ? "resets tomorrow" : `resets in ${days} days`;
+}
+
+/**
+ * Short, contextual "what Pro adds here" lines. One sentence per surface, shown
+ * only where the extra capability is genuinely relevant.
+ */
+export const PRO_CONTEXT_NOTES = {
+  analytics:
+    "Free shows your recent performance. Pro connects those matches into longer-term patterns.",
+  coaching:
+    "Free gives you complete individual coaching reports. Pro follows your priorities across matches.",
+  goals: "Pro continuously adjusts personalized goals as your performance changes.",
+  champion: "Pro can identify champion-specific patterns across your match history.",
+} as const;
+
+export type ProContextSurface = keyof typeof PRO_CONTEXT_NOTES;
+
+
 export interface LockedInsight {
   id: string;
   /** Coaching area, e.g. "Farming" — enough to establish value, not the analysis. */
