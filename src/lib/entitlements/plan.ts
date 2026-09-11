@@ -54,9 +54,42 @@ export const PLAN_CONFIG = {
   freeProInsightPreviewsPerPeriod: 1,
   /** Real billing is NOT connected yet. Nothing may collect payment. */
   paymentsEnabled: false,
-  /** Pricing is undecided — never render an invented price. */
-  priceLabel: "Pricing coming soon",
+  /** Display-only price summary. Derived from PRICING below. */
+  priceLabel: "$9.99 / month · $79.99 / year",
 } as const;
+
+// --- pricing (DISPLAY ONLY — no checkout, no payment collection) ------------
+
+/**
+ * The published BotDiff Pro prices. These are presentation values only:
+ * `PLAN_CONFIG.paymentsEnabled` is false, so no surface may take payment and
+ * nothing here grants access. Every derived figure (monthly equivalent,
+ * savings) is CALCULATED from these numbers, never hand-written.
+ */
+export const PRICING = {
+  currency: "USD",
+  free: { price: "$0", cadence: "Forever" },
+  monthly: { amount: 9.99, price: "$9.99", cadence: "/ month" },
+  annual: { amount: 79.99, price: "$79.99", cadence: "/ year" },
+} as const;
+
+export type BillingCycle = "monthly" | "annual";
+
+function formatUsd(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+/** Annual price expressed per month, e.g. "$6.67". */
+export function annualMonthlyEquivalent(): string {
+  return formatUsd(Math.round((PRICING.annual.amount / 12) * 100) / 100);
+}
+
+/** Whole-percent saving of annual vs 12 monthly payments (33 at current prices). */
+export function annualSavingsPercent(): number {
+  const yearOfMonthly = PRICING.monthly.amount * 12;
+  return Math.round((1 - PRICING.annual.amount / yearOfMonthly) * 100);
+}
+
 
 // --- capabilities -----------------------------------------------------------
 
