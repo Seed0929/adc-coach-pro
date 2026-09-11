@@ -10,7 +10,7 @@
 // embellishes a number. It only removes detail Free members haven't unlocked.
 // ---------------------------------------------------------------------------
 import type { BillingPlan, LockedInsight } from "./plan";
-import { PLAN_CONFIG } from "./plan";
+import { PLAN_CONFIG, isProOrAbove } from "./plan";
 import type { CoachDossier, CoachPattern } from "@/lib/player-memory";
 
 function lockedPreview(p: CoachPattern): string {
@@ -34,7 +34,8 @@ function toLocked(patterns: CoachPattern[]): LockedInsight[] {
  * champion-specific coaching, the later queue and coaching history — is Pro.
  */
 export function gateDossier(dossier: CoachDossier, plan: BillingPlan): CoachDossier {
-  if (plan === "pro") return { ...dossier, planTier: "pro", lockedInsights: [] };
+  // Owner resolves above Pro, so it receives the complete, ungated dossier.
+  if (isProOrAbove(plan)) return { ...dossier, planTier: "pro", lockedInsights: [] };
 
   const keep = PLAN_CONFIG.freeVisiblePatterns;
   const visible = dossier.recurringHabits.slice(0, keep);

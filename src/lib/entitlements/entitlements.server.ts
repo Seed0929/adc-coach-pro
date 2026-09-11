@@ -9,6 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   freeAllowance,
+  isProOrAbove,
   periodEnd,
   periodKey,
   proAllowance,

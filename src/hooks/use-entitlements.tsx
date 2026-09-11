@@ -23,7 +23,10 @@ interface EntitlementContextValue {
   /** Signed-in with a resolved plan (guests browse on the Free experience). */
   resolved: boolean;
   can: (capability: Capability) => boolean;
+  /** True for Pro AND owner — owner satisfies every Pro check automatically. */
   isPro: boolean;
+  /** Internal owner access. Display only; the server re-checks every time. */
+  isOwner: boolean;
   refresh: () => Promise<void>;
   switchPlan: (plan: BillingPlan) => Promise<string | null>;
 }
