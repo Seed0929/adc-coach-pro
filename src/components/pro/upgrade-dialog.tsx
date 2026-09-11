@@ -18,8 +18,8 @@ import {
 } from "@/lib/entitlements/plan";
 
 /**
- * The BotDiff Pro upgrade experience. Payments are NOT connected: there is no
- * price, no checkout and no payment collection anywhere in this dialog.
+ * The BotDiff Pro upgrade experience. Real billing is NOT connected: this
+ * surface shows no price and never collects payment details.
  */
 export function UpgradeDialog({
   trigger,
