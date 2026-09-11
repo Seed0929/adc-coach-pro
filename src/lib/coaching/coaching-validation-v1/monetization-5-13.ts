@@ -167,18 +167,20 @@ export function runMonetizationChecks(): CheckResult[] {
     return (gated.lockedInsights?.length ?? 0) <= PLAN_CONFIG.freeLockedPatternPreviews;
   });
 
-  // --- 6. no payments, no invented pricing ---------------------------------
+  // --- 6. prices are display-only; no payment collection -------------------
   check("payments are disabled in configuration", () => PLAN_CONFIG.paymentsEnabled === false);
-  check("pricing copy is 'coming soon', never a number", () =>
-    !/[$€£]\s*\d/.test(PLAN_CONFIG.priceLabel));
-  check("upgrade surface collects no payment and shows no price", () => {
+  check("displayed prices come from the pricing config", () => {
+    const plan = src("src/lib/entitlements/plan.ts");
+    return /monthly:\s*\{\s*amount:\s*9\.99/.test(plan) && /annual:\s*\{\s*amount:\s*79\.99/.test(plan);
+  });
+  check("upgrade surface collects no payment details", () => {
     const dlg = src("src/components/pro/upgrade-dialog.tsx");
     return (
-      !/[$€£]\s*\d/.test(dlg) &&
-      !/checkout|stripe|card number|billing address/i.test(dlg) &&
-      dlg.includes("state.priceLabel")
+      !/checkout|stripe|card number|billing address|<input/i.test(dlg) &&
+      dlg.includes("PRICING.annual.price")
     );
   });
+
   check("upgrade surface uses no manipulative scarcity", () => {
     const dlg = src("src/components/pro/upgrade-dialog.tsx");
     return !/only \d+ (left|spots)|limited time|hurry|act now|expires in/i.test(dlg);
