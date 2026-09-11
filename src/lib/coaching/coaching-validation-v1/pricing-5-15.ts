@@ -62,7 +62,10 @@ export function runPricingChecks(): CheckResult[] {
   // --- 3. no payments anywhere ---------------------------------------------
   check("payments remain disabled", () => PLAN_CONFIG.paymentsEnabled === false);
   check("pricing UI has no checkout, card fields or payment provider", () => {
-    const page = src("src/components/pricing/pricing-plans.tsx") + src("src/routes/pricing.tsx");
+    // Strip comments first: the source deliberately DOCUMENTS the absence of these.
+    const page = (src("src/components/pricing/pricing-plans.tsx") + src("src/routes/pricing.tsx"))
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
     return !/stripe|paddle|checkout|card number|cvc|billing address|<input/i.test(page);
   });
   check("Pro CTA opens an honest coming-soon panel", () => {
