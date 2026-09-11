@@ -78,12 +78,23 @@ export interface CoachTrend {
   note: string;
 }
 
+/**
+ * One real Riot statistic described in plain language: what the player averages,
+ * the range they actually landed in, and how repeatable that is. BotDiff never
+ * turns this into an invented 0-100 rating.
+ */
 export interface ConsistencyDimension {
   label: string;
-  score: number; // 0-100 (higher = more stable)
+  /** Recent average, already formatted with its unit. */
+  average: string;
+  /** Lowest → highest single game in the window, formatted. */
+  range: string;
+  /** Plain-language repeatability, or "Needs more data". */
+  variability: string;
 }
 
 export interface ConsistencyMetric {
+  /** INTERNAL ONLY — repeatability index used to pick coaching tone. Never displayed. */
   current: number;
   previous: number;
   weeklyTrend: number; // signed change vs previous window
