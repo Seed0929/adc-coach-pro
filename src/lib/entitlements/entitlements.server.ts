@@ -9,6 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   freeAllowance,
+  isProOrAbove,
   periodEnd,
   periodKey,
   proAllowance,
@@ -20,8 +21,31 @@ import {
 
 type Client = SupabaseClient<any, any, any>;
 
-/** Reads the caller's plan. Missing row = Free (the default for everyone). */
+/**
+ * Server-authorized OWNER check.
+ *
+ * Owner status lives ONLY in public.user_roles (role = 'owner'), which normal
+ * users can read for themselves but can never write: the table has no INSERT
+ * or UPDATE policy and `authenticated` holds SELECT only. Nothing from the
+ * browser — headers, body, storage, profile fields — can influence this.
+ */
+export async function isOwner(supabase: Client, userId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "owner" });
+    return data === true;
+  } catch {
+    return false; // fail closed
+  }
+}
+
+/**
+ * Resolves the caller's effective access level: owner > pro > free.
+ *
+ * Owner is resolved FIRST and independently of billing, so no future payment,
+ * cancellation or webhook state can downgrade an owner account.
+ */
 export async function loadPlan(supabase: Client, userId: string): Promise<BillingPlan> {
+  if (await isOwner(supabase, userId)) return "owner";
   const { data } = await supabase
     .from("user_entitlements")
     .select("plan")
@@ -55,13 +79,16 @@ export async function hasReportGrant(
   return Boolean(data);
 }
 
-/** Development / admin plan switching is never available to normal production users. */
+/** Development / admin / owner plan switching — never for normal production users. */
 export async function devToggleAllowed(supabase: Client, userId: string): Promise<boolean> {
   if (process.env["NODE_ENV"] !== "production") return true;
   if (process.env["BOTDIFF_ALLOW_PLAN_TOGGLE"] === "true") return true;
   try {
-    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    return data === true;
+    const [admin, owner] = await Promise.all([
+      supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+      supabase.rpc("has_role", { _user_id: userId, _role: "owner" }),
+    ]);
+    return admin.data === true || owner.data === true;
   } catch {
     return false;
   }
@@ -75,8 +102,9 @@ export async function buildEntitlementState(
     loadPlan(supabase, userId),
     devToggleAllowed(supabase, userId),
   ]);
+  // Pro AND owner are unlimited: no weekly allowance, no reset, no countdown.
   const fullReports =
-    plan === "pro"
+    isProOrAbove(plan)
       ? proAllowance()
       : freeAllowance(await countReportsUsed(supabase, userId), periodEnd().toISOString());
   return {
@@ -106,7 +134,8 @@ export async function ensureFullReportAccess(
   matchId: string,
 ): Promise<ReportAccess> {
   const plan = await loadPlan(supabase, userId);
-  if (plan === "pro") return { allowed: true, plan, consumed: false };
+  // Pro and owner: unmetered, always allowed.
+  if (isProOrAbove(plan)) return { allowed: true, plan, consumed: false };
 
   if (await hasReportGrant(supabase, userId, matchId)) {
     return { allowed: true, plan, consumed: false };
@@ -129,10 +158,15 @@ export async function ensureFullReportAccess(
   return { allowed: true, plan, consumed: true };
 }
 
-/** Development-only plan switch. Callers MUST have passed `devToggleAllowed`. */
+/**
+ * Development-only plan switch. Callers MUST have passed `devToggleAllowed`.
+ * Only the two customer plans can ever be written here — owner access is a
+ * role, not a plan value, and is never writable through the application.
+ */
 export async function writePlan(userId: string, plan: BillingPlan): Promise<void> {
+  const value = plan === "pro" ? "pro" : "free";
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   await supabaseAdmin
     .from("user_entitlements")
-    .upsert({ user_id: userId, plan, source: "dev-toggle" }, { onConflict: "user_id" });
+    .upsert({ user_id: userId, plan: value, source: "dev-toggle" }, { onConflict: "user_id" });
 }

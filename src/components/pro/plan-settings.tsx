@@ -10,7 +10,7 @@ import { UpgradeDialog } from "@/components/pro/upgrade-dialog";
  * that the server refuses for normal production users.
  */
 export function PlanSettings() {
-  const { state, isPro, switchPlan, loading } = useEntitlements();
+  const { state, isPro, isOwner, switchPlan, loading } = useEntitlements();
   const [busy, setBusy] = useState(false);
 
   async function change(plan: "free" | "pro") {
@@ -28,9 +28,10 @@ export function PlanSettings() {
           <Sparkles className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="font-medium">Current Plan</div>
+          <div className="font-medium">{isOwner ? "Owner Access" : "Current Plan"}</div>
           <div className="text-sm text-muted-foreground">
             {planLabel(state.plan)}
+            {isOwner && " · full access, no allowance"}
             {!isPro && state.fullReports.limit > 0 && (
               <>
                 {" · "}
@@ -59,6 +60,11 @@ export function PlanSettings() {
           <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-warning">
             <FlaskConical className="size-3" /> Internal · payments not yet enabled
           </div>
+          {isOwner && (
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Owner access always applies, so this switch won't restrict your account.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {(["free", "pro"] as const).map((p) => (
               <button

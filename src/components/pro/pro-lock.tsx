@@ -14,10 +14,10 @@ import {
 
 /** Small plan badge — used in Settings and the upgrade surfaces. */
 export function PlanBadge() {
-  const { state } = useEntitlements();
+  const { state, isPro } = useEntitlements();
   return (
-    <Pill tone={state.plan === "pro" ? "primary" : "neutral"}>
-      {state.plan === "pro" && <Sparkles className="size-3.5" />}
+    <Pill tone={isPro ? "primary" : "neutral"}>
+      {isPro && <Sparkles className="size-3.5" />}
       {planLabel(state.plan)}
     </Pill>
   );

@@ -9,7 +9,33 @@
 // Pure + client-safe: no server imports, no Supabase, no side effects.
 // ---------------------------------------------------------------------------
 
-export type BillingPlan = "free" | "pro";
+/**
+ * Access levels, lowest to highest: free < pro < owner.
+ *
+ * `owner` is NOT a customer subscription. It is an internal, server-authorized
+ * access level for BotDiff ownership/development accounts. It satisfies every
+ * Pro capability check automatically, never expires, and is completely
+ * independent of any future billing state.
+ */
+export type AccessLevel = "free" | "pro" | "owner";
+
+/** Historic name kept so existing call sites keep compiling. */
+export type BillingPlan = AccessLevel;
+
+/** Customer-facing plans only — the two levels users ever see or choose. */
+export const PUBLIC_PLANS: readonly AccessLevel[] = ["free", "pro"] as const;
+
+/** Ranking used for "at least Pro" style checks. Owner always wins. */
+const LEVEL_RANK: Record<AccessLevel, number> = { free: 0, pro: 1, owner: 2 };
+
+/** True for pro AND owner — the single test for "has premium capabilities". */
+export function isProOrAbove(level: AccessLevel): boolean {
+  return LEVEL_RANK[level] >= LEVEL_RANK.pro;
+}
+
+export function isOwnerLevel(level: AccessLevel): boolean {
+  return level === "owner";
+}
 
 export const PLAN_CONFIG = {
   /** Full AI match coaching reports a Free member may unlock per period. */
@@ -53,7 +79,7 @@ export type Capability =
  * complete reports; the difference is the metered allowance, enforced
  * separately by the entitlement server layer.
  */
-export const CAPABILITIES: Record<BillingPlan, Record<Capability, boolean>> = {
+const PLAN_CAPABILITIES: Record<"free" | "pro", Record<Capability, boolean>> = {
   free: {
     canViewBasicStats: true,
     canViewMatchHistory: true,
@@ -84,11 +110,27 @@ export const CAPABILITIES: Record<BillingPlan, Record<Capability, boolean>> = {
   },
 };
 
-export function can(plan: BillingPlan, capability: Capability): boolean {
+/**
+ * Owner inherits EVERY capability automatically — it is derived from the Pro
+ * map rather than hand-listed, so a future Pro capability unlocks for owner
+ * accounts without touching this file or any component.
+ */
+const OWNER_CAPABILITIES = Object.fromEntries(
+  Object.keys(PLAN_CAPABILITIES.pro).map((key) => [key, true]),
+) as Record<Capability, boolean>;
+
+export const CAPABILITIES: Record<AccessLevel, Record<Capability, boolean>> = {
+  free: PLAN_CAPABILITIES.free,
+  pro: PLAN_CAPABILITIES.pro,
+  owner: OWNER_CAPABILITIES,
+};
+
+export function can(plan: AccessLevel, capability: Capability): boolean {
   return CAPABILITIES[plan][capability];
 }
 
-export function planLabel(plan: BillingPlan): string {
+export function planLabel(plan: AccessLevel): string {
+  if (plan === "owner") return "BotDiff Owner";
   return plan === "pro" ? "BotDiff Pro" : "BotDiff Free";
 }
 
@@ -196,12 +238,16 @@ export interface ReportAllowance {
 }
 
 export interface EntitlementState {
-  plan: BillingPlan;
+  /**
+   * Resolved access level. DISPLAY STATE ONLY — every access decision is made
+   * again on the server from the database. Nothing here grants anything.
+   */
+  plan: AccessLevel;
   capabilities: Record<Capability, boolean>;
   fullReports: ReportAllowance;
   paymentsEnabled: boolean;
   priceLabel: string;
-  /** True only in non-production environments / for admins. */
+  /** True only in non-production environments / for admins / for owners. */
   devToggleAvailable: boolean;
 }
 
