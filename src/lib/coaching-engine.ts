@@ -879,12 +879,11 @@ function trend(
   };
 }
 
-function buildHistory(
-  m: MatchAnalysisInput,
-  prev: MatchAnalysisInput | null,
-  curScore: number,
-  prevScore: number | null,
-): TrendItem[] {
+/**
+ * Match-over-match history. Every row is a real Riot statistic — BotDiff never
+ * compares two games with a composite rating it invented.
+ */
+function buildHistory(m: MatchAnalysisInput, prev: MatchAnalysisInput | null): TrendItem[] {
   if (!prev) return [];
   const objectives = (x: MatchAnalysisInput) =>
     x.dragonTakedowns + x.baronTakedowns + x.riftHeraldTakedowns;
@@ -893,13 +892,13 @@ function buildHistory(
   const percent = (n: number) => `${Math.round(n * 100)}%`;
   return [
     trend("cs", "CS / min", m.csPerMin, prev.csPerMin, one, true),
-    trend("vision", "Vision score", m.visionScore, prev.visionScore, int, true),
+    trend("wards", "Wards placed", m.wardsPlaced, prev.wardsPlaced, int, true),
+    trend("controlWards", "Control wards", m.controlWardsPlaced, prev.controlWardsPlaced, int, true),
     trend("damage", "Damage share", m.damageShare, prev.damageShare, percent, true),
     trend("deaths", "Deaths", m.deaths, prev.deaths, int, false),
     trend("objectives", "Objective takedowns", objectives(m), objectives(prev), int, true),
     trend("kp", "Kill participation", m.killParticipation, prev.killParticipation, percent, true),
     trend("gold", "Gold / min", m.goldPerMin, prev.goldPerMin, int, true),
-    trend("champion", "Overall performance", curScore, prevScore ?? curScore, int, true),
   ];
 }
 
