@@ -186,8 +186,7 @@ export function runOwnerAccessChecks(): CheckResult[] {
 export async function runOwnerDossierChecks(): Promise<CheckResult[]> {
   const out: CheckResult[] = [];
   const dossier = await buildDemoDossier();
-  const gated = (plan: AccessLevel) =>
-    gateDossier(dossier, plan, { used: 0, limit: 3, remaining: 3, unlimited: plan !== "free", resetsAt: null });
+  const gated = (plan: AccessLevel) => gateDossier(dossier, plan);
 
   const owner = gated("owner");
   const pro = gated("pro");
@@ -196,8 +195,8 @@ export async function runOwnerDossierChecks(): Promise<CheckResult[]> {
   out.push({
     name: "owner dossier matches Pro depth exactly",
     passed:
-      owner.lockedInsights.length === 0 &&
-      pro.lockedInsights.length === 0 &&
+      (owner.lockedInsights?.length ?? 0) === 0 &&
+      (pro.lockedInsights?.length ?? 0) === 0 &&
       JSON.stringify(owner) === JSON.stringify(pro),
   });
   out.push({
