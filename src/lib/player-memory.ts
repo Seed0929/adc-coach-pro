@@ -450,23 +450,23 @@ function buildIdentity(agg: Agg): { traits: string[]; summary: string } {
 }
 
 // --- rank assessment -------------------------------------------------------
+// BotDiff does NOT predict a rank ceiling — no statistic it holds supports that.
+// It describes the player's own averages and names what would move them most.
 
 function rankAssessment(agg: Agg): { assessment: string; potential: string } {
-  const skill =
-    agg.csPerMin * 5 +
-    (1 - Math.min(agg.deaths, 10) / 10) * 25 +
-    agg.damageShare * 60 +
-    agg.killParticipation * 25 +
-    agg.winRate * 20;
-  const assessment =
-    skill >= 90
-      ? "Your mechanics and decision-making are already ahead of your current bracket — inconsistency is what's holding your LP back, not skill."
-      : skill >= 70
-        ? "You have solid fundamentals for your rank. Cleaning up one recurring habit is what separates you from the next tier."
-        : "Your fundamentals still have clear gaps. Tightening farming, deaths, and fight timing will move you up quickly.";
-  const potential =
-    skill >= 90 ? "Emerald+" : skill >= 70 ? "Platinum / Emerald" : "Gold";
-  return { assessment, potential: `Estimated ceiling: ${potential} if your biggest leak is fixed.` };
+  const assessment = `Across these games you average ${one(agg.csPerMin)} CS/min, ${one(agg.deaths)} deaths, ${pct(agg.killParticipation)} kill participation and ${pct(agg.damageShare)} damage share, with a ${Math.round(agg.winRate * 100)}% win rate.`;
+  const leak =
+    agg.deaths >= 6
+      ? "cutting deaths"
+      : agg.csPerMin < 6.5
+        ? "raising CS/min"
+        : agg.killParticipation < 0.5
+          ? "being present for more fights"
+          : "holding these numbers more consistently";
+  return {
+    assessment,
+    potential: `The single biggest lever in your own numbers right now is ${leak}.`,
+  };
 }
 
 // --- consistency -----------------------------------------------------------
