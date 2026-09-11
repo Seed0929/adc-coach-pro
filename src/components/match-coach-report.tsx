@@ -499,10 +499,11 @@ export function MatchCoachReport({
       </div>
 
       {/* Decision Chain timeline — how one decision influences the next. */}
-      <Card icon={Clock} title="Match Timeline">
+      <Card icon={Clock} title="Decision Sequence">
         <p className="mb-4 text-xs text-muted-foreground">
-          How one decision led to the next. Times are approximate until interactive replay is
-          connected.
+          BotDiff's read of how one decision led to the next, ordered by game phase. These are
+          coaching interpretations of your match statistics, not observed timeline events, so no
+          exact clock times are shown.
         </p>
         <div className="space-y-3">
           {report.plan.timeline.events.map((e) => (
