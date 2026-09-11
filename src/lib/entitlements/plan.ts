@@ -238,12 +238,16 @@ export interface ReportAllowance {
 }
 
 export interface EntitlementState {
-  plan: BillingPlan;
+  /**
+   * Resolved access level. DISPLAY STATE ONLY — every access decision is made
+   * again on the server from the database. Nothing here grants anything.
+   */
+  plan: AccessLevel;
   capabilities: Record<Capability, boolean>;
   fullReports: ReportAllowance;
   paymentsEnabled: boolean;
   priceLabel: string;
-  /** True only in non-production environments / for admins. */
+  /** True only in non-production environments / for admins / for owners. */
   devToggleAvailable: boolean;
 }
 
