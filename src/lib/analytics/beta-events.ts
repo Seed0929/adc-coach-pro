@@ -24,6 +24,11 @@ export const BETA_EVENTS = {
   recoverableError: "recoverable_error",
   noMatchState: "no_match_state",
   degradedDataState: "degraded_data_state",
+  pricingViewed: "pricing_viewed",
+  proPreviewViewed: "pro_preview_viewed",
+  upgradeClicked: "upgrade_clicked",
+  freeLimitReached: "free_limit_reached",
+  proInterestClicked: "pro_interest_clicked",
 } as const;
 
 export type BetaEventName = (typeof BETA_EVENTS)[keyof typeof BETA_EVENTS];
@@ -35,6 +40,7 @@ export type BetaJourneyStage =
   | "sync"
   | "analysis"
   | "coaching"
+  | "pricing"
   | "health";
 
 export const STAGE_BY_EVENT: Record<BetaEventName, BetaJourneyStage> = {
@@ -51,6 +57,11 @@ export const STAGE_BY_EVENT: Record<BetaEventName, BetaJourneyStage> = {
   recoverable_error: "health",
   no_match_state: "health",
   degraded_data_state: "health",
+  pricing_viewed: "pricing",
+  pro_preview_viewed: "pricing",
+  upgrade_clicked: "pricing",
+  free_limit_reached: "pricing",
+  pro_interest_clicked: "pricing",
 };
 
 /**
