@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { LogIn, ArrowRight } from "lucide-react";
 import { PricingSection } from "@/components/pricing/pricing-plans";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
-import logoLockup from "@/assets/botdiff-lockup.png";
+import logoLockup from "@/assets/botdiff-logo.png";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({

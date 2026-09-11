@@ -70,6 +70,12 @@ function TopBar() {
         </span>
         <div className="ml-auto flex items-center gap-2">
           <Link
+            to="/pricing"
+            className="hidden rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+          >
+            Pricing
+          </Link>
+          <Link
             to="/auth"
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium transition-colors hover:bg-white/[0.07]"
           >
@@ -123,7 +129,11 @@ function Hero() {
           </Link>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Link your Riot account after signing up — everything below is an example profile.
+          Free includes 3 personalized coaching reports every week —{" "}
+          <Link to="/pricing" className="text-primary underline-offset-2 hover:underline">
+            see pricing
+          </Link>
+          . Link your Riot account after signing up — everything below is an example profile.
         </p>
       </div>
 
