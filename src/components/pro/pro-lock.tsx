@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Lock, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Pill } from "@/components/app-shell";
 import { UpgradeButton, UpgradeDialog } from "@/components/pro/upgrade-dialog";
 import { useEntitlements } from "@/hooks/use-entitlements";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import {
   planLabel,
   resetLabel,
@@ -191,6 +193,10 @@ export function AllowanceExhausted({
   resetsAt: string | null;
   limit: number;
 }) {
+  useEffect(() => {
+    trackBetaEvent(BETA_EVENTS.freeLimitReached, { surface: "coaching-allowance" });
+  }, []);
+
   return (
     <div className="glass relative overflow-hidden rounded-3xl p-6">
       <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary/20 blur-[90px]" />
