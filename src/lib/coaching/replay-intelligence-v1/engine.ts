@@ -177,16 +177,18 @@ function timestampFor(
       estimated: false,
     };
   }
-  // Spread the timeline evenly across the known (or a standard 30 min) game,
-  // starting after the first wave so early-game decisions land in lane phase.
+  // No Riot timeline anchor for this decision. We still need a stable ordering,
+  // so we spread decisions across the game — but the *label* is the game phase,
+  // never a clock time. BotDiff does not invent minute:second precision.
   const duration = input.gameDurationSeconds ?? 30 * 60;
   const start = 90;
   const step = total > 1 ? (duration - start) / (total + 1) : (duration - start) / 2;
   const seconds = Math.round(start + step * (sequence + 1));
+  const phase = phaseOf(seconds);
   return {
     seconds,
-    label: mmss(seconds),
-    phase: phaseOf(seconds),
+    label: phase,
+    phase,
     sequence,
     estimated: true,
   };
