@@ -159,7 +159,7 @@ export function runMonetizationChecks(): CheckResult[] {
     const gated = gateDossier(dossier, "free");
     const deep = dossier.recurringHabits.slice(PLAN_CONFIG.freeVisiblePatterns);
     return (gated.lockedInsights ?? []).every((i) =>
-      deep.every((h) => !i.preview.includes(h.coaching ?? "__none__")),
+      deep.every((h) => !i.preview.includes(h.detail)),
     );
   });
   check("locked preview count never exceeds the configured preview cap", () => {
