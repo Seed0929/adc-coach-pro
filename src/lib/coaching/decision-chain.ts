@@ -226,7 +226,7 @@ function laneEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: "Started the mid game a component behind.",
       impact: m.laneMinions10 < 55 ? "high" : "medium",
-      evidence: `Only ${Math.round(m.laneMinions10)} CS at 10 minutes (target ~75+).`,
+      evidence: `Only ${Math.round(m.laneMinions10)} CS at 10 minutes.`,
       explanation:
         "Every missed minion is gold you don't have at your next recall. Over the first ten minutes it compounds into a delayed first item, which is the difference between winning and losing your level-6 trade.",
       practiceTakeaway: "Last-hit the first three waves without using abilities and aim for 75+ CS at 10:00.",
@@ -473,7 +473,7 @@ function teamfightEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: `Only ${pct(m.killParticipation)} kill participation.`,
       impact: "medium",
-      evidence: `Kill participation of ${pct(m.killParticipation)} — below the ~55% you want.`,
+      evidence: `Kill participation of ${pct(m.killParticipation)}.`,
       explanation:
         "After you crash a wave, the next play is usually a group or an objective, not a fourth wave alone. Being absent means your team takes fights a member down, which quietly loses the mid game.",
       practiceTakeaway: "Rotate to the next play after every wave crash — keep kill participation above 55%.",
@@ -507,7 +507,7 @@ function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
       ],
       outcome: `Reached ${Math.round(m.laneMinions10)} CS at 10:00 — ahead of curve.`,
       impact: "medium",
-      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes (target 75+).`,
+      evidence: `${Math.round(m.laneMinions10)} CS at 10 minutes.`,
       explanation:
         "This is the fundamental every carry role is built on. Repeating this CS number is what turns a lane win into a game win — keep pairing it with a wave-crash recall.",
       practiceTakeaway: "Bank this: same opening pattern next game — trades only when they miss a cooldown.",
@@ -530,7 +530,7 @@ function positiveEvents(m: MatchAnalysisInput): CoachableEvent[] {
         "Fights started on your read",
         "Objectives contested with info",
       ],
-      outcome: `${m.controlWardsPlaced} control wards placed — Challenger-tier habit.`,
+      outcome: `${m.controlWardsPlaced} control wards placed.`,
       impact: "medium",
       evidence: `${m.controlWardsPlaced} control wards purchased.`,
       explanation:
