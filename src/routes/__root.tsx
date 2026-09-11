@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
 import { DataProvider } from "@/lib/player-data";
 import { SyncProvider } from "@/hooks/use-sync";
+import { EntitlementProvider } from "@/hooks/use-entitlements";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/hooks/use-theme";
 import { installBetaAnalytics } from "@/lib/analytics/supabase-transport";
 import { Toaster } from "sonner";
@@ -143,6 +144,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
+          <EntitlementProvider>
           <SyncProvider>
             <DataProvider>
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -158,6 +160,7 @@ function RootComponent() {
             />
             </DataProvider>
           </SyncProvider>
+          </EntitlementProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
