@@ -77,6 +77,30 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_report_grants: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          period_start: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          period_start: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          period_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feedback_reports: {
         Row: {
           coaching_verdict: string | null
@@ -316,6 +340,30 @@ export type Database = {
           },
         ]
       }
+      user_entitlements: {
+        Row: {
+          created_at: string
+          plan: Database["public"]["Enums"]["billing_plan"]
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          plan?: Database["public"]["Enums"]["billing_plan"]
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          plan?: Database["public"]["Enums"]["billing_plan"]
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -352,6 +400,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      billing_plan: "free" | "pro"
       feedback_report_status: "new" | "reviewing" | "resolved" | "closed"
       feedback_report_type:
         | "bug"
@@ -488,6 +537,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      billing_plan: ["free", "pro"],
       feedback_report_status: ["new", "reviewing", "resolved", "closed"],
       feedback_report_type: [
         "bug",

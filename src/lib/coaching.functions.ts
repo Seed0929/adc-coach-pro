@@ -11,6 +11,8 @@ import { buildCoachDossier, type CoachDossier } from "./player-memory";
 import { buildCoachingContext } from "./coaching/context-builder";
 import { coachAnswer } from "./coaching";
 import type { AnalysisMode } from "./coaching/question-router";
+import { ensureFullReportAccess, loadPlan } from "./entitlements/entitlements.server";
+import { gateDossier } from "./entitlements/gate";
 
 // ---------------------------------------------------------------------------
 // Coaching analysis server function.
@@ -42,7 +44,13 @@ export const getCoachDossier = createServerFn({ method: "GET" })
       if (inputs.length === 0) {
         return { ok: false, code: "no_matches", message: "No matches to analyze yet." };
       }
-      return { ok: true, dossier: buildCoachDossier(inputs, analyses, false) };
+      // Entitlement gating happens BEFORE serialization, so locked Pro depth
+      // never reaches the browser.
+      const plan = await loadPlan(supabase, userId);
+      return {
+        ok: true,
+        dossier: gateDossier(buildCoachDossier(inputs, analyses, false), plan),
+      };
     } catch {
       return { ok: false, code: "unknown", message: "Couldn't build your coaching profile right now." };
     }
@@ -96,7 +104,13 @@ export const askCoach = createServerFn({ method: "POST" })
 
 export type MatchReportResult =
   | { ok: true; report: MatchCoachingReport }
-  | { ok: false; code: string; message: string };
+  | {
+      ok: false;
+      code: string;
+      message: string;
+      /** Present when the Free coaching allowance is exhausted. */
+      allowance?: { limit: number; resetsAt: string };
+    };
 
 /** Build the full AI Coach report for a single match (with trend vs previous). */
 export const getMatchReport = createServerFn({ method: "GET" })
@@ -129,6 +143,18 @@ export const getMatchReport = createServerFn({ method: "GET" })
       } catch {
         /* timeline is enrichment only — never block the report */
       }
+      // Free members get the REAL report within their included allowance; a
+      // previously unlocked match stays unlocked forever.
+      const access = await ensureFullReportAccess(supabase, userId, data.matchId);
+      if (!access.allowed) {
+        return {
+          ok: false,
+          code: "plan_limit",
+          message: `You've used your ${access.limit} full coaching reports this period.`,
+          allowance: { limit: access.limit, resetsAt: access.resetsAt },
+        };
+      }
+
       const prev = inputs[idx + 1] ?? null;
       // Sprint 2.2 — pass the older-match window so the decision-chain can
       // recognise recurring wave / objective habits across recent games.
