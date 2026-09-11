@@ -79,7 +79,7 @@ export type Capability =
  * complete reports; the difference is the metered allowance, enforced
  * separately by the entitlement server layer.
  */
-export const CAPABILITIES: Record<AccessLevel, Record<Capability, boolean>> = {
+const PLAN_CAPABILITIES: Record<"free" | "pro", Record<Capability, boolean>> = {
   free: {
     canViewBasicStats: true,
     canViewMatchHistory: true,
@@ -110,11 +110,27 @@ export const CAPABILITIES: Record<AccessLevel, Record<Capability, boolean>> = {
   },
 };
 
-export function can(plan: BillingPlan, capability: Capability): boolean {
+/**
+ * Owner inherits EVERY capability automatically — it is derived from the Pro
+ * map rather than hand-listed, so a future Pro capability unlocks for owner
+ * accounts without touching this file or any component.
+ */
+const OWNER_CAPABILITIES = Object.fromEntries(
+  Object.keys(PLAN_CAPABILITIES.pro).map((key) => [key, true]),
+) as Record<Capability, boolean>;
+
+export const CAPABILITIES: Record<AccessLevel, Record<Capability, boolean>> = {
+  free: PLAN_CAPABILITIES.free,
+  pro: PLAN_CAPABILITIES.pro,
+  owner: OWNER_CAPABILITIES,
+};
+
+export function can(plan: AccessLevel, capability: Capability): boolean {
   return CAPABILITIES[plan][capability];
 }
 
-export function planLabel(plan: BillingPlan): string {
+export function planLabel(plan: AccessLevel): string {
+  if (plan === "owner") return "BotDiff Owner";
   return plan === "pro" ? "BotDiff Pro" : "BotDiff Free";
 }
 
