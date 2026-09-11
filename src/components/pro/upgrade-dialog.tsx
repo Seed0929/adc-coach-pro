@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { Lock, Sparkles, Check, ArrowRight } from "lucide-react";
+import { Sparkles, Check, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +15,9 @@ import {
   FREE_SUMMARY,
   PRO_FEATURES,
   PRO_SUMMARY,
+  PRICING,
+  annualMonthlyEquivalent,
+  annualSavingsPercent,
   planLabel,
   resetLabel,
 } from "@/lib/entitlements/plan";
@@ -105,21 +110,30 @@ export function UpgradeDialog({
 
         <div className="relative mt-2 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-4">
           <div className="min-w-0 flex-1">
-            <div className="font-display text-lg font-semibold">{state.priceLabel}</div>
+            <div className="font-display text-lg font-semibold">
+              {PRICING.annual.price} {PRICING.annual.cadence}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ≈ {annualMonthlyEquivalent()} / month
+              </span>
+            </div>
             <div className="text-[11px] text-muted-foreground">
+              Or {PRICING.monthly.price} {PRICING.monthly.cadence} · save about{" "}
+              {annualSavingsPercent()}% annually.{" "}
               {isPro
                 ? `You're on ${planLabel("pro")}.`
-                : "We'll let you know as soon as Pro opens up."}
+                : "Subscriptions aren't open yet — nothing is charged today."}
             </div>
           </div>
-          <button
-            type="button"
-            disabled
-            title="Payments are not enabled yet."
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground opacity-60"
+          <Link
+            to="/pricing"
+            onClick={() => {
+              trackBetaEvent(BETA_EVENTS.upgradeClicked, { surface: "upgrade-dialog" });
+              setOpen(false);
+            }}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
           >
-            <Lock className="size-4" /> Pro is coming soon
-          </button>
+            See pricing <ArrowRight className="size-4" />
+          </Link>
         </div>
       </DialogContent>
     </Dialog>
