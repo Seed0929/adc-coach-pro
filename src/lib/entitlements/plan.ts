@@ -135,6 +135,14 @@ export function resetLabel(resetsAt: string | null): string {
   return `Resets ${d.toLocaleDateString(undefined, { weekday: "long" })}`;
 }
 
+export interface LockedInsight {
+  id: string;
+  /** Coaching area, e.g. "Farming" — enough to establish value, not the analysis. */
+  title: string;
+  /** Observed-only teaser built from the player's own game count. */
+  preview: string;
+}
+
 // --- shared state shape -----------------------------------------------------
 
 export interface ReportAllowance {

@@ -181,6 +181,14 @@ export interface CoachDossier {
   coachingPriority: CoachingPriority;
   /** Layered memory: universal / role / champion. */
   layeredMemory: LayeredPlayerMemory;
+
+  // --- entitlements (set by the server gate, never by the builders) --------
+  /** Which plan this payload was gated for. */
+  planTier?: "free" | "pro";
+  /** Non-revealing previews of patterns withheld from the Free tier. */
+  lockedInsights?: { id: string; title: string; preview: string }[];
+  /** Total number of withheld patterns (may exceed the previewed list). */
+  lockedInsightCount?: number;
 }
 
 // --- helpers ---------------------------------------------------------------

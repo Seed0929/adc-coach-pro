@@ -9,17 +9,9 @@
 // Evidence integrity overrides monetization: nothing here invents, rounds or
 // embellishes a number. It only removes detail Free members haven't unlocked.
 // ---------------------------------------------------------------------------
-import type { BillingPlan } from "./plan";
+import type { BillingPlan, LockedInsight } from "./plan";
 import { PLAN_CONFIG } from "./plan";
 import type { CoachDossier, CoachPattern } from "@/lib/player-memory";
-
-export interface LockedInsight {
-  id: string;
-  /** Coaching area, e.g. "Farming" — enough to establish value, not the analysis. */
-  title: string;
-  /** Observed-only teaser built from the player's own game count. */
-  preview: string;
-}
 
 function lockedPreview(p: CoachPattern): string {
   const games = p.count === 1 ? "1 of your recent games" : `${p.count} of your recent games`;
@@ -42,7 +34,7 @@ function toLocked(patterns: CoachPattern[]): LockedInsight[] {
  * champion-specific coaching, the later queue and coaching history — is Pro.
  */
 export function gateDossier(dossier: CoachDossier, plan: BillingPlan): CoachDossier {
-  if (plan === "pro") return { ...dossier, plan_tier: "pro", lockedInsights: [] };
+  if (plan === "pro") return { ...dossier, planTier: "pro", lockedInsights: [] };
 
   const keep = PLAN_CONFIG.freeVisiblePatterns;
   const visible = dossier.recurringHabits.slice(0, keep);
@@ -50,7 +42,7 @@ export function gateDossier(dossier: CoachDossier, plan: BillingPlan): CoachDoss
 
   return {
     ...dossier,
-    plan_tier: "free",
+    planTier: "free",
     recurringHabits: visible,
     weaknessPatterns: dossier.weaknessPatterns.slice(0, keep),
     strengthPatterns: dossier.strengthPatterns.slice(0, keep),
