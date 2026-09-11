@@ -326,7 +326,7 @@ function buildMoment(
     narrative?.summary,
     league?.summary,
     topic?.definition,
-    `${c.roleIntelligence.roleLabel} decision around ${fundamental.label.toLowerCase()} at ${timestamp.label}.`,
+    `${c.roleIntelligence.roleLabel} decision around ${fundamental.label.toLowerCase()} during ${timestamp.label.toLowerCase()}.`,
   );
   traces.push(
     trace(
@@ -580,14 +580,14 @@ export function buildTimeline(input: ReplayInput): ReplayTimeline {
   );
 
   const headline = primary
-    ? `${roleLabel}: the game turned on ${primary.curriculumTopicLabel.toLowerCase()} around ${primary.timestamp.label}.`
+    ? `${roleLabel}: the game turned on ${primary.curriculumTopicLabel.toLowerCase()} during ${primary.timestamp.label.toLowerCase()}.`
     : `${roleLabel}: a clean timeline — nothing decided this game against you.`;
 
   const gameDevelopment = [
     `Here is how the game developed for you as ${roleLabel}.`,
     ...moments
       .slice(0, 4)
-      .map((m) => `At ${m.timestamp.label}, ${m.situationSummary} ${m.tempoImpact}`.trim()),
+      .map((m) => `During ${m.timestamp.label.toLowerCase()}, ${m.situationSummary} ${m.tempoImpact}`.trim()),
     primary ? `The decision that mattered most: ${primary.whyItMattered}` : "",
   ]
     .filter((s) => s.length > 0)
