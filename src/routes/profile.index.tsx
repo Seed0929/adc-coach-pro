@@ -321,7 +321,9 @@ function ProfilePage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{c.name}</span>
-                      <span className="font-display text-lg font-semibold text-primary">{c.avgGradeLetter}</span>
+                      <span className="font-display text-sm font-semibold text-primary">
+                        {c.avgKda} KDA
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground">{c.games} games · {c.winRate}% WR</div>
                   </div>
