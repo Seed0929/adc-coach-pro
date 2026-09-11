@@ -67,6 +67,11 @@ function mmss(seconds: number): string {
   return `${m}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** Player-facing name for a phase — used wherever no real clock anchor exists. */
+function phaseLabel(phase: GamePhase): string {
+  return phase === "early" ? "Laning phase" : phase === "mid" ? "Mid game" : "Late game";
+}
+
 function phaseOf(seconds: number): GamePhase {
   if (seconds < 14 * 60) return "early";
   if (seconds < 25 * 60) return "mid";
@@ -187,7 +192,7 @@ function timestampFor(
   const phase = phaseOf(seconds);
   return {
     seconds,
-    label: phase,
+    label: phaseLabel(phase),
     phase,
     sequence,
     estimated: true,
@@ -683,7 +688,13 @@ export function safeFallback(role: RoleId = "adc", now?: string): ReplayTimeline
 
   const base: ReplayMoment = {
     id: `0:${fundamentalId}`,
-    timestamp: { seconds, label: mmss(seconds), phase: phaseOf(seconds), sequence: 0, estimated: true },
+    timestamp: {
+      seconds,
+      label: phaseLabel(phaseOf(seconds)),
+      phase: phaseOf(seconds),
+      sequence: 0,
+      estimated: true,
+    },
     decisionId: fundamentalId,
     leagueFundamental: fundamentalId,
     leagueFundamentalLabel: fundamental.label,
