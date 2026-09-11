@@ -764,13 +764,12 @@ function CoachingAnalysisSection() {
         {/* Consistency dimensions */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {dossier.consistency.dimensions.map((d) => (
-            <ScoreMeter
-              key={d.label}
-              label={d.label}
-              value={d.score}
-              tone={scoreTone(d.score)}
-              sub="stability"
-            />
+            <div key={d.label} className="rounded-2xl bg-white/[0.03] p-4">
+              <div className="text-[11px] text-muted-foreground">{d.label}</div>
+              <div className="mt-0.5 font-display text-xl font-semibold">{d.average}</div>
+              <div className="text-[11px] text-muted-foreground">range {d.range}</div>
+              <div className="mt-1 text-[11px] text-foreground/70">{d.variability}</div>
+            </div>
           ))}
         </div>
 
