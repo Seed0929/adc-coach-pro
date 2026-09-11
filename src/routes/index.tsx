@@ -695,27 +695,6 @@ function DashboardInner() {
   );
 }
 
-function scoreTone(value: number): Tone {
-  if (value >= 75) return "success";
-  if (value >= 55) return "primary";
-  if (value >= 40) return "warning";
-  return "danger";
-}
-
-function ScoreMeter({ label, value, tone, sub }: { label: string; value: number; tone: Tone; sub: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className={`font-display text-lg font-semibold ${toneText[tone]}`}>{value}</span>
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <div className={`h-full rounded-full ${toneBar[tone]}`} style={{ width: `${value}%` }} />
-      </div>
-      <div className="mt-1.5 text-[11px] text-muted-foreground">{sub}</div>
-    </div>
-  );
-}
 
 function CoachingAnalysisSection() {
   const { dossier, loading } = useCoachDossier();
