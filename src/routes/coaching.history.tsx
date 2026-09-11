@@ -56,7 +56,7 @@ function CoachingHistory() {
                   <span className="text-xs text-muted-foreground">{report.date}</span>
                   <span className="text-xs text-muted-foreground">· {report.timeAgo}</span>
                   <Pill tone="primary">{report.focusCategory}</Pill>
-                  <Pill tone="neutral">Grade {report.overallGrade}</Pill>
+                  
                   <Pill tone="neutral">{report.gamesAnalyzed} games</Pill>
                 </div>
                 <h2 className="font-display text-xl font-semibold">{report.title}</h2>
