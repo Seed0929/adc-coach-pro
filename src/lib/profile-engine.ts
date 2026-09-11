@@ -310,7 +310,7 @@ interface MetricDef {
 
 const METRIC_DEFS: MetricDef[] = [
   { key: "cs", label: "CS / min", unit: "/min", get: (m) => round(m.csPerMin * 10) / 10, higherIsBetter: true },
-  { key: "vision", label: "Vision Score", unit: "", get: (m) => m.visionScore, higherIsBetter: true },
+  { key: "vision", label: "Vision Score (Riot stat)", unit: "", get: (m) => m.visionScore, higherIsBetter: true },
   { key: "deaths", label: "Deaths", unit: "/game", get: (m) => m.deaths, higherIsBetter: false },
   { key: "kda", label: "KDA", unit: ": 1", get: (m) => round(m.kda * 10) / 10, higherIsBetter: true },
   { key: "damage", label: "Damage", unit: "", get: (m) => m.damageToChampions, higherIsBetter: true },
@@ -533,7 +533,7 @@ function buildRecords(matches: ProfileMatch[]): PersonalRecord[] {
   return [
     { label: "Highest CS", value: `${csM.cs}`, sub: `${csM.champion} · ${csM.csPerMin.toFixed(1)}/min`, icon: "sword" },
     { label: "Highest Damage", value: dmgM.damageToChampions.toLocaleString(), sub: `${dmgM.champion}`, icon: "zap" },
-    { label: "Best Vision Score", value: `${visM.visionScore}`, sub: `${visM.champion}`, icon: "eye" },
+    { label: "Best Vision Score (Riot stat)", value: `${visM.visionScore}`, sub: `${visM.champion}`, icon: "eye" },
     { label: "Longest Win Streak", value: `${streak}`, sub: streak === 1 ? "game" : "games", icon: "flame" },
     { label: "Highest Kill Participation", value: `${round(kpM.killParticipation * 100)}%`, sub: `${kpM.champion}`, icon: "users" },
     { label: "Best KDA", value: `${kdaM.kda.toFixed(1)}`, sub: `${kdaM.champion} · ${kdaM.kills}/${kdaM.deaths}/${kdaM.assists}`, icon: "star" },

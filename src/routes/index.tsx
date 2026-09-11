@@ -937,7 +937,7 @@ function MatchCard({ match }: { match: Match }) {
         <div className="animate-fade-in space-y-3 border-t border-white/[0.06] px-5 py-4 text-sm">
           <div className="grid grid-cols-3 gap-3">
             <MiniStat label="CS / min" value={match.stats.csPerMin} />
-            <MiniStat label="Vision" value={match.stats.visionScore} />
+            <MiniStat label="Vision (Riot)" value={match.stats.visionScore} />
             <MiniStat label="Damage share" value={match.stats.damageShare} />
           </div>
           <p className="text-success/90">
