@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { getEntitlements, setDevPlan } from "@/lib/entitlements/entitlements.functions";
 import {
   guestEntitlementState,
+  isOwnerLevel,
+  isProOrAbove,
   type BillingPlan,
   type Capability,
   type EntitlementState,
@@ -91,7 +93,8 @@ export function EntitlementProvider({ children }: { children: ReactNode }) {
       loading,
       resolved,
       can: (capability) => state.capabilities[capability],
-      isPro: state.plan === "pro",
+      isPro: isProOrAbove(state.plan),
+      isOwner: isOwnerLevel(state.plan),
       refresh,
       switchPlan,
     }),
