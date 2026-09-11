@@ -20,8 +20,31 @@ import {
 
 type Client = SupabaseClient<any, any, any>;
 
-/** Reads the caller's plan. Missing row = Free (the default for everyone). */
+/**
+ * Server-authorized OWNER check.
+ *
+ * Owner status lives ONLY in public.user_roles (role = 'owner'), which normal
+ * users can read for themselves but can never write: the table has no INSERT
+ * or UPDATE policy and `authenticated` holds SELECT only. Nothing from the
+ * browser — headers, body, storage, profile fields — can influence this.
+ */
+export async function isOwner(supabase: Client, userId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "owner" });
+    return data === true;
+  } catch {
+    return false; // fail closed
+  }
+}
+
+/**
+ * Resolves the caller's effective access level: owner > pro > free.
+ *
+ * Owner is resolved FIRST and independently of billing, so no future payment,
+ * cancellation or webhook state can downgrade an owner account.
+ */
 export async function loadPlan(supabase: Client, userId: string): Promise<BillingPlan> {
+  if (await isOwner(supabase, userId)) return "owner";
   const { data } = await supabase
     .from("user_entitlements")
     .select("plan")
