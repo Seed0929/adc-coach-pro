@@ -112,9 +112,11 @@ function FreeCard({ cta }: { cta: ReactNode }) {
 }
 
 function ProCard() {
-  const [cycle, setCycle] = useState<BillingCycle>("annual");
+  // Monthly is the default for every first visit: no stored/remembered cycle.
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [comingSoon, setComingSoon] = useState(false);
   const annual = cycle === "annual";
+
 
   return (
     <section className="glass relative flex flex-col overflow-hidden rounded-3xl border border-primary/30 p-6 md:p-7">
