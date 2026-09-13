@@ -112,9 +112,11 @@ function FreeCard({ cta }: { cta: ReactNode }) {
 }
 
 function ProCard() {
-  const [cycle, setCycle] = useState<BillingCycle>("annual");
+  // Monthly is the default for every first visit: no stored/remembered cycle.
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [comingSoon, setComingSoon] = useState(false);
   const annual = cycle === "annual";
+
 
   return (
     <section className="glass relative flex flex-col overflow-hidden rounded-3xl border border-primary/30 p-6 md:p-7">
@@ -134,19 +136,25 @@ function ProCard() {
           aria-label="Billing cycle"
           className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1"
         >
-          {(["annual", "monthly"] as const).map((c) => (
+          {(["monthly", "annual"] as const).map((c) => (
             <button
               key={c}
               type="button"
               aria-pressed={cycle === c}
               onClick={() => setCycle(c)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-colors ${
                 cycle === c ? "bg-primary/15 text-primary" : "text-muted-foreground"
               }`}
             >
               {c}
+              {c === "annual" && (
+                <span className="rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-primary">
+                  Save {annualSavingsPercent()}%
+                </span>
+              )}
             </button>
           ))}
+
         </div>
 
         <div className="mt-4 flex flex-wrap items-end gap-2">

@@ -54,6 +54,15 @@ export function runPricingChecks(): CheckResult[] {
   // --- 2. derived figures are calculated, not written -----------------------
   check("annual monthly equivalent is $6.67", () => annualMonthlyEquivalent() === "$6.67");
   check("annual saving is 33%", () => annualSavingsPercent() === 33);
+  check("monthly is the default billing cycle shown", () => {
+    const page = src("src/components/pricing/pricing-plans.tsx");
+    return /useState<BillingCycle>\("monthly"\)/.test(page);
+  });
+  check("annual option carries a calculated savings badge", () => {
+    const page = src("src/components/pricing/pricing-plans.tsx");
+    return page.includes("Save {annualSavingsPercent()}%");
+  });
+
   check("savings math matches the two prices", () => {
     const expected = Math.round((1 - PRICING.annual.amount / (PRICING.monthly.amount * 12)) * 100);
     return annualSavingsPercent() === expected;
