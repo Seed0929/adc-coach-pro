@@ -281,6 +281,10 @@ function AuthPage() {
             </button>
           )}
         </div>
+
+        <p className="mt-6 border-t border-white/[0.06] pt-5 text-[11px] leading-relaxed text-muted-foreground/80">
+          {RIOT_DISCLAIMER}
+        </p>
       </div>
     </div>
   );
