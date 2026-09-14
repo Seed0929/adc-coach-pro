@@ -20,6 +20,7 @@ import {
 import { Pill } from "@/components/app-shell";
 import { CoachingCard, CardField } from "@/components/coaching-card";
 import { ChampionBackdrop } from "@/components/champion-backdrop";
+import { PublicFooter } from "@/components/public-footer";
 import { SAMPLE_PLAYER } from "@/lib/player-data";
 import logoLockup from "@/assets/botdiff-logo.png";
 
@@ -438,10 +439,7 @@ function FinalCta() {
           </div>
         </div>
       </div>
-      <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-xs text-muted-foreground">
-        <span>© {new Date().getFullYear()} BotDiff — personal League of Legends coaching.</span>
-        <span>BotDiff is not endorsed by Riot Games.</span>
-      </footer>
+      <PublicFooter className="mt-10 px-0 pb-0" />
     </section>
   );
 }
