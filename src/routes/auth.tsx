@@ -133,7 +133,8 @@ function AuthPage() {
       </div>
 
       <div className="rise glass w-full max-w-md rounded-3xl p-8">
-        <Link to="/auth" className="mb-8 flex items-center gap-2.5">
+        <div className="mb-8 flex items-center justify-between gap-3">
+        <Link to="/" className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--primary)]">
             <span className="font-display text-lg font-bold">B</span>
           </span>
