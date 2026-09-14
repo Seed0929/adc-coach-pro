@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Mail, Lock, User as UserIcon, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, User as UserIcon, ArrowRight, ArrowLeft } from "lucide-react";
+import { RIOT_DISCLAIMER } from "@/components/public-footer";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { MfaChallenge } from "@/components/mfa-challenge";
