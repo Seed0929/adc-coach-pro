@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
-  Send,
   Sparkles,
   Target,
   TrendingUp,
@@ -25,9 +24,7 @@ import {
 } from "@/components/coaching-plan";
 import { activeFocusReference } from "@/lib/coaching/performance-intelligence-v1";
 import { useCoachDossier } from "@/hooks/use-coach-dossier";
-import { useServerFn } from "@tanstack/react-start";
-import { coachAnswer, proactiveCoaching, followUpQuestion } from "@/lib/coaching";
-import { askCoach } from "@/lib/coaching.functions";
+import { proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 
 export const Route = createFileRoute("/coach")({
   head: () => ({
@@ -79,45 +76,8 @@ function Section({
 
 function Coach() {
   const { dossier, loading } = useCoachDossier();
-  const askServer = useServerFn(askCoach);
-  const [messages, setMessages] = useState<ChatTurn[]>([]);
-  const [input, setInput] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const scrollDown = () =>
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-    });
 
-  const ask = async (text: string) => {
-    const t = text.trim();
-    if (!t) return;
-    setInput("");
-    // Instant deterministic answer (works offline + for demo/guests).
-    const local = coachAnswer(dossier, t).answer;
-    setMessages((m) => [...m, { role: "you", text: t }, { role: "coach", text: local }]);
-    scrollDown();
-    // For linked players, upgrade to a live AI answer when a key is configured.
-    if (dossier.isDemo) return;
-    try {
-      const res = await askServer({ data: { question: t } });
-      if (res.ok && res.source === "ai" && res.answer !== local) {
-        setMessages((m) => {
-          const next = [...m];
-          for (let i = next.length - 1; i >= 0; i--) {
-            if (next[i].role === "coach") {
-              next[i] = { role: "coach", text: res.answer };
-              break;
-            }
-          }
-          return next;
-        });
-        scrollDown();
-      }
-    } catch {
-      /* keep the deterministic answer */
-    }
-  };
 
   const dirIcon = (d: "up" | "down" | "flat", improved: boolean) => {
     if (d === "flat") return <Minus className="size-3.5 text-muted-foreground" />;
@@ -199,73 +159,6 @@ function Coach() {
         )}
       </Section>
 
-      {/* Quick Ask */}
-      <div className="glass rise mb-6 rounded-3xl">
-        <div className="border-b border-white/5 p-6">
-          <div className="mb-1 flex items-center gap-2.5">
-            <span className="grid size-8 place-items-center rounded-xl bg-primary/15 text-primary">
-              <Sparkles className="size-4" />
-            </span>
-            <h2 className="font-display text-lg font-semibold tracking-tight">Quick Ask</h2>
-          </div>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Tap a question — I'll answer from your actual match data.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {dossier.quickPrompts.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => ask(p.text)}
-                className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-2 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
-              >
-                {p.text}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div ref={scrollRef} className="max-h-[46vh] space-y-4 overflow-y-auto p-6">
-          {messages.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Ask a question above or type one below to start.
-            </p>
-          ) : (
-            messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "you" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[82%] whitespace-pre-line rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    m.role === "you" ? "bg-primary text-primary-foreground" : "bg-white/[0.05] text-foreground"
-                  }`}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            ask(input);
-          }}
-          className="flex items-center gap-2 border-t border-white/5 p-3"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask your coach anything about your games…"
-            className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-40"
-          >
-            <Send className="size-4" />
-          </button>
-        </form>
-      </div>
 
       {/* Strength + Weakness */}
       <div className="mb-6 grid gap-6 md:grid-cols-2">
