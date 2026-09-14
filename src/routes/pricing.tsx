@@ -77,12 +77,7 @@ function PricingPage() {
         />
       </main>
 
-      <footer className="mx-auto max-w-5xl px-5 pb-10 text-xs text-muted-foreground">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
-          <span>© {new Date().getFullYear()} BotDiff — personal League of Legends coaching.</span>
-          <span>BotDiff is not endorsed by Riot Games.</span>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
