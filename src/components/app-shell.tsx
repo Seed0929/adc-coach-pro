@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   async function handleSignOut() {
     await signOut();
     toast.success("Signed out");
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   if (loading || (isAuthenticated && profile && !onboardingComplete)) {

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Mail, Lock, User as UserIcon, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, User as UserIcon, ArrowRight, ArrowLeft } from "lucide-react";
+import { RIOT_DISCLAIMER } from "@/components/public-footer";
 import { toast } from "sonner";
 import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { MfaChallenge } from "@/components/mfa-challenge";
@@ -133,12 +134,20 @@ function AuthPage() {
       </div>
 
       <div className="rise glass w-full max-w-md rounded-3xl p-8">
-        <Link to="/auth" className="mb-8 flex items-center gap-2.5">
+        <div className="mb-8 flex items-center justify-between gap-3">
+        <Link to="/" className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_24px_-8px_var(--primary)]">
             <span className="font-display text-lg font-bold">B</span>
           </span>
           <span className="font-display text-lg font-semibold tracking-tight">BotDiff</span>
         </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-white/[0.1] hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" /> Back to Home
+          </Link>
+        </div>
 
         <h1 className="font-display text-2xl font-semibold tracking-tight">{heading}</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
@@ -272,6 +281,10 @@ function AuthPage() {
             </button>
           )}
         </div>
+
+        <p className="mt-6 border-t border-white/[0.06] pt-5 text-[11px] leading-relaxed text-muted-foreground/80">
+          {RIOT_DISCLAIMER}
+        </p>
       </div>
     </div>
   );
