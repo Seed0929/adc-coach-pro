@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: oauthReturnUrl(),
         data: { username },
       },
     });
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback<AuthContextValue["signInWithGoogle"]>(async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: oauthReturnUrl(),
     });
     if (result.error) return { error: result.error.message ?? "Google sign-in failed" };
     return { error: null };

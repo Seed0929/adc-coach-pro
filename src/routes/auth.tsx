@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Mail, Lock, User as UserIcon, ArrowRight, ArrowLeft } from "lucide-react";
 import { RIOT_DISCLAIMER } from "@/components/public-footer";
 import { toast } from "sonner";
-import { hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
+import { consentReturnPath, hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { MfaChallenge } from "@/components/mfa-challenge";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 
@@ -73,6 +73,11 @@ function AuthPage() {
   useEffect(() => {
     // While MFA is outstanding the login is NOT complete — stay on /auth.
     if (!loading && isAuthenticated && !mfaChallengeRequired) {
+      const consent = consentReturnPath();
+      if (consent) {
+        window.location.assign(consent);
+        return;
+      }
       navigate({ to: profile && !hasCompletedOnboarding(profile) ? "/welcome" : dest, replace: true });
     }
   }, [loading, isAuthenticated, profile, navigate, dest, mfaChallengeRequired]);
