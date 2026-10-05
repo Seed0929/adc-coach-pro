@@ -9,101 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WelcomeRouteImport } from './routes/welcome'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ProgressRouteImport } from './routes/progress'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as MatchesRouteImport } from './routes/matches'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CoachingRouteImport } from './routes/coaching'
-import { Route as CoachRouteImport } from './routes/coach'
-import { Route as ChampionsRouteImport } from './routes/champions'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings.index'
-import { Route as ProfileIndexRouteImport } from './routes/profile.index'
-import { Route as MatchesIndexRouteImport } from './routes/matches.index'
-import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
-import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
-import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
-import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
-import { Route as AnalysisReplayCoachRouteImport } from './routes/analysis.replay-coach'
-import { Route as AnalysisPracticeHistoryRouteImport } from './routes/analysis.practice-history'
-import { Route as AnalysisHabitAnalysisRouteImport } from './routes/analysis.habit-analysis'
-import { Route as AnalysisDecisionTimelineRouteImport } from './routes/analysis.decision-timeline'
-import { Route as AnalysisCoachMemoryRouteImport } from './routes/analysis.coach-memory'
-import { Route as AnalysisChampionAnalysisRouteImport } from './routes/analysis.champion-analysis'
-import { Route as AnalysisBuildReviewRouteImport } from './routes/analysis.build-review'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChampionsRouteImport } from './routes/champions'
+import { Route as CoachRouteImport } from './routes/coach'
+import { Route as CoachingRouteImport } from './routes/coaching'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as MatchesRouteImport } from './routes/matches'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AnalysisBuildReviewRouteImport } from './routes/analysis.build-review'
+import { Route as AnalysisChampionAnalysisRouteImport } from './routes/analysis.champion-analysis'
+import { Route as AnalysisCoachMemoryRouteImport } from './routes/analysis.coach-memory'
+import { Route as AnalysisDecisionTimelineRouteImport } from './routes/analysis.decision-timeline'
+import { Route as AnalysisHabitAnalysisRouteImport } from './routes/analysis.habit-analysis'
+import { Route as AnalysisPracticeHistoryRouteImport } from './routes/analysis.practice-history'
+import { Route as AnalysisReplayCoachRouteImport } from './routes/analysis.replay-coach'
+import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
+import { Route as MatchesIndexRouteImport } from './routes/matches.index'
+import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
-const WelcomeRoute = WelcomeRouteImport.update({
-  id: '/welcome',
-  path: '/welcome',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProgressRoute = ProgressRouteImport.update({
-  id: '/progress',
-  path: '/progress',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MatchesRoute = MatchesRouteImport.update({
-  id: '/matches',
-  path: '/matches',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoachingRoute = CoachingRouteImport.update({
-  id: '/coaching',
-  path: '/coaching',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoachRoute = CoachRouteImport.update({
-  id: '/coach',
-  path: '/coach',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChampionsRoute = ChampionsRouteImport.update({
-  id: '/champions',
-  path: '/champions',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -111,81 +51,69 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ChampionsRoute = ChampionsRouteImport.update({
+  id: '/champions',
+  path: '/champions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SettingsRoute,
+const CoachRoute = CoachRouteImport.update({
+  id: '/coach',
+  path: '/coach',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileIndexRoute = ProfileIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProfileRoute,
+const CoachingRoute = CoachingRouteImport.update({
+  id: '/coaching',
+  path: '/coaching',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const MatchesIndexRoute = MatchesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => MatchesRoute,
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsProfileRoute = SettingsProfileRouteImport.update({
+const MatchesRoute = MatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const ProfileChampionRoute = ProfileChampionRouteImport.update({
-  id: '/$champion',
-  path: '/$champion',
-  getParentRoute: () => ProfileRoute,
-} as any)
-const MatchesMatchIdRoute = MatchesMatchIdRouteImport.update({
-  id: '/$matchId',
-  path: '/$matchId',
-  getParentRoute: () => MatchesRoute,
-} as any)
-const CoachingHistoryRoute = CoachingHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => CoachingRoute,
-} as any)
-const AnalysisReplayCoachRoute = AnalysisReplayCoachRouteImport.update({
-  id: '/analysis/replay-coach',
-  path: '/analysis/replay-coach',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalysisPracticeHistoryRoute = AnalysisPracticeHistoryRouteImport.update({
-  id: '/analysis/practice-history',
-  path: '/analysis/practice-history',
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalysisHabitAnalysisRoute = AnalysisHabitAnalysisRouteImport.update({
-  id: '/analysis/habit-analysis',
-  path: '/analysis/habit-analysis',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalysisDecisionTimelineRoute =
-  AnalysisDecisionTimelineRouteImport.update({
-    id: '/analysis/decision-timeline',
-    path: '/analysis/decision-timeline',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AnalysisCoachMemoryRoute = AnalysisCoachMemoryRouteImport.update({
-  id: '/analysis/coach-memory',
-  path: '/analysis/coach-memory',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalysisChampionAnalysisRoute =
-  AnalysisChampionAnalysisRouteImport.update({
-    id: '/analysis/champion-analysis',
-    path: '/analysis/champion-analysis',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AnalysisBuildReviewRoute = AnalysisBuildReviewRouteImport.update({
-  id: '/analysis/build-review',
-  path: '/analysis/build-review',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -194,6 +122,78 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AnalysisBuildReviewRoute = AnalysisBuildReviewRouteImport.update({
+  id: '/analysis/build-review',
+  path: '/analysis/build-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisChampionAnalysisRoute =
+  AnalysisChampionAnalysisRouteImport.update({
+    id: '/analysis/champion-analysis',
+    path: '/analysis/champion-analysis',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AnalysisCoachMemoryRoute = AnalysisCoachMemoryRouteImport.update({
+  id: '/analysis/coach-memory',
+  path: '/analysis/coach-memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisDecisionTimelineRoute =
+  AnalysisDecisionTimelineRouteImport.update({
+    id: '/analysis/decision-timeline',
+    path: '/analysis/decision-timeline',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AnalysisHabitAnalysisRoute = AnalysisHabitAnalysisRouteImport.update({
+  id: '/analysis/habit-analysis',
+  path: '/analysis/habit-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisPracticeHistoryRoute = AnalysisPracticeHistoryRouteImport.update({
+  id: '/analysis/practice-history',
+  path: '/analysis/practice-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisReplayCoachRoute = AnalysisReplayCoachRouteImport.update({
+  id: '/analysis/replay-coach',
+  path: '/analysis/replay-coach',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoachingHistoryRoute = CoachingHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => CoachingRoute,
+} as any)
+const MatchesIndexRoute = MatchesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MatchesRoute,
+} as any)
+const MatchesMatchIdRoute = MatchesMatchIdRouteImport.update({
+  id: '/$matchId',
+  path: '/$matchId',
+  getParentRoute: () => MatchesRoute,
+} as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileChampionRoute = ProfileChampionRouteImport.update({
+  id: '/$champion',
+  path: '/$champion',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -425,95 +425,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/welcome': {
-      id: '/welcome'
-      path: '/welcome'
-      fullPath: '/welcome'
-      preLoaderRoute: typeof WelcomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/progress': {
-      id: '/progress'
-      path: '/progress'
-      fullPath: '/progress'
-      preLoaderRoute: typeof ProgressRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/matches': {
-      id: '/matches'
-      path: '/matches'
-      fullPath: '/matches'
-      preLoaderRoute: typeof MatchesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/coaching': {
-      id: '/coaching'
-      path: '/coaching'
-      fullPath: '/coaching'
-      preLoaderRoute: typeof CoachingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/coach': {
-      id: '/coach'
-      path: '/coach'
-      fullPath: '/coach'
-      preLoaderRoute: typeof CoachRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/champions': {
-      id: '/champions'
-      path: '/champions'
-      fullPath: '/champions'
-      preLoaderRoute: typeof ChampionsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -523,102 +439,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/champions': {
+      id: '/champions'
+      path: '/champions'
+      fullPath: '/champions'
+      preLoaderRoute: typeof ChampionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/': {
-      id: '/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof SettingsRoute
+    '/coach': {
+      id: '/coach'
+      path: '/coach'
+      fullPath: '/coach'
+      preLoaderRoute: typeof CoachRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/profile/': {
-      id: '/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof ProfileIndexRouteImport
-      parentRoute: typeof ProfileRoute
+    '/coaching': {
+      id: '/coaching'
+      path: '/coaching'
+      fullPath: '/coaching'
+      preLoaderRoute: typeof CoachingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/matches/': {
-      id: '/matches/'
-      path: '/'
-      fullPath: '/matches/'
-      preLoaderRoute: typeof MatchesIndexRouteImport
-      parentRoute: typeof MatchesRoute
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/settings/profile': {
-      id: '/settings/profile'
+    '/matches': {
+      id: '/matches'
+      path: '/matches'
+      fullPath: '/matches'
+      preLoaderRoute: typeof MatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
       path: '/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof SettingsProfileRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/profile/$champion': {
-      id: '/profile/$champion'
-      path: '/$champion'
-      fullPath: '/profile/$champion'
-      preLoaderRoute: typeof ProfileChampionRouteImport
-      parentRoute: typeof ProfileRoute
-    }
-    '/matches/$matchId': {
-      id: '/matches/$matchId'
-      path: '/$matchId'
-      fullPath: '/matches/$matchId'
-      preLoaderRoute: typeof MatchesMatchIdRouteImport
-      parentRoute: typeof MatchesRoute
-    }
-    '/coaching/history': {
-      id: '/coaching/history'
-      path: '/history'
-      fullPath: '/coaching/history'
-      preLoaderRoute: typeof CoachingHistoryRouteImport
-      parentRoute: typeof CoachingRoute
-    }
-    '/analysis/replay-coach': {
-      id: '/analysis/replay-coach'
-      path: '/analysis/replay-coach'
-      fullPath: '/analysis/replay-coach'
-      preLoaderRoute: typeof AnalysisReplayCoachRouteImport
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/practice-history': {
-      id: '/analysis/practice-history'
-      path: '/analysis/practice-history'
-      fullPath: '/analysis/practice-history'
-      preLoaderRoute: typeof AnalysisPracticeHistoryRouteImport
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/habit-analysis': {
-      id: '/analysis/habit-analysis'
-      path: '/analysis/habit-analysis'
-      fullPath: '/analysis/habit-analysis'
-      preLoaderRoute: typeof AnalysisHabitAnalysisRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/decision-timeline': {
-      id: '/analysis/decision-timeline'
-      path: '/analysis/decision-timeline'
-      fullPath: '/analysis/decision-timeline'
-      preLoaderRoute: typeof AnalysisDecisionTimelineRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/coach-memory': {
-      id: '/analysis/coach-memory'
-      path: '/analysis/coach-memory'
-      fullPath: '/analysis/coach-memory'
-      preLoaderRoute: typeof AnalysisCoachMemoryRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/champion-analysis': {
-      id: '/analysis/champion-analysis'
-      path: '/analysis/champion-analysis'
-      fullPath: '/analysis/champion-analysis'
-      preLoaderRoute: typeof AnalysisChampionAnalysisRouteImport
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analysis/build-review': {
@@ -628,12 +544,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalysisBuildReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/analysis/champion-analysis': {
+      id: '/analysis/champion-analysis'
+      path: '/analysis/champion-analysis'
+      fullPath: '/analysis/champion-analysis'
+      preLoaderRoute: typeof AnalysisChampionAnalysisRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/analysis/coach-memory': {
+      id: '/analysis/coach-memory'
+      path: '/analysis/coach-memory'
+      fullPath: '/analysis/coach-memory'
+      preLoaderRoute: typeof AnalysisCoachMemoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/decision-timeline': {
+      id: '/analysis/decision-timeline'
+      path: '/analysis/decision-timeline'
+      fullPath: '/analysis/decision-timeline'
+      preLoaderRoute: typeof AnalysisDecisionTimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/habit-analysis': {
+      id: '/analysis/habit-analysis'
+      path: '/analysis/habit-analysis'
+      fullPath: '/analysis/habit-analysis'
+      preLoaderRoute: typeof AnalysisHabitAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/practice-history': {
+      id: '/analysis/practice-history'
+      path: '/analysis/practice-history'
+      fullPath: '/analysis/practice-history'
+      preLoaderRoute: typeof AnalysisPracticeHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/replay-coach': {
+      id: '/analysis/replay-coach'
+      path: '/analysis/replay-coach'
+      fullPath: '/analysis/replay-coach'
+      preLoaderRoute: typeof AnalysisReplayCoachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coaching/history': {
+      id: '/coaching/history'
+      path: '/history'
+      fullPath: '/coaching/history'
+      preLoaderRoute: typeof CoachingHistoryRouteImport
+      parentRoute: typeof CoachingRoute
+    }
+    '/matches/': {
+      id: '/matches/'
+      path: '/'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof MatchesIndexRouteImport
+      parentRoute: typeof MatchesRoute
+    }
+    '/matches/$matchId': {
+      id: '/matches/$matchId'
+      path: '/$matchId'
+      fullPath: '/matches/$matchId'
+      preLoaderRoute: typeof MatchesMatchIdRouteImport
+      parentRoute: typeof MatchesRoute
+    }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/$champion': {
+      id: '/profile/$champion'
+      path: '/$champion'
+      fullPath: '/profile/$champion'
+      preLoaderRoute: typeof ProfileChampionRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'

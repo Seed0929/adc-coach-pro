@@ -253,3 +253,13 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 }
+/** Same-origin path of a pending agent-connection consent, if any. */
+export function consentReturnPath(): string | null {
+  if (typeof window === "undefined") return null;
+  const r = new URLSearchParams(window.location.search).get("redirect");
+  return r && r.startsWith("/.lovable/oauth/consent") && !r.startsWith("//") ? r : null;
+}
+
+function oauthReturnUrl(): string {
+  return window.location.origin + (consentReturnPath() ?? "");
+}
