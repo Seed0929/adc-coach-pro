@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: oauthReturnUrl(),
         data: { username },
       },
     });
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback<AuthContextValue["signInWithGoogle"]>(async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: oauthReturnUrl(),
     });
     if (result.error) return { error: result.error.message ?? "Google sign-in failed" };
     return { error: null };
@@ -252,4 +252,14 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
+}
+/** Same-origin path of a pending agent-connection consent, if any. */
+export function consentReturnPath(): string | null {
+  if (typeof window === "undefined") return null;
+  const r = new URLSearchParams(window.location.search).get("redirect");
+  return r && r.startsWith("/.lovable/oauth/consent") && !r.startsWith("//") ? r : null;
+}
+
+function oauthReturnUrl(): string {
+  return window.location.origin + (consentReturnPath() ?? "");
 }
