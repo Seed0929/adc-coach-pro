@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CoachingRouteImport } from './routes/coaching'
@@ -37,6 +38,8 @@ import { Route as AnalysisDecisionTimelineRouteImport } from './routes/analysis.
 import { Route as AnalysisCoachMemoryRouteImport } from './routes/analysis.coach-memory'
 import { Route as AnalysisChampionAnalysisRouteImport } from './routes/analysis.champion-analysis'
 import { Route as AnalysisBuildReviewRouteImport } from './routes/analysis.build-review'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -71,6 +74,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -180,6 +188,17 @@ const AnalysisBuildReviewRoute = AnalysisBuildReviewRouteImport.update({
   path: '/analysis/build-review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -189,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRouteWithChildren
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
@@ -196,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
   '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
   '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
@@ -210,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/matches/': typeof MatchesIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -218,11 +240,13 @@ export interface FileRoutesByTo {
   '/coach': typeof CoachRoute
   '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/progress': typeof ProgressRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
   '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
   '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
@@ -237,6 +261,7 @@ export interface FileRoutesByTo {
   '/matches': typeof MatchesIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -247,6 +272,7 @@ export interface FileRoutesById {
   '/coaching': typeof CoachingRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/matches': typeof MatchesRouteWithChildren
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
@@ -254,6 +280,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/welcome': typeof WelcomeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
   '/analysis/champion-analysis': typeof AnalysisChampionAnalysisRoute
   '/analysis/coach-memory': typeof AnalysisCoachMemoryRoute
@@ -268,6 +295,7 @@ export interface FileRoutesById {
   '/matches/': typeof MatchesIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -279,6 +307,7 @@ export interface FileRouteTypes {
     | '/coaching'
     | '/dashboard'
     | '/matches'
+    | '/mcp'
     | '/pricing'
     | '/profile'
     | '/progress'
@@ -286,6 +315,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
     | '/analysis/champion-analysis'
     | '/analysis/coach-memory'
@@ -300,6 +330,7 @@ export interface FileRouteTypes {
     | '/matches/'
     | '/profile/'
     | '/settings/'
+    | '/.lovable/oauth/consent'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -308,11 +339,13 @@ export interface FileRouteTypes {
     | '/coach'
     | '/coaching'
     | '/dashboard'
+    | '/mcp'
     | '/pricing'
     | '/progress'
     | '/reset-password'
     | '/sitemap.xml'
     | '/welcome'
+    | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
     | '/analysis/champion-analysis'
     | '/analysis/coach-memory'
@@ -327,6 +360,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/profile'
     | '/settings'
+    | '/.lovable/oauth/consent'
   id:
     | '__root__'
     | '/'
@@ -336,6 +370,7 @@ export interface FileRouteTypes {
     | '/coaching'
     | '/dashboard'
     | '/matches'
+    | '/mcp'
     | '/pricing'
     | '/profile'
     | '/progress'
@@ -343,6 +378,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/welcome'
+    | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
     | '/analysis/champion-analysis'
     | '/analysis/coach-memory'
@@ -357,6 +393,7 @@ export interface FileRouteTypes {
     | '/matches/'
     | '/profile/'
     | '/settings/'
+    | '/.lovable/oauth/consent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -367,6 +404,7 @@ export interface RootRouteChildren {
   CoachingRoute: typeof CoachingRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   MatchesRoute: typeof MatchesRouteWithChildren
+  McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   ProgressRoute: typeof ProgressRoute
@@ -374,6 +412,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WelcomeRoute: typeof WelcomeRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AnalysisBuildReviewRoute: typeof AnalysisBuildReviewRoute
   AnalysisChampionAnalysisRoute: typeof AnalysisChampionAnalysisRoute
   AnalysisCoachMemoryRoute: typeof AnalysisCoachMemoryRoute
@@ -381,6 +420,7 @@ export interface RootRouteChildren {
   AnalysisHabitAnalysisRoute: typeof AnalysisHabitAnalysisRoute
   AnalysisPracticeHistoryRoute: typeof AnalysisPracticeHistoryRoute
   AnalysisReplayCoachRoute: typeof AnalysisReplayCoachRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -432,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -581,6 +628,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalysisBuildReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -644,6 +705,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoachingRoute: CoachingRouteWithChildren,
   DashboardRoute: DashboardRoute,
   MatchesRoute: MatchesRouteWithChildren,
+  McpRoute: McpRoute,
   PricingRoute: PricingRoute,
   ProfileRoute: ProfileRouteWithChildren,
   ProgressRoute: ProgressRoute,
@@ -651,6 +713,8 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   WelcomeRoute: WelcomeRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AnalysisBuildReviewRoute: AnalysisBuildReviewRoute,
   AnalysisChampionAnalysisRoute: AnalysisChampionAnalysisRoute,
   AnalysisCoachMemoryRoute: AnalysisCoachMemoryRoute,
@@ -658,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisHabitAnalysisRoute: AnalysisHabitAnalysisRoute,
   AnalysisPracticeHistoryRoute: AnalysisPracticeHistoryRoute,
   AnalysisReplayCoachRoute: AnalysisReplayCoachRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
