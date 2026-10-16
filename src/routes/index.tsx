@@ -164,15 +164,26 @@ export function DashboardPage() {
   return <DashboardInner />;
 }
 
+/** Rank text that never claims "Unranked" when Riot's ranked lookup failed. */
+function rankText(summary: RiotAccountSummary, stale: boolean): string {
+  if (summary.rank) {
+    const base = `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`;
+    return stale ? `${base} (last known)` : base;
+  }
+  return summary.rankState.status === "unavailable" ? "Rank unavailable" : "Unranked";
+}
+
 function RiotAccountCard({
   summary,
   loading,
   error,
+  rankStale,
   onRefresh,
 }: {
   summary: RiotAccountSummary | null;
   loading: boolean;
   error: string | null;
+  rankStale: boolean;
   onRefresh: () => void;
 }) {
   return (
@@ -222,11 +233,9 @@ function RiotAccountCard({
 
         <div className="flex items-center gap-3">
           {summary && (
-            <Pill tone={summary.rank ? "primary" : "neutral"}>
+            <Pill tone={summary.rank && !rankStale ? "primary" : summary.rankState.status === "unavailable" ? "warning" : "neutral"}>
               <Trophy className="size-3.5" />
-              {summary.rank
-                ? `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`
-                : "Unranked"}
+              {rankText(summary, rankStale)}
             </Pill>
           )}
           <button
@@ -248,6 +257,13 @@ function RiotAccountCard({
           % win rate
         </div>
       )}
+      {summary?.rankState.status === "unavailable" && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          {rankStale ? "Couldn't refresh your rank from Riot — showing the last known rank." : "Couldn't load your rank from Riot right now."}{" "}
+          Code: {summary.rankState.code ?? "unknown"}
+          {summary.rankState.httpStatus ? ` (${summary.rankState.httpStatus})` : ""}
+        </div>
+      )}
     </section>
   );
 }
@@ -255,7 +271,13 @@ function RiotAccountCard({
 function DashboardInner() {
   const { isDemo, data, identity } = useBotDiffData();
   const { profile, user } = useAuth();
-  const { summary, loading: riotLoading, error: riotError, refresh: refreshRiot } = useRiotSummary();
+  const { summary, loading: riotLoading, error: riotError, rankStale, refresh: refreshRiot } = useRiotSummary();
+  const { syncNow } = useSync();
+  // Manual refresh: force a fresh ranked fetch (bypasses cache) and re-check matches.
+  const refreshRiotNow = () => {
+    void refreshRiot({ fresh: true });
+    void syncNow();
+  };
   const { dossier } = useCoachDossier();
   const greetingName =
     summary?.gameName ?? profile?.username ?? identity?.gameName ?? data.playerName ?? user?.email?.split("@")[0];
@@ -294,10 +316,10 @@ function DashboardInner() {
       };
   const po = data.performanceOverview;
   const rankPill = summary
-    ? summary.rank
-      ? `${summary.rank.tier} ${summary.rank.division} · ${summary.rank.lp} LP`
-      : "Unranked"
-    : `${data.rank.tier} · ${data.rank.lp} LP`;
+    ? rankText(summary, rankStale)
+    : data.rank.lp || data.rank.tier.includes(" ")
+      ? `${data.rank.tier} · ${data.rank.lp} LP`
+      : data.rank.tier;
   // The champion from the most recent game becomes the session's visual identity.
   const sessionChampion = data.matches[0]?.champ;
 
@@ -352,7 +374,8 @@ function DashboardInner() {
           summary={summary}
           loading={riotLoading}
           error={riotError}
-          onRefresh={refreshRiot}
+          rankStale={rankStale}
+          onRefresh={refreshRiotNow}
         />
       )}
 
@@ -582,7 +605,7 @@ function DashboardInner() {
         <div className="glass rounded-3xl p-6">
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-7">
             <MiniStat label="Grade" value={po.grade} highlight />
-            <MiniStat label="Rank" value={po.rank} />
+            <MiniStat label="Rank" value={summary ? rankText(summary, rankStale) : po.rank} />
             <MiniStat label="Role" value={po.role} />
             <MiniStat label="Champion Pool" value={`${po.championPool}`} />
             <MiniStat label="Avg CS" value={po.avgCs} />
