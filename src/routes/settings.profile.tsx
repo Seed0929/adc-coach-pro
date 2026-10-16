@@ -343,17 +343,28 @@ function ProfileSettingsPage() {
               </select>
             </div>
           </div>
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={handleRiotSave}
+              disabled={savingRiot || !riotDirty}
+              className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-5 py-3 text-sm font-medium transition-colors hover:bg-white/[0.1] disabled:opacity-50"
+            >
+              {savingRiot ? <Loader2 className="size-4 animate-spin" /> : <Gamepad2 className="size-4" />}
+              Update Linked Riot Account
+            </button>
+          </div>
         </div>
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
-            disabled={saving || uploading || !dirty}
+            disabled={saving || uploading || !profileDirty}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            Save Changes
+            Save BotDiff Profile
           </button>
           <button
             type="button"
