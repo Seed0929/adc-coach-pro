@@ -241,7 +241,7 @@ function RealMatches({ history }: { history: ReturnType<typeof useMatchHistory> 
                   </div>
                 </div>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                  <Sparkles className="size-3.5" /> AI Coach
+                  <Sparkles className="size-3.5" /> Coaching
                 </span>
               </Link>
             );
@@ -391,7 +391,7 @@ function DemoMatches() {
             params={{ matchId: `demo-${activeIndex < 0 ? 0 : activeIndex}` }}
             className="glass glass-hover mt-4 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-primary"
           >
-            Open full AI Coach report <ArrowUpRight className="size-4" />
+            Open full coaching report <ArrowUpRight className="size-4" />
           </Link>
         </div>
       </div>

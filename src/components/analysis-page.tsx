@@ -308,7 +308,7 @@ function PracticeHistory() {
         </CoachingCard>
       ))}
       <div className="text-xs text-muted-foreground">
-        {tasks.length} practice tasks tracked. Complete them from the Coaching library.
+        {tasks.length} practice tasks tracked. Complete them from Gameplan.
       </div>
     </AnalysisShell>
   );

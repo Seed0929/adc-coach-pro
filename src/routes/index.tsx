@@ -662,7 +662,7 @@ function DashboardInner() {
 
       {/* ---------------- AI COACHING ---------------- */}
       <section className="mt-8 rise">
-        <SectionTitle icon={Rocket} title="AI Coaching" />
+        <SectionTitle icon={Rocket} title="Coaching" />
         <div className="grid gap-4 md:grid-cols-2">
           <InsightCard icon={Lightbulb} tone="primary" title="Biggest Improvement Opportunity" body={data.aiInsight.biggestOpportunity} />
           <InsightCard icon={Dumbbell} tone="success" title="Recommended Practice" body={data.aiInsight.recommendedPractice} />

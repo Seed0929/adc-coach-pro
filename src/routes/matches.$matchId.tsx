@@ -10,13 +10,13 @@ import { AllowanceExhausted, FreeUsageMeter } from "@/components/pro/pro-lock";
 export const Route = createFileRoute("/matches/$matchId")({
   head: () => ({
     meta: [
-      { title: "AI Coach — Match Review — BotDiff" },
+      { title: "Coaching — Match Review — BotDiff" },
       {
         name: "description",
         content:
           "A personalized AI coaching report for one match: grade, strengths, mistakes, priority improvement, practice goal, and how you've trended.",
       },
-      { property: "og:title", content: "AI Coach — Match Review — BotDiff" },
+      { property: "og:title", content: "Coaching — Match Review — BotDiff" },
       {
         property: "og:description",
         content: "Read your match like feedback from a real League coach.",
@@ -56,7 +56,7 @@ function MatchReportPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <PageHeader
-          eyebrow="AI Coach"
+          eyebrow="Coaching"
           title="Match coaching report"
           subtitle="Why the game went the way it did — not just the stats."
         />

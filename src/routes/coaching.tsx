@@ -37,13 +37,13 @@ import {
 export const Route = createFileRoute("/coaching")({
   head: () => ({
     meta: [
-      { title: "Coaching Library — BotDiff" },
+      { title: "Gameplan — BotDiff" },
       {
         name: "description",
         content:
           "Your personal coaching library: prioritized insights, practice tasks, and long-term goals that tell you exactly what to improve next.",
       },
-      { property: "og:title", content: "Coaching Library — BotDiff" },
+      { property: "og:title", content: "Gameplan — BotDiff" },
       {
         property: "og:description",
         content: "What should you improve next? Your coach has the answer.",
@@ -301,7 +301,7 @@ function Coaching() {
     <AppShell>
       {isDemo && <DemoModeBanner />}
       <PageHeader
-        eyebrow="Coaching Library"
+        eyebrow="Gameplan"
         title="What to improve next"
         subtitle="Every insight your coach has surfaced — prioritized, explained, and turned into practice you can act on today."
       />
@@ -406,7 +406,7 @@ function Coaching() {
                 <History className="size-[18px]" />
               </span>
               <div>
-                <div className="text-sm font-medium">Coaching history</div>
+                <div className="text-sm font-medium">Gameplan history</div>
                 <div className="text-xs text-muted-foreground">Your past coaching reports</div>
               </div>
             </div>
