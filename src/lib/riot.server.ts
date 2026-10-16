@@ -39,10 +39,13 @@ export class RiotError extends Error {
     | "downtime"
     | "config"
     | "unknown";
-  constructor(code: RiotError["code"], message: string) {
+  /** Upstream HTTP status when the failure came from Riot (non-secret, safe to log). */
+  httpStatus: number | null;
+  constructor(code: RiotError["code"], message: string, httpStatus: number | null = null) {
     super(message);
     this.name = "RiotError";
     this.code = code;
+    this.httpStatus = httpStatus;
   }
 }
 
@@ -93,8 +96,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Core fetch wrapper: attaches the key, maps status codes to friendly errors.
  *  On HTTP 429 (rate limit) it retries with exponential backoff, honouring the
  *  Retry-After header when Riot supplies one, before finally surfacing the error. */
-async function riotFetch<T>(url: string, cacheTtlMs = 0, maxRetries = 3): Promise<T> {
-  if (cacheTtlMs > 0) {
+async function riotFetch<T>(
+  url: string,
+  cacheTtlMs = 0,
+  maxRetries = 3,
+  skipCacheRead = false,
+): Promise<T> {
+  if (cacheTtlMs > 0 && !skipCacheRead) {
     const cached = cacheGet<T>(url);
     if (cached !== undefined) return cached;
   }
@@ -131,6 +139,16 @@ async function riotFetch<T>(url: string, cacheTtlMs = 0, maxRetries = 3): Promis
 }
 
 function mapErrorStatus(status: number): never {
+  try {
+    mapErrorStatusInner(status);
+  } catch (err) {
+    if (err instanceof RiotError) err.httpStatus = status;
+    throw err;
+  }
+  throw new RiotError("unknown", "Something went wrong talking to Riot.", status);
+}
+
+function mapErrorStatusInner(status: number): never {
   switch (status) {
     case 400:
       throw new RiotError("not_found", "That Riot ID doesn't look valid. Check the spelling.");
@@ -264,23 +282,53 @@ export async function getSummonerByPuuid(
   return riotFetch<RiotSummoner>(url, 5 * 60 * 1000);
 }
 
-/** league-v4: ranked entries by PUUID. Returns [] if unranked or unavailable. */
+/** league-v4: ranked entries by PUUID (platform host, e.g. na1). Throws on
+ *  any failure — callers must not treat a failed request as "unranked". */
 export async function getRankByPuuid(
   puuid: string,
   region: string,
+  opts: { fresh?: boolean } = {},
 ): Promise<RiotRankEntry[]> {
   const { platform } = resolveRegion(region);
   const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(
     puuid,
   )}`;
+  return riotFetch<RiotRankEntry[]>(url, 2 * 60 * 1000, 3, Boolean(opts.fresh));
+}
+
+/** Serializable rank lookup outcome. "unranked" only when Riot answered
+ *  successfully with no ranked entries; any failure is "unavailable". */
+export type RankLookupStatus = "ranked" | "unranked" | "unavailable";
+export interface RankLookupState {
+  status: RankLookupStatus;
+  /** Safe diagnostic code, e.g. "auth", "rate_limited", "downtime". */
+  code: RiotError["code"] | null;
+  httpStatus: number | null;
+  checkedAt: string;
+}
+
+export async function lookupRank(
+  puuid: string | null | undefined,
+  region: string,
+  opts: { fresh?: boolean } = {},
+): Promise<{ entries: RiotRankEntry[]; state: RankLookupState }> {
+  const checkedAt = new Date().toISOString();
+  if (!puuid) {
+    return { entries: [], state: { status: "unavailable", code: "not_found", httpStatus: null, checkedAt } };
+  }
   try {
-    return await riotFetch<RiotRankEntry[]>(url, 2 * 60 * 1000);
+    const entries = await getRankByPuuid(puuid, region, opts);
+    const list = Array.isArray(entries) ? entries : [];
+    return {
+      entries: list,
+      state: { status: list.length ? "ranked" : "unranked", code: null, httpStatus: 200, checkedAt },
+    };
   } catch (err) {
-    // Ranked data is best-effort — never fail the whole flow over it.
-    if (err instanceof RiotError && (err.code === "not_found" || err.code === "downtime")) {
-      return [];
-    }
-    throw err;
+    const code = err instanceof RiotError ? err.code : "unknown";
+    const httpStatus = err instanceof RiotError ? err.httpStatus : null;
+    // Safe server log: region + status/code only, never the key or PUUID.
+    console.warn(`[riot] league-v4 rank lookup failed region=${region} code=${code} http=${httpStatus ?? "n/a"}`);
+    return { entries: [], state: { status: "unavailable", code, httpStatus, checkedAt } };
   }
 }
 

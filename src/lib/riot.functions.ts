@@ -37,6 +37,8 @@ export interface RiotAccountSummary {
   profileIconId: number | null;
   profileIconUrl: string | null;
   rank: RiotRankSummary | null;
+  /** Whether rank came back fresh, genuinely unranked, or failed. */
+  rankState: RankLookupState;
 }
 
 export type RiotResult =
@@ -57,12 +59,14 @@ async function buildSummary(
   tagLine: string,
   region: string,
   puuid: string,
+  opts: { fresh?: boolean } = {},
 ): Promise<{ summary: RiotAccountSummary; profileIconId: number | null; summonerLevel: number | null }> {
-  const [summoner, rankEntries, version] = await Promise.all([
+  const [summoner, rank, version] = await Promise.all([
     getSummonerByPuuid(puuid, region).catch(() => null),
-    getRankByPuuid(puuid, region).catch(() => []),
+    lookupRank(puuid, region, opts),
     getLatestDDragonVersion(),
   ]);
+  const rankEntries = rank.entries;
 
   const primary = pickPrimaryRank(rankEntries);
   const profileIconId = summoner?.profileIconId ?? null;
@@ -86,6 +90,7 @@ async function buildSummary(
           losses: primary.losses,
         }
       : null,
+    rankState: rank.state,
   };
   return { summary, profileIconId, summonerLevel };
 }
@@ -153,7 +158,8 @@ export const linkRiotAccount = createServerFn({ method: "POST" })
 /** Fetch the latest live Riot summary for the signed-in user's linked account. */
 export const getRiotSummary = createServerFn({ method: "GET" })
   .middleware([requireVerifiedSession])
-  .handler(async ({ context }): Promise<RiotResult> => {
+  .inputValidator((input: { fresh?: boolean } | undefined) => ({ fresh: Boolean(input?.fresh) }))
+  .handler(async ({ data, context }): Promise<RiotResult> => {
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("riot_accounts")
@@ -177,6 +183,7 @@ export const getRiotSummary = createServerFn({ method: "GET" })
         row.tag_line,
         row.region,
         puuid,
+        { fresh: data.fresh },
       );
 
       // Keep stored snapshot fresh (best-effort).
