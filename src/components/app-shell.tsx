@@ -39,9 +39,10 @@ const nav: { to: string; label: string; icon: LucideIcon }[] = [
  * "Gameplan" (/coaching) together, because the two paths share a prefix.
  */
 export function isActiveNav(to: string, pathname: string): boolean {
-  if (to === "/dashboard") return pathname === "/" || isActiveNav("/dashboard", pathname);
+  if (to === "/dashboard" && pathname === "/") return true;
   return pathname === to || pathname.startsWith(`${to}/`);
 }
+
 
 function Ambient() {
 
