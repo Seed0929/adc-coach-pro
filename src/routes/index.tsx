@@ -317,9 +317,9 @@ function DashboardInner() {
   const po = data.performanceOverview;
   const rankPill = summary
     ? rankText(summary, rankStale)
-    : data.rank.lp || data.rank.tier.includes(" ")
-      ? `${data.rank.tier} · ${data.rank.lp} LP`
-      : data.rank.tier;
+    : data.rank.tier === "Unranked" || data.rank.tier === "Rank unavailable"
+      ? data.rank.tier
+      : `${data.rank.tier} · ${data.rank.lp} LP`;
   // The champion from the most recent game becomes the session's visual identity.
   const sessionChampion = data.matches[0]?.champ;
 
