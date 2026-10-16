@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useRef } from "react";
+import { ChampionSelector, ScopeNote } from "@/components/coach-champion-selector";
 import {
   Sparkles,
   Target,
@@ -42,13 +43,14 @@ export const Route = createFileRoute("/coach")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { champion?: string } => ({
+    champion:
+      typeof search.champion === "string" && search.champion.trim()
+        ? search.champion.trim().slice(0, 40)
+        : undefined,
+  }),
   component: Coach,
 });
-
-interface ChatTurn {
-  role: "coach" | "you";
-  text: string;
-}
 
 function Section({
   icon: Icon,
@@ -75,7 +77,13 @@ function Section({
 }
 
 function Coach() {
-  const { dossier, loading } = useCoachDossier();
+  const { champion } = Route.useSearch();
+  const navigate = useNavigate({ from: "/coach" });
+  const { dossier, loading, champions, scope } = useCoachDossier(champion ?? null);
+  const planRef = useRef<HTMLDivElement>(null);
+  const selectChampion = (name: string | null) =>
+    navigate({ search: name ? { champion: name } : {}, replace: true });
+  const scoped = Boolean(scope?.champion);
 
 
 
@@ -86,7 +94,12 @@ function Coach() {
   };
 
   const proactive = useMemo(() => proactiveCoaching(dossier), [dossier]);
-  const followUp = useMemo(() => followUpQuestion(dossier), [dossier]);
+  // Suggestions come from the account-wide view only, so they aren't recycled into champion claims.
+  const followUp = useMemo(() => (scoped ? null : followUpQuestion(dossier)), [dossier, scoped]);
+  const followUpChampion = useMemo(
+    () => (followUp ? champions.find((c) => followUp.includes(c.name))?.name ?? null : null),
+    [followUp, champions],
+  );
 
   return (
     <AppShell>
@@ -99,14 +112,27 @@ function Coach() {
           <p className="text-sm text-muted-foreground">
             {loading
               ? "Reading your recent games…"
-              : `A full report from your last ${dossier.matchesAnalyzed} games — built on your habits, not generic advice.`}
+              : scoped
+                ? `Coaching from your ${scope!.games} ${scope!.champion} game${scope!.games === 1 ? "" : "s"} only.`
+                : `A full report from your last ${dossier.matchesAnalyzed} games — built on your habits, not generic advice.`}
           </p>
         </div>
         {dossier.isDemo && <DemoModeBadge />}
       </div>
 
+      {champions.length > 0 && (
+        <ChampionSelector
+          champions={champions}
+          selected={scope?.champion ?? null}
+          totalGames={scope?.totalGames ?? 0}
+          loading={loading}
+          onSelect={selectChampion}
+        />
+      )}
+      {scope && <ScopeNote scope={scope} />}
+
       {/* Overall summary + identity */}
-      <Section icon={Brain} title="Overall coaching summary" className="mb-6">
+      <Section icon={Brain} title={scoped ? `${scope!.champion} coaching summary` : "Overall coaching summary"} className="mb-6">
         <p className="text-sm leading-relaxed text-foreground/90">{dossier.overallSummary}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {dossier.identityTraits.map((t) => (
@@ -117,12 +143,16 @@ function Coach() {
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl bg-white/[0.03] p-4">
-            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Rank assessment</div>
+            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+              Rank assessment{scoped ? ` · ${scope!.champion} games` : ""}
+            </div>
             <p className="text-sm text-foreground/90">{dossier.rankAssessment}</p>
             <p className="mt-2 text-xs font-medium text-primary">{dossier.rankPotential}</p>
           </div>
           <div className="rounded-2xl bg-white/[0.03] p-4">
-            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Record</div>
+            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+              {scoped ? `${scope!.champion} record` : "Record"}
+            </div>
             <p className="text-2xl font-display font-semibold">
               {dossier.wins}W · {dossier.losses}L
             </p>
@@ -153,9 +183,20 @@ function Coach() {
           <p className="text-sm text-foreground/90">{proactive.nextGameChallenge}</p>
         </div>
         {followUp && (
-          <p className="mt-3 rounded-2xl bg-white/[0.03] p-4 text-sm italic text-muted-foreground">
-            "{followUp}"
-          </p>
+          <button
+            type="button"
+            onClick={() =>
+              followUpChampion
+                ? selectChampion(followUpChampion)
+                : planRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="mt-3 w-full rounded-2xl bg-white/[0.03] p-4 text-left text-sm text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <span className="italic">"{followUp}"</span>
+            <span className="mt-1.5 block text-xs font-medium not-italic text-primary">
+              {followUpChampion ? `Show ${followUpChampion}-only coaching →` : "Go to your coaching plan →"}
+            </span>
+          </button>
         )}
       </Section>
 
@@ -232,6 +273,7 @@ function Coach() {
       </Section>
 
       {/* The single authoritative coaching plan */}
+      <div ref={planRef} className="scroll-mt-24">
       <Section icon={Target} title="Your Personalized Coaching Plan" className="mb-6">
         <p className="mb-4 text-sm text-muted-foreground">
           One priority at a time, measured against levels you have already produced. When Priority #1
@@ -239,6 +281,7 @@ function Coach() {
         </p>
         <CoachingPlanPanel plan={dossier.plan} />
       </Section>
+      </div>
 
       {/* Performance consistency — plain language, no abstract scores */}
       <Section icon={Gauge} title="Performance consistency" className="mb-6">
@@ -270,7 +313,7 @@ function Coach() {
       )}
 
       {/* Champion advice */}
-      {dossier.championAdvice.length > 0 && (
+      {!scoped && dossier.championAdvice.length > 0 && (
         <Section icon={Swords} title="Champion-specific advice" className="mb-6">
           <div className="grid gap-3 md:grid-cols-2">
             {dossier.championAdvice.map((c) => (
