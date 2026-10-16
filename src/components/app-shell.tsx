@@ -33,7 +33,18 @@ const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
+/**
+ * A nav item is active only for its own route or a page nested beneath it.
+ * A plain `pathname.startsWith(to)` would light up "Coaching" (/coach) and
+ * "Gameplan" (/coaching) together, because the two paths share a prefix.
+ */
+export function isActiveNav(to: string, pathname: string): boolean {
+  if (to === "/dashboard") return pathname === "/" || isActiveNav("/dashboard", pathname);
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
 function Ambient() {
+
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div className="absolute -left-40 -top-40 size-[42rem] rounded-full bg-primary/20 blur-[140px] [animation:float-glow_16s_ease-in-out_infinite]" />
@@ -99,8 +110,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="flex flex-1 flex-col gap-1">
             {nav.map(({ to, label, icon: Icon }) => {
-              const active =
-                to === "/dashboard" ? pathname === "/" || pathname.startsWith(to) : pathname.startsWith(to);
+              const active = isActiveNav(to, pathname);
+
               return (
                 <Link
                   key={to}
@@ -170,8 +181,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <nav className="flex items-center gap-1">
           {nav.map(({ to, icon: Icon }) => {
-            const active =
-              to === "/dashboard" ? pathname === "/" || pathname.startsWith(to) : pathname.startsWith(to);
+            const active = isActiveNav(to, pathname);
+
             return (
               <Link
                 key={to}
