@@ -72,12 +72,13 @@ function ProfileSettingsPage() {
       });
   }, [user]);
 
-  const dirty =
-    displayName !== initial.displayName ||
-    avatarUrl !== initial.avatarUrl ||
-    riotGameName !== initialRiot.gameName ||
-    riotTagLine !== initialRiot.tagLine ||
+  const profileDirty =
+    displayName !== initial.displayName || avatarUrl !== initial.avatarUrl;
+  const riotDirty =
+    riotGameName.trim() !== initialRiot.gameName ||
+    riotTagLine.trim().replace(/^#/, "") !== initialRiot.tagLine ||
     riotRegion !== initialRiot.region;
+  const [savingRiot, setSavingRiot] = useState(false);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -90,7 +91,7 @@ function ProfileSettingsPage() {
     try {
       const url = await uploadAvatar(user.id, file);
       setAvatarUrl(url);
-      toast.success("Picture uploaded. Save changes to apply.");
+      toast.success("Picture uploaded. Save your BotDiff profile to apply.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -104,7 +105,7 @@ function ProfileSettingsPage() {
     try {
       await removeAvatarFiles(user.id);
       setAvatarUrl(null);
-      toast.success("Picture removed. Save changes to apply.");
+      toast.success("Picture removed. Save your BotDiff profile to apply.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not remove picture.");
     } finally {
@@ -112,47 +113,67 @@ function ProfileSettingsPage() {
     }
   }
 
+  /** Saves BotDiff-only identity. Never calls Riot. */
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (saving || !user) return;
+    if (saving || !user || !profileDirty) return;
     const name = displayName.trim();
-    const gameName = riotGameName.trim();
-    const tagLine = riotTagLine.trim().replace(/^#/, "");
     if (!name) return toast.error("Username can't be empty.");
     if (name.length > 40) return toast.error("Username must be under 40 characters.");
+
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        username: name,
+        display_name: name,
+        avatar_url: avatarUrl,
+        profile_picture: avatarUrl,
+      })
+      .eq("id", user.id);
+    if (error) {
+      setSaving(false);
+      toast.error(error.message || "Could not save your BotDiff profile.");
+      return;
+    }
+    setDisplayName(name);
+    setInitial({ displayName: name, avatarUrl });
+    toast.success("BotDiff profile saved.");
+    // Refresh shared state; a refresh hiccup must not report the save as failed.
+    try {
+      await refreshProfile();
+    } catch {
+      /* saved already */
+    }
+    setSaving(false);
+  }
+
+  /** Re-links Riot only when Riot fields changed and the user asked for it. */
+  async function handleRiotSave() {
+    if (savingRiot || !user || !riotDirty) return;
+    const gameName = riotGameName.trim();
+    const tagLine = riotTagLine.trim().replace(/^#/, "");
     if (!gameName) return toast.error("Enter your Riot Game Name.");
     if (!tagLine) return toast.error("Enter your Riot Tag.");
 
-    setSaving(true);
+    setSavingRiot(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          username: name,
-          display_name: name,
-          avatar_url: avatarUrl,
-          profile_picture: avatarUrl,
-        })
-        .eq("id", user.id);
-      if (error) throw error;
-
-      // Link through the same server contract onboarding uses so the account is
-      // verified with Riot (PUUID resolved) and the connected flags are set.
-      const linkResult = await link({
-        data: { gameName, tagLine, region: riotRegion },
-      });
+      const linkResult = await link({ data: { gameName, tagLine, region: riotRegion } });
       if (!linkResult.ok) throw new Error(linkResult.message);
-
-      await refreshProfile();
-      await refreshIdentity();
+      setRiotGameName(gameName);
       setRiotTagLine(tagLine);
-      setInitial({ displayName: name, avatarUrl });
       setInitialRiot({ gameName, tagLine, region: riotRegion });
-      toast.success("Profile updated.");
+      toast.success("Linked Riot account updated.");
+      try {
+        await refreshProfile();
+        await refreshIdentity();
+      } catch {
+        /* linked already */
+      }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save changes.");
+      toast.error(err instanceof Error ? err.message : "Could not update your Riot account.");
     } finally {
-      setSaving(false);
+      setSavingRiot(false);
     }
   }
 
