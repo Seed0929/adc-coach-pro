@@ -548,12 +548,18 @@ function dashboardToPlayerData(dash: DashboardData): PlayerData {
   return {
     ...base,
     playerName: `${dash.gameName}#${dash.tagLine}`,
-    rank: dash.rank ? { tier: dash.rank.label, lp: dash.rank.lp } : { tier: "Unranked", lp: 0 },
+    rank: dash.rank
+      ? { tier: dash.rank.label, lp: dash.rank.lp }
+      : { tier: dash.rankState.status === "unavailable" ? "Rank unavailable" : "Unranked", lp: 0 },
     performanceGrade: grade,
     visionScore: Number(dash.averages.visionScore) || 0,
     performanceOverview: {
       grade,
-      rank: dash.rank ? `${dash.rank.label} · ${dash.rank.lp} LP` : "Unranked",
+      rank: dash.rank
+        ? `${dash.rank.label} · ${dash.rank.lp} LP`
+        : dash.rankState.status === "unavailable"
+          ? "Rank unavailable"
+          : "Unranked",
       role: dash.primaryRole,
       championPool: dash.championPool,
       avgCs: `${dash.averages.csPerMin} / min`,

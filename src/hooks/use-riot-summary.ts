@@ -7,7 +7,9 @@ interface RiotSummaryState {
   summary: RiotAccountSummary | null;
   loading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  /** True when the last rank lookup failed and a previously fetched rank is being shown. */
+  rankStale: boolean;
+  refresh: (opts?: { fresh?: boolean }) => Promise<void>;
 }
 
 /**
@@ -21,10 +23,11 @@ export function useRiotSummary(): RiotSummaryState {
   const [summary, setSummary] = useState<RiotAccountSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rankStale, setRankStale] = useState(false);
 
   const linked = isAuthenticated && Boolean(profile?.riot_connected);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { fresh?: boolean }) => {
     if (!linked) {
       setSummary(null);
       return;
@@ -32,9 +35,19 @@ export function useRiotSummary(): RiotSummaryState {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchSummary();
-      if (result.ok) setSummary(result.account);
-      else setError(result.message);
+      const result = await fetchSummary({ data: { fresh: Boolean(opts?.fresh) } });
+      if (result.ok) {
+        const next = result.account;
+        setSummary((prev) => {
+          // Transient rank failure: keep the last known rank but flag it stale.
+          if (next.rankState.status === "unavailable" && prev?.rank) {
+            setRankStale(true);
+            return { ...next, rank: prev.rank };
+          }
+          setRankStale(false);
+          return next;
+        });
+      } else setError(result.message);
     } catch {
       setError("Couldn't load your Riot profile right now.");
     } finally {
@@ -46,5 +59,5 @@ export function useRiotSummary(): RiotSummaryState {
     void refresh();
   }, [refresh]);
 
-  return { summary, loading, error, refresh };
+  return { summary, loading, error, rankStale, refresh };
 }
