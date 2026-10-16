@@ -4,6 +4,8 @@ import {
   RiotError,
   RIOT_REGIONS,
   getRankByPuuid,
+  lookupRank,
+  type RankLookupState,
   getSummonerByPuuid,
   getLatestDDragonVersion,
   profileIconUrl,
@@ -70,6 +72,8 @@ export interface DashboardData {
   summonerLevel: number | null;
   profileIconUrl: string | null;
   rank: DashboardRank | null;
+  /** "unranked" only on a successful empty Riot response; failures are "unavailable". */
+  rankState: RankLookupState;
   overallWinrate: number; // over the loaded matches, 0-100
   primaryRole: string;
   championPool: number;
@@ -125,6 +129,7 @@ function buildDashboard(
   account: { gameName: string; tagLine: string; region: string },
   matches: StoredMatch[],
   rankEntries: Awaited<ReturnType<typeof getRankByPuuid>>,
+  rankState: RankLookupState,
   summonerLevel: number | null,
   profileIconId: number | null,
   version: string,
@@ -241,6 +246,7 @@ function buildDashboard(
     summonerLevel,
     profileIconUrl: profileIconId != null ? profileIconUrl(version, profileIconId) : null,
     rank,
+    rankState,
     overallWinrate: n ? Math.round((sum.wins / n) * 100) : 0,
     primaryRole,
     championPool: champMap.size,
@@ -287,8 +293,8 @@ export const getRiotDashboard = createServerFn({ method: "GET" })
         }
       }
 
-      const [rankEntries, summoner, version] = await Promise.all([
-        getRankByPuuid(account.puuid, account.region).catch(() => []),
+      const [rankLookup, summoner, version] = await Promise.all([
+        lookupRank(account.puuid, account.region),
         getSummonerByPuuid(account.puuid, account.region).catch(() => null),
         getLatestDDragonVersion(),
       ]);
@@ -296,7 +302,8 @@ export const getRiotDashboard = createServerFn({ method: "GET" })
       const dashboard = buildDashboard(
         { gameName: row.game_name, tagLine: row.tag_line, region: row.region },
         matches,
-        rankEntries,
+        rankLookup.entries,
+        rankLookup.state,
         summoner?.summonerLevel ?? null,
         summoner?.profileIconId ?? null,
         version,

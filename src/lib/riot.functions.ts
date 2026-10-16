@@ -9,6 +9,8 @@ import {
   getLatestDDragonVersion,
   profileIconUrl,
   pickPrimaryRank,
+  lookupRank,
+  type RankLookupState,
 } from "./riot.server";
 
 // ---------------------------------------------------------------------------
@@ -27,6 +29,8 @@ export interface RiotRankSummary {
   wins: number;
   losses: number;
 }
+
+export type { RankLookupState } from "./riot.server";
 
 export interface RiotAccountSummary {
   gameName: string;

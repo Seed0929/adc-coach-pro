@@ -3,7 +3,7 @@ import { requireVerifiedSession } from "@/lib/security/require-verified-session"
 import {
   RiotError,
   RIOT_REGIONS,
-  getRankByPuuid,
+  lookupRank,
   getSummonerByPuuid,
   getLatestDDragonVersion,
   profileIconUrl,
@@ -58,15 +58,17 @@ export const getPlayerProfile = createServerFn({ method: "GET" })
       }
 
       const version = await getLatestDDragonVersion();
-      const [rankEntries, summoner] = await Promise.all([
-        row.puuid ? getRankByPuuid(row.puuid, row.region).catch(() => []) : Promise.resolve([]),
+      const [rankLookup, summoner] = await Promise.all([
+        lookupRank(row.puuid, row.region),
         row.puuid ? getSummonerByPuuid(row.puuid, row.region).catch(() => null) : Promise.resolve(null),
       ]);
 
-      const primary = pickPrimaryRank(rankEntries);
+      const primary = pickPrimaryRank(rankLookup.entries);
       const rankLabel = primary
         ? `${primary.tier ? primary.tier[0] + primary.tier.slice(1).toLowerCase() : primary.tier} ${primary.rank}`
-        : "Unranked";
+        : rankLookup.state.status === "unavailable"
+          ? "Rank unavailable"
+          : "Unranked";
       const iconId = summoner?.profileIconId ?? row.profile_icon_id ?? null;
       const level = summoner?.summonerLevel ?? row.summoner_level ?? null;
 
