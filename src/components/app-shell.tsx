@@ -25,8 +25,8 @@ import { useSync, formatLastSynced } from "@/hooks/use-sync";
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
   { to: "/profile", label: "Profile", icon: UserRound },
-  { to: "/coach", label: "AI Coach", icon: MessageSquareText },
-  { to: "/coaching", label: "Coaching", icon: Brain },
+  { to: "/coach", label: "Coaching", icon: MessageSquareText },
+  { to: "/coaching", label: "Gameplan", icon: Brain },
   { to: "/matches", label: "Match History", icon: Swords },
   { to: "/champions", label: "Champions", icon: Sparkles },
   { to: "/progress", label: "Analytics", icon: TrendingUp },
