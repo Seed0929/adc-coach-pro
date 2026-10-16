@@ -156,7 +156,7 @@ function Progress() {
               {focus ?? "No active coaching focus yet — import more games."}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Open Coaching for the evidence behind it and what to practise.
+              Open Gameplan for the evidence behind it and what to practise.
             </p>
           </div>
         </div>

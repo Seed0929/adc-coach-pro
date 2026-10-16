@@ -30,16 +30,16 @@ import { proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 export const Route = createFileRoute("/coach")({
   head: () => ({
     meta: [
-      { title: "AI Coach — BotDiff" },
+      { title: "Coaching — BotDiff" },
       {
         name: "description",
         content:
           "Your personal BotDiff coaching report: player identity, recurring habits, a rank-up plan, and answers grounded in your own games.",
       },
-      { property: "og:title", content: "AI Coach — BotDiff" },
+      { property: "og:title", content: "Coaching — BotDiff" },
       {
         property: "og:description",
-        content: "A Challenger-level AI coach that remembers your habits across every game.",
+        content: "A Challenger-level coach that remembers your habits across every game.",
       },
     ],
   }),
@@ -108,7 +108,7 @@ function Coach() {
           <Sparkles className="size-5" />
         </span>
         <div className="flex-1">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">AI Coach</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Coaching</h1>
           <p className="text-sm text-muted-foreground">
             {loading
               ? "Reading your recent games…"
