@@ -1,10 +1,60 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useEntitlements } from "@/hooks/use-entitlements";
 import { planLabel, resetLabel } from "@/lib/entitlements/plan";
 import { UpgradeDialog } from "@/components/pro/upgrade-dialog";
+import { createBillingPortal, getMySubscription } from "@/lib/billing/billing.functions";
+import { paymentsEnvironment } from "@/lib/stripe";
+
+/** Shown only when the player actually has a subscription on record. */
+function ManageBillingButton() {
+  const getSub = useServerFn(getMySubscription);
+  const openPortal = useServerFn(createBillingPortal);
+  const [sub, setSub] = useState<{
+    status: string;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const env = typeof window === "undefined" ? null : paymentsEnvironment();
+
+  useEffect(() => {
+    if (!env) return;
+    getSub({ data: { environment: env } })
+      .then((r) => setSub(r.subscription))
+      .catch(() => setSub(null));
+  }, [env, getSub]);
+
+  if (!env || !sub) return null;
+  const ends = sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : null;
+
+  return (
+    <div className="flex items-center gap-2">
+      {sub.cancel_at_period_end && ends && (
+        <span className="text-xs text-muted-foreground">Pro ends {ends}</span>
+      )}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          const r = await openPortal({ data: { environment: env, returnUrl: window.location.href } }).catch(
+            () => ({ ok: false as const, error: "Couldn't open billing right now." }),
+          );
+          setBusy(false);
+          if (!r.ok) toast.error(r.error);
+          else window.open(r.url, "_blank");
+        }}
+        className="rounded-full border border-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/[0.06] disabled:opacity-60"
+      >
+        Manage billing
+      </button>
+    </div>
+  );
+}
 
 /**
  * Account plan row for Settings. Includes a development-only Free/Pro switch
@@ -53,6 +103,7 @@ export function PlanSettings() {
             Pricing
           </Link>
         )}
+        {!isOwner && <ManageBillingButton />}
         <UpgradeDialog
           trigger={
             <button
