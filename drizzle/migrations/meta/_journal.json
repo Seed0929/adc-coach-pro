@@ -15,6 +15,13 @@
       "when": 1789159772933,
       "tag": "0001_harden_privilege_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792218289453,
+      "tag": "0002_create_subscriptions",
+      "breakpoints": true
     }
   ]
 }
