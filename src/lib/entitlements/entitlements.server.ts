@@ -7,6 +7,7 @@
 // client so a member can never self-grant Pro from the browser.
 // ---------------------------------------------------------------------------
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { subscriptionGrantsPro } from "@/lib/billing/billing-status";
 import {
   freeAllowance,
   isProOrAbove,
@@ -46,12 +47,30 @@ export async function isOwner(supabase: Client, userId: string): Promise<boolean
  */
 export async function loadPlan(supabase: Client, userId: string): Promise<BillingPlan> {
   if (await isOwner(supabase, userId)) return "owner";
+  if (await hasPaidPro(supabase, userId)) return "pro";
   const { data } = await supabase
     .from("user_entitlements")
     .select("plan")
     .eq("user_id", userId)
     .maybeSingle();
   return data?.plan === "pro" ? "pro" : "free";
+}
+
+/** Pro from a payment-confirmed subscription (written only by the signed webhook). */
+async function hasPaidPro(supabase: Client, userId: string): Promise<boolean> {
+  try {
+    const env = process.env["NODE_ENV"] === "production" ? "live" : "sandbox";
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", userId)
+      .eq("environment", env);
+    return (data ?? []).some((row: { status: string; current_period_end: string | null }) =>
+      subscriptionGrantsPro(row),
+    );
+  } catch {
+    return false;
+  }
 }
 
 /** Full reports the caller has unlocked inside the current allowance period. */

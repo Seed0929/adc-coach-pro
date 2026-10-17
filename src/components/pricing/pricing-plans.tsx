@@ -1,5 +1,10 @@
-import { useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { useEntitlements } from "@/hooks/use-entitlements";
+import { ProCheckoutDialog } from "@/components/pro/pro-checkout-dialog";
+import { PRO_PRICE_IDS, type ProPriceId } from "@/lib/billing/billing-status";
+import { checkoutAvailable } from "@/lib/stripe";
 import { Check, Sparkles, ArrowRight, Lock } from "lucide-react";
 import {
   Dialog,
@@ -115,6 +120,12 @@ function ProCard() {
   // Monthly is the default for every first visit: no stored/remembered cycle.
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [comingSoon, setComingSoon] = useState(false);
+  const [checkoutPrice, setCheckoutPrice] = useState<ProPriceId | null>(null);
+  const [canCheckout, setCanCheckout] = useState(false);
+  useEffect(() => setCanCheckout(checkoutAvailable()), []);
+  const { isAuthenticated } = useAuth();
+  const { isPro } = useEntitlements();
+  const navigate = useNavigate();
   const annual = cycle === "annual";
 
 
@@ -176,20 +187,33 @@ function ProCard() {
         <div className="mt-6">
           <button
             type="button"
+            disabled={canCheckout && isPro}
             onClick={() => {
               trackBetaEvent(BETA_EVENTS.proInterestClicked, { surface: "pricing" });
-              setComingSoon(true);
+              if (!canCheckout) return setComingSoon(true);
+              if (!isAuthenticated) {
+                void navigate({ to: "/auth", search: { mode: "signup" } });
+                return;
+              }
+              setCheckoutPrice(annual ? PRO_PRICE_IDS.annual : PRO_PRICE_IDS.monthly);
             }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-60"
           >
-            Get BotDiff Pro <ArrowRight className="size-4" />
+            {canCheckout && isPro ? "You have BotDiff Pro" : "Get BotDiff Pro"}{" "}
+            <ArrowRight className="size-4" />
           </button>
           <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
-            <Lock className="size-3" /> Subscriptions aren't open yet — nothing is charged today.
+            <Lock className="size-3" />
+            {canCheckout
+              ? "Test mode — no real charges. Cancel anytime."
+              : "Subscriptions aren't open yet — nothing is charged today."}
           </p>
         </div>
       </div>
       <ProComingSoonDialog open={comingSoon} onOpenChange={setComingSoon} />
+      {canCheckout && (
+        <ProCheckoutDialog priceId={checkoutPrice} onOpenChange={(o) => !o && setCheckoutPrice(null)} />
+      )}
     </section>
   );
 }

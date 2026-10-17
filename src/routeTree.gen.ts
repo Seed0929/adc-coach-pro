@@ -32,6 +32,7 @@ import { Route as AnalysisDecisionTimelineRouteImport } from './routes/analysis.
 import { Route as AnalysisHabitAnalysisRouteImport } from './routes/analysis.habit-analysis'
 import { Route as AnalysisPracticeHistoryRouteImport } from './routes/analysis.practice-history'
 import { Route as AnalysisReplayCoachRouteImport } from './routes/analysis.replay-coach'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as CoachingHistoryRouteImport } from './routes/coaching.history'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
 import { Route as MatchesMatchIdRouteImport } from './routes/matches.$matchId'
@@ -40,6 +41,7 @@ import { Route as ProfileChampionRouteImport } from './routes/profile.$champion'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -159,6 +161,11 @@ const AnalysisReplayCoachRoute = AnalysisReplayCoachRouteImport.update({
   path: '/analysis/replay-coach',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoachingHistoryRoute = CoachingHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -199,6 +206,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -224,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
   '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
   '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -232,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -254,6 +269,7 @@ export interface FileRoutesByTo {
   '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
   '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
   '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -262,6 +278,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -288,6 +305,7 @@ export interface FileRoutesById {
   '/analysis/habit-analysis': typeof AnalysisHabitAnalysisRoute
   '/analysis/practice-history': typeof AnalysisPracticeHistoryRoute
   '/analysis/replay-coach': typeof AnalysisReplayCoachRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/history': typeof CoachingHistoryRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/profile/$champion': typeof ProfileChampionRoute
@@ -296,6 +314,7 @@ export interface FileRoutesById {
   '/profile/': typeof ProfileIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -323,6 +342,7 @@ export interface FileRouteTypes {
     | '/analysis/habit-analysis'
     | '/analysis/practice-history'
     | '/analysis/replay-coach'
+    | '/checkout/return'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -331,6 +351,7 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/settings/'
     | '/.lovable/oauth/consent'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -353,6 +374,7 @@ export interface FileRouteTypes {
     | '/analysis/habit-analysis'
     | '/analysis/practice-history'
     | '/analysis/replay-coach'
+    | '/checkout/return'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -361,6 +383,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/.lovable/oauth/consent'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -386,6 +409,7 @@ export interface FileRouteTypes {
     | '/analysis/habit-analysis'
     | '/analysis/practice-history'
     | '/analysis/replay-coach'
+    | '/checkout/return'
     | '/coaching/history'
     | '/matches/$matchId'
     | '/profile/$champion'
@@ -394,6 +418,7 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/settings/'
     | '/.lovable/oauth/consent'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -420,7 +445,9 @@ export interface RootRouteChildren {
   AnalysisHabitAnalysisRoute: typeof AnalysisHabitAnalysisRoute
   AnalysisPracticeHistoryRoute: typeof AnalysisPracticeHistoryRoute
   AnalysisReplayCoachRoute: typeof AnalysisReplayCoachRoute
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -586,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalysisReplayCoachRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/coaching/history': {
       id: '/coaching/history'
       path: '/history'
@@ -640,6 +674,13 @@ declare module '@tanstack/react-router' {
       path: '/.lovable/oauth/consent'
       fullPath: '/.lovable/oauth/consent'
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -722,7 +763,9 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisHabitAnalysisRoute: AnalysisHabitAnalysisRoute,
   AnalysisPracticeHistoryRoute: AnalysisPracticeHistoryRoute,
   AnalysisReplayCoachRoute: AnalysisReplayCoachRoute,
+  CheckoutReturnRoute: CheckoutReturnRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
