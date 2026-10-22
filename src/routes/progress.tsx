@@ -21,6 +21,8 @@ import { computeTrends, type TrendWindow } from "@/lib/profile-engine";
 export const Route = createFileRoute("/progress")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Progress — BotDiff" },
       {
         name: "description",

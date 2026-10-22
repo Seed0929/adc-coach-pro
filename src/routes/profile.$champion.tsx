@@ -42,6 +42,7 @@ function championReading(
 }
 
 export const Route = createFileRoute("/profile/$champion")({
+  head: () => ({ meta: [{"title": "Champion progress \u2014 BotDiff"}, {"name": "description", "content": "Review statistics from your matches on a selected champion."}, {"property": "og:title", "content": "Champion progress \u2014 BotDiff"}, {"property": "og:description", "content": "Review statistics from your matches on a selected champion."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ChampionProgressPage,
 });
 

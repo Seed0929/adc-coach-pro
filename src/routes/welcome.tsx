@@ -12,6 +12,10 @@ export const Route = createFileRoute("/welcome")({
   ssr: false,
   head: () => ({
     meta: [
+      {"property": "og:title", "content": "Welcome \u2014 BotDiff"},
+      {"property": "og:description", "content": "Link your Riot account to start your personalized BotDiff coaching journey."},
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Welcome — BotDiff" },
       {
         name: "description",

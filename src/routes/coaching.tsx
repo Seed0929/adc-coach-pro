@@ -37,6 +37,8 @@ import {
 export const Route = createFileRoute("/coaching")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Gameplan — BotDiff" },
       {
         name: "description",
