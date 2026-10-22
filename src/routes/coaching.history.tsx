@@ -7,6 +7,8 @@ import { useCoachingData } from "@/lib/coaching-data";
 export const Route = createFileRoute("/coaching/history")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Coaching History — BotDiff" },
       {
         name: "description",

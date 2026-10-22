@@ -23,6 +23,8 @@ import type { StoredMatch } from "@/lib/matches.functions";
 export const Route = createFileRoute("/matches/")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Match Review — BotDiff" },
       {
         name: "description",

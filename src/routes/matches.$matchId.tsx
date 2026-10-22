@@ -10,6 +10,8 @@ import { AllowanceExhausted, FreeUsageMeter } from "@/components/pro/pro-lock";
 export const Route = createFileRoute("/matches/$matchId")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Coaching — Match Review — BotDiff" },
       {
         name: "description",

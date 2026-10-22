@@ -13,7 +13,12 @@ const oauth = (supabase.auth as unknown as {
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Connect an app — BotDiff" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [
+      {"name": "description", "content": "Authorize a connected assistant to read your BotDiff account and match summaries."},
+      {"property": "og:title", "content": "Connect an app \u2014 BotDiff"},
+      {"property": "og:description", "content": "Authorize a connected assistant to read your BotDiff account and match summaries."},
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},{ title: "Connect an app — BotDiff" }, { name: "robots", content: "noindex" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "",
   }),

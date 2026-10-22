@@ -8,6 +8,10 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
+      {"property": "og:title", "content": "Reset password \u2014 BotDiff"},
+      {"property": "og:description", "content": "Set a new password for your BotDiff account."},
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Reset password — BotDiff" },
       { name: "description", content: "Set a new password for your BotDiff account." },
     ],

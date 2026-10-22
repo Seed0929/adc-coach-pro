@@ -20,6 +20,7 @@ import { linkRiotAccount } from "@/lib/riot.functions";
 import { useBotDiffData } from "@/lib/player-data";
 
 export const Route = createFileRoute("/settings/profile")({
+  head: () => ({ meta: [{"title": "Edit profile \u2014 BotDiff"}, {"name": "description", "content": "Manage your BotDiff name and picture separately from your linked Riot account."}, {"property": "og:title", "content": "Edit profile \u2014 BotDiff"}, {"property": "og:description", "content": "Manage your BotDiff name and picture separately from your linked Riot account."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ProfileSettingsPage,
 });
 

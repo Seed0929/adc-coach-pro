@@ -6,6 +6,8 @@ import { useRiotAssets } from "@/hooks/use-riot-assets";
 export const Route = createFileRoute("/champions")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Champion Pool — BotDiff" },
       {
         name: "description",

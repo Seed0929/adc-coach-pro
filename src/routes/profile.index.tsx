@@ -34,6 +34,7 @@ import {
 } from "@/lib/profile-engine";
 
 export const Route = createFileRoute("/profile/")({
+  head: () => ({ meta: [{"title": "Your player profile \u2014 BotDiff"}, {"name": "description", "content": "Review your own match statistics and champion progress."}, {"property": "og:title", "content": "Your player profile \u2014 BotDiff"}, {"property": "og:description", "content": "Review your own match statistics and champion progress."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ProfilePage,
 });
 

@@ -30,6 +30,8 @@ import { proactiveCoaching, followUpQuestion } from "@/lib/coaching";
 export const Route = createFileRoute("/coach")({
   head: () => ({
     meta: [
+      {"property": "og:type", "content": "website"},
+      {"name": "twitter:card", "content": "summary"},
       { title: "Coaching — BotDiff" },
       {
         name: "description",

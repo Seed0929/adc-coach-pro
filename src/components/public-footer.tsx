@@ -25,6 +25,15 @@ export function PublicFooter({ className = "" }: { className?: string }) {
             </Link>
           </nav>
         </div>
+        <nav aria-label="Legal information" className="flex flex-wrap gap-x-5 gap-y-3 leading-relaxed">
+          <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">Privacy</Link>
+          <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">Terms</Link>
+          <Link to="/cookies" className="underline underline-offset-4 hover:text-foreground">Cookies & storage</Link>
+          <Link to="/refunds" className="underline underline-offset-4 hover:text-foreground">Billing & refunds</Link>
+          <Link to="/disclaimer" className="underline underline-offset-4 hover:text-foreground">Disclaimer</Link>
+          <Link to="/data-deletion" className="underline underline-offset-4 hover:text-foreground">Data deletion</Link>
+          <Link to="/affiliate-terms" className="underline underline-offset-4 hover:text-foreground">Affiliate terms</Link>
+        </nav>
         <p className="max-w-4xl leading-relaxed text-muted-foreground/80">{RIOT_DISCLAIMER}</p>
       </div>
     </footer>

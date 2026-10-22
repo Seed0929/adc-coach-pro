@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { consentReturnPath, hasCompletedOnboarding, useAuth } from "@/hooks/use-auth";
 import { MfaChallenge } from "@/components/mfa-challenge";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
+import { Checkbox } from "@/components/ui/checkbox";
+import { canSubmitAccountForm } from "@/lib/legal/signup-policy";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string; mode?: "signup" } => ({
@@ -19,6 +21,10 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content: "Sign in or create your BotDiff account to get personalized League coaching.",
       },
+      { property: "og:title", content: "Sign in — BotDiff" },
+      { property: "og:description", content: "Access your personal BotDiff coaching account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
@@ -60,6 +66,9 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // NEEDS OWNER REVIEW: UI-only acknowledgment; not sent to auth or persisted.
+  // Google OAuth deliberately keeps its existing flow without a consent gate.
+  const [termsAcknowledged, setTermsAcknowledged] = useState(false);
 
   const dest = search.redirect && search.redirect !== "/auth" ? search.redirect : "/dashboard";
 
@@ -85,6 +94,7 @@ function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
+    if (!canSubmitAccountForm(mode, termsAcknowledged)) return;
     setSubmitting(true);
 
     try {
@@ -238,9 +248,21 @@ function AuthPage() {
             </div>
           )}
 
+          {mode === "signup" && (
+            <div className="space-y-2 py-2 text-xs leading-relaxed text-muted-foreground">
+              <div className="flex items-start gap-3">
+                <Checkbox id="signup-terms" checked={termsAcknowledged} onCheckedChange={(value) => setTermsAcknowledged(value === true)} aria-describedby="signup-legal-draft" />
+                <label htmlFor="signup-terms" className="cursor-pointer">
+                  I acknowledge the draft <Link to="/terms" className="text-primary underline underline-offset-4">Terms</Link> and have read the <Link to="/privacy" className="text-primary underline underline-offset-4">Privacy notice</Link>.
+                </label>
+              </div>
+              <p id="signup-legal-draft">Drafts awaiting owner review. This acknowledgment is not saved as a consent record.</p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !canSubmitAccountForm(mode, termsAcknowledged)}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {submitting ? (
@@ -287,6 +309,12 @@ function AuthPage() {
           )}
         </div>
 
+        <nav aria-label="Account legal information" className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+          <Link to="/terms" className="underline underline-offset-4">Terms</Link>
+          <Link to="/privacy" className="underline underline-offset-4">Privacy</Link>
+          <Link to="/cookies" className="underline underline-offset-4">Cookies & storage</Link>
+          <Link to="/data-deletion" className="underline underline-offset-4">Data deletion</Link>
+        </nav>
         <p className="mt-6 border-t border-white/[0.06] pt-5 text-[11px] leading-relaxed text-muted-foreground/80">
           {RIOT_DISCLAIMER}
         </p>
