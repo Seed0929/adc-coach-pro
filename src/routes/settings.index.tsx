@@ -10,6 +10,14 @@ import { PlanSettings } from "@/components/pro/plan-settings";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/settings/")({
+  head: () => ({ meta: [
+    { title: "Account settings — BotDiff" },
+    { name: "description", content: "Manage your BotDiff profile, security, privacy information and preferences." },
+    { property: "og:title", content: "Account settings — BotDiff" },
+    { property: "og:description", content: "Manage your BotDiff account and read draft privacy and legal information." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: SettingsPage,
 });
 
@@ -154,6 +162,17 @@ function SettingsPage() {
         <FeedbackSettings />
         <ThemePicker />
       </div>
+      <section aria-labelledby="privacy-legal-heading" className="mt-8 border-t border-border py-6">
+        <h2 id="privacy-legal-heading" className="font-display text-lg font-semibold">Privacy & legal</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Draft notices await owner review. Account deletion and an analytics opt-out are not currently available.</p>
+        <nav aria-label="Privacy and legal settings" className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm">
+          <Link to="/privacy" className="text-primary underline underline-offset-4">Privacy notice</Link>
+          <Link to="/cookies" className="text-primary underline underline-offset-4">Cookies & storage</Link>
+          <Link to="/data-deletion" className="text-primary underline underline-offset-4">Data deletion</Link>
+          <Link to="/terms" className="text-primary underline underline-offset-4">Terms</Link>
+          <Link to="/refunds" className="text-primary underline underline-offset-4">Billing & refunds</Link>
+        </nav>
+      </section>
     </AppShell>
   );
 }
