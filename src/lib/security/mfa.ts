@@ -88,6 +88,8 @@ export interface MfaEnrollment {
   uri: string | null;
   /** Shown once during setup so the user can type it into their app. */
   secret: string | null;
+  /** Provider-generated QR image (SVG data URI) for the otpauth URI. */
+  qrCode: string | null;
 }
 
 /** Starts provider-side TOTP enrollment. The factor stays UNVERIFIED here. */
@@ -105,6 +107,7 @@ export async function startTotpEnrollment(
       factorId: data.id,
       uri: data.totp?.uri ?? null,
       secret: data.totp?.secret ?? null,
+      qrCode: data.totp?.qr_code ?? null,
     },
     error: null,
   };

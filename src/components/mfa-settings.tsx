@@ -38,7 +38,7 @@ const ICONS: Record<MfaFactorKind, LucideIcon> = {
 };
 
 type Setup =
-  | { kind: "totp"; step: "code"; factorId: string; secret: string | null }
+  | { kind: "totp"; step: "code"; factorId: string; secret: string | null; qrCode: string | null }
   | { kind: "sms"; step: "phone" }
   | { kind: "sms"; step: "code"; factorId: string };
 
@@ -109,7 +109,7 @@ export function MfaSettings() {
       return;
     }
     const next: MfaEnrollment = enrollment;
-    setSetup({ kind: "totp", step: "code", factorId: next.factorId, secret: next.secret });
+    setSetup({ kind: "totp", step: "code", factorId: next.factorId, secret: next.secret, qrCode: next.qrCode });
   }
 
   async function sendSmsCode(event: React.FormEvent) {
@@ -370,6 +370,13 @@ export function MfaSettings() {
                         ? "Step 1 of 2 — add this setup key to your authenticator app."
                         : "Step 2 of 2 — enter the code we just texted you."}
                     </p>
+                    {setup.kind === "totp" && setup.qrCode && (
+                      <img
+                        src={setup.qrCode}
+                        alt="QR code to add BotDiff to your authenticator app"
+                        className="size-44 rounded-xl bg-foreground p-2"
+                      />
+                    )}
                     {setup.kind === "totp" && setup.secret && (
                       <code className="block break-all rounded-lg bg-white/[0.04] px-3 py-2 text-xs">
                         {setup.secret}
