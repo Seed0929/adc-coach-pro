@@ -367,7 +367,7 @@ export function MfaSettings() {
                   <form onSubmit={verifyCode} className="mt-4 space-y-3">
                     <p className="text-xs text-muted-foreground">
                       {setup.kind === "totp"
-                        ? "Step 1 of 2 — add this setup key to your authenticator app."
+                        ? "Step 1 of 2 — scan the QR code or type this setup key into your authenticator app."
                         : "Step 2 of 2 — enter the code we just texted you."}
                     </p>
                     {setup.kind === "totp" && setup.qrCode && (

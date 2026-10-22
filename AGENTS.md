@@ -4,3 +4,4 @@
 - Legal documents use shared factual draft content and presentation with separate public leaf routes and noindex metadata; this keeps notices consistent and prevents unfinished policies from being indexed. Review the legal prepublication checklist before adopting or publishing them.
 - Signup acknowledgment is an email-form-only UI check, not persisted consent; keep existing OAuth independent until an approved provider-wide consent mechanism exists.
 - Public legal contact links use a shared client-safe contact module so every legal page targets the same owner-supplied mailbox without implying automatic request handling.
+- Optional TOTP MFA is enforced in three layers (UI challenge, requireVerifiedSession on server functions, restrictive RLS via session_meets_mfa); new user-data tables need the restrictive policy too.
