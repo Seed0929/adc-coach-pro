@@ -43,6 +43,7 @@ These drafts describe inspected implementation, not verified provider contracts 
 - `src/components/public-footer.tsx`, `src/routes/auth.tsx`, `src/routes/settings.index.tsx`: legal links and acknowledgment.
 - `src/lib/legal/signup-policy.ts`, `signup-policy.test.ts`: email-form-only check and four concrete rules tested.
 - `AGENTS.md`, `roadmap.md`: architecture rules and task completion. Test-runner dependency added so tests remain runnable.
+- Metadata-only completion in existing content routes: seven `analysis.*` pages, `champions.tsx`, `coach.tsx`, `coaching.tsx`, `coaching.history.tsx`, `dashboard.tsx`, `matches.index.tsx`, `matches.$matchId.tsx`, `profile.index.tsx`, `profile.$champion.tsx`, `profile.tsx`, `progress.tsx`, `reset-password.tsx`, `settings.profile.tsx`, `settings.tsx`, `welcome.tsx`, and OAuth consent. Root-level unrelated preview image tags removed so they do not override leaf-page previews. No URLs, engine behavior, auth gates or billing behavior changed.
 
 ## Authoritative reference material for owner review
 
@@ -53,5 +54,6 @@ These drafts describe inspected implementation, not verified provider contracts 
 ## Verification record
 
 - Focused acknowledgment and existing billing-status unit tests: 9 passed.
-- Preview page/links, mobile layout, unsigned signup check and signed-in Settings review: see final task report. Tests do not establish legal sufficiency or provider settings.
-- Automatic preview typecheck/build must be clean before reporting completion. No manual build/typecheck, publication, live setting change or payment processing in this task.
+- Existing feedback validation: 42/42; account security: 37/37; hardening/analytics: 21/21. Total: 109 passing checks.
+- All seven public draft URLs returned HTTP 200 and distinct titles/noindex metadata. Desktop/mobile privacy screenshots inspected; signup starts unchecked, requires acknowledgment for email signup, leaves Google enabled and existing sign-in ungated. Signed-in owner's Settings displays five legal links; Data deletion link opens the public draft. No page errors observed. No new account, Google OAuth completion or payment was executed.
+- Latest automatic preview build/typecheck: build OK. No manual build/typecheck, publication, live setting change or payment processing in this task. Provider settings and legal sufficiency remain unverified.
