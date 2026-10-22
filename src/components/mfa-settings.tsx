@@ -17,6 +17,7 @@ import {
   startTotpEnrollment,
   verifyPhoneEnrollment,
   verifyTotpEnrollment,
+  verifyMfaChallenge,
   type MfaEnrollment,
 } from "@/lib/security/mfa";
 import {
