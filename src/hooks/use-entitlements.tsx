@@ -40,7 +40,7 @@ const EntitlementContext = createContext<EntitlementContextValue | undefined>(un
  * capabilities from here instead of testing the plan string itself.
  */
 export function EntitlementProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading, mfaChallengeRequired, user } = useAuth();
   const fetchState = useServerFn(getEntitlements);
   const changePlan = useServerFn(setDevPlan);
   const guest = useMemo(() => guestEntitlementState(), []);
@@ -49,7 +49,7 @@ export function EntitlementProvider({ children }: { children: ReactNode }) {
   const [resolved, setResolved] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || authLoading || mfaChallengeRequired) {
       setState(guest);
       setResolved(false);
       return;
@@ -66,7 +66,7 @@ export function EntitlementProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, fetchState, guest]);
+  }, [isAuthenticated, authLoading, mfaChallengeRequired, user?.id, fetchState, guest]);
 
   useEffect(() => {
     void refresh();

@@ -1,427 +1,87 @@
-// ---------------------------------------------------------------------------
-// MFA settings (Sprint 5.9). Same surface styling as the rest of Settings — no
-// new design language. Three clearly-labelled factor choices, one step at a
-// time. Status is server-derived; codes are verified by the auth provider.
-// A factor is only shown as "On" when the provider holds a VERIFIED factor.
-// ---------------------------------------------------------------------------
-import { useCallback, useEffect, useState } from "react";
-import { ShieldCheck, ShieldAlert, Loader2, Smartphone, MessageSquare, Mail } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { toast } from "sonner";
+// Optional native TOTP only. Secrets are transient enrollment state, never persisted.
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  cancelMfaEnrollment,
-  removeMfaFactor,
-  readMfaStatus,
-  startPhoneEnrollment,
-  startTotpEnrollment,
-  verifyPhoneEnrollment,
-  verifyTotpEnrollment,
-  verifyMfaChallenge,
-  type MfaEnrollment,
-} from "@/lib/security/mfa";
-import {
-  describeMfaFactors,
-  isFactorEnabled,
-  type MfaFactorKind,
-  type MfaFactorOption,
-} from "@/lib/security/mfa-factors";
-import {
-  getAccountSecurityStatus,
-  type AccountSecurityStatus,
-} from "@/lib/security/account-security.functions";
-
-const ICONS: Record<MfaFactorKind, LucideIcon> = {
-  totp: Smartphone,
-  sms: MessageSquare,
-  email: Mail,
-};
-
-type Setup =
-  | { kind: "totp"; step: "code"; factorId: string; secret: string | null; qrCode: string | null }
-  | { kind: "sms"; step: "phone" }
-  | { kind: "sms"; step: "code"; factorId: string };
+import { Button } from "@/components/ui/button";
+import { cancelMfaEnrollment, disableTotpFactor, startTotpEnrollment, verifyTotpEnrollment, type MfaEnrollment } from "@/lib/security/mfa";
+import { getAccountSecurityStatus, type AccountSecurityStatus } from "@/lib/security/account-security.functions";
 
 export function MfaSettings() {
-  const { isAuthenticated, refreshMfa } = useAuth();
+  const { isAuthenticated, refreshMfa, mfa } = useAuth();
+  const getStatus = useServerFn(getAccountSecurityStatus);
   const [status, setStatus] = useState<AccountSecurityStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [setup, setSetup] = useState<Setup | null>(null);
-  const [phone, setPhone] = useState("");
+  const [setup, setSetup] = useState<MfaEnrollment | null>(null);
+  const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Turning off TOTP requires a fresh code (re-authentication), not just a click.
-  const [disabling, setDisabling] = useState(false);
-  const [disableCode, setDisableCode] = useState("");
-
-  const refresh = useCallback(async () => {
-    if (!isAuthenticated) {
-      setStatus(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      // Server-derived truth (provider factors + verified token claims).
-      setStatus(await getAccountSecurityStatus());
-    } catch {
-      setStatus(null);
-    } finally {
-      setLoading(false);
-    }
-    // Keep the app-wide (provider-derived) MFA state in step, so enrolling or
-    // removing a factor here can't leave a stale challenge state elsewhere.
-    await refreshMfa();
-  }, [isAuthenticated, refreshMfa]);
-
+  const [notice, setNotice] = useState<string | null>(null);
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
+    let active = true;
+    if (isAuthenticated) void getStatus().then((value) => { if (active) setStatus(value); }).catch(() => { if (active) setStatus(null); });
+    return () => { active = false; };
+  }, [getStatus, isAuthenticated, mfa]);
   if (!isAuthenticated) return null;
 
-  const options = describeMfaFactors({
-    phoneAuthEnabled: Boolean(status?.phoneAuthEnabled),
-    smsProvider: status?.smsProviderConfigured ? "configured" : null,
-  });
-  const verifiedFactorTypes = status?.verifiedFactorTypes ?? [];
-  const mfaOn = Boolean(status?.mfaEnabled);
-
-  function resetSetup() {
-    setSetup(null);
-    setPhone("");
-    setCode("");
-    setError(null);
-  }
-
-  async function beginSetup(option: MfaFactorOption) {
-    setError(null);
-    if (option.kind === "sms") {
-      setSetup({ kind: "sms", step: "phone" });
-      return;
-    }
-    setBusy(true);
-    const { enrollment, error: startError } = await startTotpEnrollment();
-    setBusy(false);
-    if (startError || !enrollment) {
-      setError(startError ?? "Couldn't start setup.");
-      return;
-    }
-    const next: MfaEnrollment = enrollment;
-    setSetup({ kind: "totp", step: "code", factorId: next.factorId, secret: next.secret, qrCode: next.qrCode });
-  }
-
-  async function sendSmsCode(event: React.FormEvent) {
-    event.preventDefault();
+  async function act(operation: () => Promise<void>) {
     if (busy) return;
-    setBusy(true);
-    setError(null);
-    const { factorId, error: startError } = await startPhoneEnrollment(phone.trim());
-    setBusy(false);
-    if (startError || !factorId) {
-      // Real provider error — SMS is NOT enabled by a failed enrollment.
-      setError(startError ?? "Couldn't send a code to that number.");
-      return;
-    }
-    setSetup({ kind: "sms", step: "code", factorId });
+    setBusy(true); setError(null); setNotice(null);
+    try { await operation(); } catch { setError("Couldn't reach account security. Please retry."); }
+    finally { setBusy(false); }
   }
-
-  async function verifyCode(event: React.FormEvent) {
+  async function begin() {
+    await act(async () => {
+      const result = await startTotpEnrollment();
+      if (result.error || !result.enrollment) { setError(result.error ?? "Couldn't start setup."); return; }
+      setCode(""); setSetup(result.enrollment);
+    });
+  }
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (busy || !setup || setup.step !== "code") return;
-    setBusy(true);
-    setError(null);
-    const result =
-      setup.kind === "totp"
-        ? await verifyTotpEnrollment(setup.factorId, code.trim())
-        : await verifyPhoneEnrollment(setup.factorId, code.trim());
-    setBusy(false);
-    if (result.error) {
-      // Failed verification never enables MFA — the factor stays unverified.
-      setError("That code wasn't accepted. Two-factor authentication is still off.");
+    await act(async () => {
+      if (!setup && !factorId) return;
+      const result = setup ? await verifyTotpEnrollment(setup.factorId, code.trim()) : await disableTotpFactor(factorId ?? "", code.trim());
       setCode("");
-      return;
-    }
-    resetSetup();
-    toast.success("Two-factor authentication is on.");
-    await refresh();
+      if (result.error) { setError(result.error); return; }
+      setNotice(setup ? "Authenticator verified. Two-factor authentication is on." : "Authenticator removed.");
+      setSetup(null); setFactorId(null);
+      await refreshMfa();
+    });
   }
-
-  async function cancelSetup() {
-    if (setup?.step === "code") await cancelMfaEnrollment(setup.factorId);
-    resetSetup();
-    await refresh();
+  async function cancel() {
+    await act(async () => {
+      if (setup) { const result = await cancelMfaEnrollment(setup.factorId); if (result.error) { setError(result.error); return; } }
+      setSetup(null); setFactorId(null); setCode(""); await refreshMfa();
+    });
   }
-
-  async function confirmTurnOffTotp(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    const { verifiedFactors } = await readMfaStatus();
-    const totp = verifiedFactors.filter((f) => f.factorType === "totp");
-    if (!totp[0]) {
-      setBusy(false);
-      setDisabling(false);
-      await refresh();
-      return;
-    }
-    const { error: verifyError } = await verifyMfaChallenge(totp[0].id, disableCode.trim());
-    if (verifyError) {
-      setBusy(false);
-      setDisableCode("");
-      setError("That code wasn't accepted or has expired. Two-factor authentication is still on.");
-      return;
-    }
-    setBusy(false);
-    setDisabling(false);
-    setDisableCode("");
-    await turnOff("totp", true);
-  }
-
-  async function turnOff(kind: MfaFactorKind, reauthenticated = false) {
-    if (kind === "totp" && !reauthenticated) {
-      setError(null);
-      setDisabling(true);
-      return;
-    }
-    const providerType = kind === "sms" ? "phone" : kind;
-    setBusy(true);
-    setError(null);
-    const { verifiedFactors } = await readMfaStatus();
-    let lastError: string | null = null;
-    for (const factor of verifiedFactors.filter((f) => f.factorType === providerType)) {
-      const { error: removeError } = await removeMfaFactor(factor.id);
-      if (removeError) lastError = removeError;
-    }
-    setBusy(false);
-    if (lastError) toast.error(lastError);
-    else toast.success("Two-factor authentication is off.");
-    await refresh();
-  }
-
+  const totp = mfa.verifiedFactors.filter((f) => f.factorType === "totp");
   return (
-    <div className="rounded-2xl bg-white/[0.03] p-5">
+    <section aria-labelledby="account-security-heading" className="rounded-2xl bg-secondary/40 p-5">
       <div className="flex items-center gap-4">
-        <span className="grid size-10 place-items-center rounded-xl bg-primary/12 text-primary">
-          {mfaOn ? <ShieldCheck className="size-5" /> : <ShieldAlert className="size-5" />}
-        </span>
+        <span className="grid size-10 place-items-center rounded-xl bg-primary/12 text-primary">{mfa.enabled ? <ShieldCheck className="size-5" /> : <ShieldAlert className="size-5" />}</span>
         <div className="min-w-0 flex-1">
-          <div className="font-medium">Two-factor authentication</div>
-          <div className="text-sm text-muted-foreground">
-            {loading
-              ? "Checking your account security…"
-              : status === null
-                ? "Security status unavailable right now."
-                : mfaOn
-                  ? "On — you'll be asked for a code every time you sign in."
-                  : "Off — add a second step so a stolen password isn't enough."}
-          </div>
+          <h2 id="account-security-heading" className="font-medium">Security</h2>
+          <p className="text-sm text-muted-foreground">{!mfa.known ? "Checking account security…" : mfa.enabled ? "Two-factor authentication is on." : "Two-factor authentication is off."}</p>
         </div>
-        {!loading && (
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-              mfaOn ? "bg-success/15 text-success" : "bg-white/[0.06] text-muted-foreground"
-            }`}
-          >
-            {mfaOn ? "Enabled" : "Not enabled"}
-          </span>
-        )}
       </div>
-
-      {!loading && (
-        <div className="mt-4 space-y-2">
-          {options.map((option) => {
-            const Icon = ICONS[option.kind];
-            const enabled = isFactorEnabled({ option, verifiedFactorTypes });
-            const setupOpen = setup?.kind === option.kind;
-            const canSetUp = option.availability === "available";
-            return (
-              <div
-                key={option.kind}
-                className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/[0.05] text-muted-foreground">
-                    <Icon className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      {option.label}
-                      {enabled && (
-                        <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs text-success">
-                          On
-                        </span>
-                      )}
-                      {!enabled && option.availability === "needs_config" && (
-                        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-muted-foreground">
-                          Not available yet
-                        </span>
-                      )}
-                      {!enabled && option.availability === "unsupported" && (
-                        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-muted-foreground">
-                          Not a second factor
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{option.description}</p>
-                  </div>
-                  {canSetUp && !setupOpen && (
-                    <button
-                      type="button"
-                      disabled={busy || Boolean(setup) || disabling}
-                      onClick={() => (enabled ? turnOff(option.kind) : beginSetup(option))}
-                      className="shrink-0 rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium transition-colors hover:bg-white/[0.1] disabled:opacity-50"
-                    >
-                      {busy ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : enabled ? (
-                        "Turn off"
-                      ) : (
-                        "Set up"
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                {enabled && option.kind === "totp" && disabling && (
-                  <form onSubmit={confirmTurnOffTotp} className="mt-4 space-y-3">
-                    <label htmlFor="mfa-disable-code" className="block text-xs text-muted-foreground">
-                      Confirm it's you — enter the current 6-digit code from your authenticator app.
-                    </label>
-                    <input
-                      id="mfa-disable-code"
-                      value={disableCode}
-                      onChange={(ev) => setDisableCode(ev.target.value)}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="123456"
-                      className="w-full rounded-xl bg-white/[0.04] px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
-                    />
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={busy || disableCode.trim().length < 6}
-                        className="rounded-full bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50"
-                      >
-                        {busy ? "Checking…" : "Turn off two-factor"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDisabling(false);
-                          setDisableCode("");
-                          setError(null);
-                        }}
-                        className="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {!enabled && option.requirement && (
-                  <p className="mt-3 rounded-lg bg-white/[0.03] p-3 text-xs text-muted-foreground">
-                    {option.requirement}
-                  </p>
-                )}
-
-                {setupOpen && setup?.kind === "sms" && setup.step === "phone" && (
-                  <form onSubmit={sendSmsCode} className="mt-4 space-y-3">
-                    <label htmlFor="mfa-phone" className="block text-xs text-muted-foreground">
-                      Step 1 of 2 — your mobile number, including country code.
-                    </label>
-                    <input
-                      id="mfa-phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder="+1 555 010 1234"
-                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60 placeholder:text-muted-foreground"
-                    />
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={busy || phone.trim().length < 6}
-                        className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-                      >
-                        {busy ? "Sending…" : "Send code"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void cancelSetup()}
-                        className="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {setupOpen && setup?.step === "code" && (
-                  <form onSubmit={verifyCode} className="mt-4 space-y-3">
-                    <p className="text-xs text-muted-foreground">
-                      {setup.kind === "totp"
-                        ? "Step 1 of 2 — scan the QR code or type this setup key into your authenticator app."
-                        : "Step 2 of 2 — enter the code we just texted you."}
-                    </p>
-                    {setup.kind === "totp" && setup.qrCode && (
-                      <img
-                        src={setup.qrCode}
-                        alt="QR code to add BotDiff to your authenticator app"
-                        className="size-44 rounded-xl bg-foreground p-2"
-                      />
-                    )}
-                    {setup.kind === "totp" && setup.secret && (
-                      <code className="block break-all rounded-lg bg-white/[0.04] px-3 py-2 text-xs">
-                        {setup.secret}
-                      </code>
-                    )}
-                    <label htmlFor="mfa-code" className="block text-xs text-muted-foreground">
-                      {setup.kind === "totp"
-                        ? "Step 2 of 2 — enter the 6-digit code it shows."
-                        : "6-digit code"}
-                    </label>
-                    <input
-                      id="mfa-code"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="123456"
-                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/60 placeholder:text-muted-foreground"
-                    />
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={busy || code.trim().length < 6}
-                        className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-                      >
-                        {busy ? "Verifying…" : "Verify and turn on"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void cancelSetup()}
-                        className="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {!loading && !setup && error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-    </div>
+      <h3 className="mt-4 text-sm font-medium">Authenticator app</h3>
+      {totp.map((factor) => <div key={factor.id} className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"><span>{factor.friendlyName ?? "BotDiff authenticator"} · Verified</span><Button variant="secondary" disabled={busy || Boolean(setup) || Boolean(factorId)} onClick={() => { setFactorId(factor.id); setCode(""); setError(null); setNotice(null); }}>Turn off</Button></div>)}
+      {!mfa.enabled && !setup && <Button className="mt-3" disabled={busy || !mfa.known} onClick={() => void begin()}>Set up authenticator</Button>}
+      {(setup || factorId) && <form onSubmit={submit} className="mt-4 space-y-3">
+        {setup && <>
+          <p className="text-sm text-muted-foreground">Scan this QR code or enter the setup key in your authenticator app.</p>
+          {setup.qrCode && <img src={setup.qrCode} alt="QR code to add BotDiff to your authenticator app" className="size-44 rounded-lg bg-foreground p-2" />}
+          {setup.secret && <code className="block break-all rounded-lg bg-secondary px-3 py-2 text-xs">{setup.secret}</code>}
+          <p className="text-sm text-muted-foreground">Setup is not enabled until your code is verified.</p>
+        </>}
+        <label htmlFor="mfa-code" className="block text-sm">{setup ? "Current 6-digit authenticator code" : "Confirm removal with a current authenticator code"}</label>
+        <input id="mfa-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+        <div className="flex flex-wrap gap-2"><Button type="submit" variant={setup ? "default" : "destructive"} disabled={busy || !/^\d{6}$/.test(code)}>{busy ? "Checking…" : setup ? "Verify and turn on" : "Turn off authenticator"}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => void cancel()}>Cancel</Button></div>
+      </form>}
+      {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+      {notice && <p role="status" className="mt-3 text-sm text-success">{notice}</p>}
+      <p className="mt-4 text-xs text-muted-foreground">Keep access to your authenticator. Password reset does not remove this protection; BotDiff does not issue recovery codes.</p>
+    </section>
   );
 }

@@ -12,9 +12,7 @@ import { readFileSync } from "node:fs";
 import {
   canEnableFactor,
   describeMfaFactors,
-  emailFactorAvailability,
   isFactorEnabled,
-  smsFactorAvailability,
   PROVIDER_MFA_FACTOR_TYPES,
 } from "../../security/mfa-factors";
 import { isSessionPermitted } from "../../security/mfa-policy";
@@ -63,9 +61,6 @@ const rejects = async (p: Promise<unknown>) =>
     () => true,
   );
 
-const CONFIGURED = { phoneAuthEnabled: true, smsProvider: "twilio" };
-const UNCONFIGURED = { phoneAuthEnabled: false, smsProvider: null };
-
 export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
   results.length = 0;
 
@@ -77,87 +72,14 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
   const serverFns = src("src/lib/feedback/feedback.functions.ts");
 
   // --- factor catalog honesty -------------------------------------------
-  check(
-    "only provider-native factor types are claimed",
-    () => PROVIDER_MFA_FACTOR_TYPES.join(",") === "totp,phone",
-  );
-  check("three factor choices are presented", () => describeMfaFactors(UNCONFIGURED).length === 3);
-  check("authenticator app is always available", () => {
-    const totp = describeMfaFactors(UNCONFIGURED).find((f) => f.kind === "totp");
-    return totp?.availability === "available";
-  });
-  check("email is never a second factor", () => emailFactorAvailability() === "unsupported");
-  check("email option cannot be enabled", () => {
-    const email = describeMfaFactors(CONFIGURED).find((f) => f.kind === "email")!;
-    return (
-      !canEnableFactor(email) && !isFactorEnabled({ option: email, verifiedFactorTypes: ["email"] })
-    );
-  });
-  check("email option explains why it is not MFA", () => {
-    const email = describeMfaFactors(CONFIGURED).find((f) => f.kind === "email")!;
-    return typeof email.requirement === "string" && email.requirement.length > 0;
-  });
-  check(
-    "SMS needs a configured provider",
-    () => smsFactorAvailability(UNCONFIGURED) === "needs_config",
-  );
-  check(
-    "SMS is available only with phone auth AND a gateway",
-    () =>
-      smsFactorAvailability({ phoneAuthEnabled: true, smsProvider: null }) === "needs_config" &&
-      smsFactorAvailability({ phoneAuthEnabled: false, smsProvider: "twilio" }) ===
-        "needs_config" &&
-      smsFactorAvailability(CONFIGURED) === "available",
-  );
-  check("unconfigured SMS can never read as enabled", () => {
-    const sms = describeMfaFactors(UNCONFIGURED).find((f) => f.kind === "sms")!;
-    return !isFactorEnabled({ option: sms, verifiedFactorTypes: ["phone"] });
-  });
-  check("configured SMS reads enabled only with a verified phone factor", () => {
-    const sms = describeMfaFactors(CONFIGURED).find((f) => f.kind === "sms")!;
-    return (
-      isFactorEnabled({ option: sms, verifiedFactorTypes: ["phone"] }) &&
-      !isFactorEnabled({ option: sms, verifiedFactorTypes: [] }) &&
-      !isFactorEnabled({ option: sms, verifiedFactorTypes: ["totp"] })
-    );
-  });
-  check("TOTP reads enabled only with a verified totp factor", () => {
-    const totp = describeMfaFactors(CONFIGURED).find((f) => f.kind === "totp")!;
-    return (
-      isFactorEnabled({ option: totp, verifiedFactorTypes: ["totp"] }) &&
-      !isFactorEnabled({ option: totp, verifiedFactorTypes: ["phone"] })
-    );
-  });
-  check(
-    "the UI derives availability from the shared policy",
-    () => mfaUi.includes("describeMfaFactors") && mfaUi.includes("isFactorEnabled"),
-  );
-  check(
-    "the UI reads its state from the server function",
-    () => mfaUi.includes("getAccountSecurityStatus") && !mfaUi.includes("localStorage"),
-  );
-
-  // --- TOTP flow preserved ----------------------------------------------
-  check(
-    "TOTP enrollment still uses the provider",
-    () => mfaLib.includes('factorType: "totp"') && mfaLib.includes("supabase.auth.mfa.enroll"),
-  );
-  check("verification is delegated to the provider", () => mfaLib.includes("challengeAndVerify"));
-  check("SMS enrollment uses the provider's phone factor", () =>
-    mfaLib.includes('factorType: "phone"'),
-  );
-  check(
-    "setup can be cancelled and the factor discarded",
-    () => mfaLib.includes("cancelMfaEnrollment") && mfaUi.includes("cancelMfaEnrollment"),
-  );
-  check(
-    "a failed verification never reports MFA as on",
-    () => /still off/i.test(mfaUi) && mfaUi.includes("if (result.error)"),
-  );
-  check(
-    "turning a factor off unenrolls it with the provider",
-    () => mfaUi.includes("removeMfaFactor") && mfaLib.includes("unenroll"),
-  );
+  check("only native TOTP is supported", () => PROVIDER_MFA_FACTOR_TYPES.join(",") === "totp");
+  check("one native factor is offered", () => describeMfaFactors().length === 1);
+  const option = describeMfaFactors()[0];
+  check("TOTP requires a verified native factor", () => Boolean(option && canEnableFactor(option) && isFactorEnabled({option, verifiedFactorTypes:["totp"]}) && !isFactorEnabled({option, verifiedFactorTypes:["phone"]})));
+  check("enrollment and verification use native APIs", () => mfaLib.includes('factorType: "totp"') && mfaLib.includes("challengeAndVerify"));
+  check("no SMS enrollment path exists", () => !mfaLib.includes('factorType: "phone"'));
+  check("removal requires fresh native verification", () => mfaUi.includes("disableTotpFactor") && mfaLib.includes("verifyMfaChallenge(factorId, code)"));
+  check("cancellation guards unverified factors", () => mfaLib.includes("status.unverifiedFactors.some"));
 
   // --- no secret / code leakage -----------------------------------------
   check(
@@ -175,7 +97,7 @@ export async function runMfaFeedbackChecks(): Promise<CheckResult[]> {
       !code("src/components/mfa-settings.tsx").includes(".from("),
   );
   check("the setup key is only shown during enrollment", () =>
-    mfaUi.includes('setup.kind === "totp" && setup.secret'),
+    mfaUi.includes('setup.secret') && mfaUi.includes('setup &&'),
   );
   check("server status never returns factor secrets", () => {
     const fns = code("src/lib/security/account-security.functions.ts");

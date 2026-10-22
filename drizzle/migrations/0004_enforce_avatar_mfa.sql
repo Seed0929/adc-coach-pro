@@ -1,0 +1,1 @@
+CREATE POLICY "Require MFA for avatars when enrolled" ON storage.objects AS RESTRICTIVE FOR ALL TO authenticated USING (bucket_id <> 'avatars' OR public.session_meets_mfa()) WITH CHECK (bucket_id <> 'avatars' OR public.session_meets_mfa());

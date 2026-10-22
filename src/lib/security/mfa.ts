@@ -18,6 +18,8 @@ export interface MfaFactorSummary {
 }
 
 export interface MfaStatus {
+  /** False until both provider factor and assurance reads succeed. */
+  known: boolean;
   /** True when at least one factor is fully verified with the provider. */
   enabled: boolean;
   /** Assurance level of the CURRENT session, as reported by the provider. */
@@ -31,6 +33,7 @@ export interface MfaStatus {
 }
 
 export const MFA_STATUS_UNKNOWN: MfaStatus = {
+  known: false,
   enabled: false,
   currentLevel: null,
   nextLevel: null,
@@ -59,25 +62,20 @@ function toSummary(factor: {
  * correct after refresh, in a new tab, or with tampered local storage.
  */
 export async function readMfaStatus(): Promise<MfaStatus> {
-  const { data: factorData, error } = await supabase.auth.mfa.listFactors();
-  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  const currentLevel = (aalData?.currentLevel as AssuranceLevel | null) ?? null;
-  const nextLevel = (aalData?.nextLevel as AssuranceLevel | null) ?? null;
-
-  if (error) {
-    return { ...MFA_STATUS_UNKNOWN, currentLevel, nextLevel };
-  }
-
-  const all = (factorData?.all ?? []).map(toSummary);
-  const verifiedFactors = all.filter((f) => f.status === "verified");
-
+  const { data: factorData, error: factorError } = await supabase.auth.mfa.listFactors();
+  const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (factorError || aalError || !factorData || !aalData) return MFA_STATUS_UNKNOWN;
+  const all = factorData.all.map(toSummary);
+  const enabled = deriveMfaEnabled(all);
+  const currentLevel = aalData.currentLevel === "aal2" ? "aal2" : aalData.currentLevel === "aal1" ? "aal1" : null;
+  const nextLevel = enabled || aalData.nextLevel === "aal2" ? "aal2" : aalData.nextLevel === "aal1" ? "aal1" : null;
   return {
-    enabled: deriveMfaEnabled(all),
+    known: true,
+    enabled,
     currentLevel,
     nextLevel,
-    // Fail closed: a session that must reach aal2 but hasn't is NOT complete.
     challengeRequired: deriveChallengeRequired(currentLevel, nextLevel),
-    verifiedFactors,
+    verifiedFactors: all.filter((f) => f.status === "verified"),
     unverifiedFactors: all.filter((f) => f.status === "unverified"),
   };
 }
@@ -94,23 +92,27 @@ export interface MfaEnrollment {
 
 /** Starts provider-side TOTP enrollment. The factor stays UNVERIFIED here. */
 export async function startTotpEnrollment(
-  friendlyName = `BotDiff ${new Date().toISOString().slice(0, 10)}`,
+  friendlyName = "BotDiff authenticator",
 ): Promise<{ enrollment: MfaEnrollment | null; error: string | null }> {
-  const { data, error } = await supabase.auth.mfa.enroll({
-    factorType: "totp",
-    friendlyName,
-  });
-  if (error || !data)
-    return { enrollment: null, error: error?.message ?? "Couldn't start MFA setup." };
-  return {
-    enrollment: {
-      factorId: data.id,
-      uri: data.totp?.uri ?? null,
-      secret: data.totp?.secret ?? null,
-      qrCode: data.totp?.qr_code ?? null,
-    },
-    error: null,
-  };
+  try {
+    // Only discard abandoned, UNVERIFIED TOTP factors. Never remove protection.
+    const status = await readMfaStatus();
+    if (!status.known) return { enrollment: null, error: "Couldn't check account security. Retry setup." };
+    if (status.enabled) return { enrollment: null, error: "An authenticator is already enabled." };
+    for (const factor of status.unverifiedFactors.filter((f) => f.factorType === "totp")) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (error) return { enrollment: null, error: "Couldn't clear unfinished setup. Try again." };
+    }
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName });
+    if (error || !data) return { enrollment: null, error: "Couldn't start authenticator setup. Try again." };
+    const qr = data.totp.qr_code;
+    // The SDK prefixes raw SVG with a data URI but leaves '#' etc. unescaped.
+    const prefix = "data:image/svg+xml;utf-8,";
+    const qrCode = qr.startsWith(prefix) ? prefix + encodeURIComponent(qr.slice(prefix.length)) : qr;
+    return { enrollment: { factorId: data.id, uri: data.totp.uri, secret: data.totp.secret, qrCode }, error: null };
+  } catch {
+    return { enrollment: null, error: "Couldn't reach account security. Try again." };
+  }
 }
 
 /**
@@ -121,79 +123,62 @@ export async function verifyTotpEnrollment(
   factorId: string,
   code: string,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
-  return { error: error?.message ?? null };
+  return verifyMfaChallenge(factorId, code);
 }
 
-/** Answers the login-time challenge for an already-verified factor. */
+/** Native challenge and verification; invalid/expired codes never elevate a session. */
 export async function verifyMfaChallenge(
   factorId: string,
   code: string,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
-  return { error: error?.message ?? null };
-}
-
-/**
- * Asks the provider to issue a challenge for a verified factor. Needed for
- * phone factors, where the challenge is what actually sends the SMS. TOTP
- * factors don't need this — the app already shows a current code.
- */
-export async function sendMfaChallenge(
-  factorId: string,
-): Promise<{ challengeId: string | null; error: string | null }> {
-  const { data, error } = await supabase.auth.mfa.challenge({ factorId });
-  if (error || !data) return { challengeId: null, error: error?.message ?? "Couldn't send a code." };
-  return { challengeId: data.id, error: null };
-}
-
-/** Verifies a code against an already-issued challenge. */
-export async function verifyMfaChallengeCode(
-  factorId: string,
-  challengeId: string,
-  code: string,
-): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.mfa.verify({ factorId, challengeId, code });
-  return { error: error?.message ?? null };
-}
-
-/** Removes a factor. The provider requires an aal2 session to allow this. */
-export async function removeMfaFactor(factorId: string): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.mfa.unenroll({ factorId });
-  return { error: error?.message ?? null };
-}
-
-/** Discards an in-progress, never-verified enrollment. */
-export async function cancelMfaEnrollment(factorId: string): Promise<void> {
-  await supabase.auth.mfa.unenroll({ factorId }).catch(() => undefined);
-}
-
-/**
- * Starts provider-side PHONE (SMS) enrollment. This is the provider's native
- * `phone` MFA factor — it only works when phone auth and an SMS gateway are
- * configured for the project; otherwise the provider's error is surfaced as-is
- * and nothing is marked enabled.
- */
-export async function startPhoneEnrollment(
-  phone: string,
-  friendlyName = `BotDiff SMS ${new Date().toISOString().slice(0, 10)}`,
-): Promise<{ factorId: string | null; error: string | null }> {
-  const { data, error } = await supabase.auth.mfa.enroll({
-    factorType: "phone",
-    phone,
-    friendlyName,
-  });
-  if (error || !data) {
-    return { factorId: null, error: error?.message ?? "Couldn't start SMS setup." };
+  if (!/^\d{6}$/.test(code)) return { error: "Enter the current 6-digit authenticator code." };
+  try {
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
+    return { error: error ? "That code wasn't accepted or has expired. Try the current code." : null };
+  } catch {
+    return { error: "Couldn't verify the code. Check your connection and try again." };
   }
-  return { factorId: data.id, error: null };
 }
 
-/** Verifies an SMS enrollment code. A wrong code leaves the factor unverified. */
-export async function verifyPhoneEnrollment(
-  factorId: string,
-  code: string,
-): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
-  return { error: error?.message ?? null };
+/** Fresh native verification before removing this exact verified TOTP factor. */
+export async function disableTotpFactor(factorId: string, code: string): Promise<{ error: string | null }> {
+  try {
+    const status = await readMfaStatus();
+    if (!status.known || !status.verifiedFactors.some((f) => f.id === factorId && f.factorType === "totp")) {
+      return { error: "Couldn't confirm this authenticator. Refresh and try again." };
+    }
+    const verified = await verifyMfaChallenge(factorId, code);
+    if (verified.error) return verified;
+    return removeMfaFactor(factorId);
+  } catch {
+    return { error: "Couldn't turn off this authenticator. It may still be enabled; refresh to check." };
+  }
+}
+
+/** Provider enforces aal2 for removal of verified factors. */
+export async function removeMfaFactor(factorId: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (error) return { error: "Couldn't remove the authenticator. Refresh and try again." };
+    // Unenrollment can downgrade assurance; obtain current claims before other calls.
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    return { error: refreshError ? "Authenticator removed, but session refresh failed. Sign in again." : null };
+  } catch {
+    return { error: "Couldn't finish removing the authenticator. Refresh to check its status." };
+  }
+}
+
+/** Cancellation must never remove a VERIFIED factor, even after a racing verification. */
+export async function cancelMfaEnrollment(factorId: string): Promise<{ error: string | null }> {
+  try {
+    const status = await readMfaStatus();
+    if (!status.known) return { error: "Couldn't check unfinished setup. Try again." };
+    if (!status.unverifiedFactors.some((f) => f.id === factorId && f.factorType === "totp")) {
+      return { error: "Setup changed. Refresh to check your authenticator." };
+    }
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    return { error: error ? "Couldn't cancel setup. Try again." : null };
+  } catch {
+    return { error: "Couldn't cancel setup. Check your connection and try again." };
+  }
 }

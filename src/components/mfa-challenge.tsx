@@ -1,17 +1,10 @@
-// ---------------------------------------------------------------------------
-// MFA challenge (Sprint 5.7). Rendered whenever the provider reports that the
-// current session must still reach aal2. Answering the challenge is a provider
-// call; failure leaves the session un-elevated and protected server functions
-// keep rejecting it.
-// ---------------------------------------------------------------------------
+// Native TOTP challenge. Unknown provider state stays blocked with retry/sign-out.
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  sendMfaChallenge,
-  verifyMfaChallenge,
-  verifyMfaChallengeCode,
-} from "@/lib/security/mfa";
+import { verifyMfaChallenge } from "@/lib/security/mfa";
+import { Button } from "@/components/ui/button";
+import { BOTDIFF_CONTACT_HREF } from "@/lib/legal/contact";
 
 export function MfaChallenge() {
   const { mfa, refreshMfa, signOut } = useAuth();
@@ -19,120 +12,37 @@ export function MfaChallenge() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [factorId, setFactorId] = useState<string | null>(null);
-  const [challengeId, setChallengeId] = useState<string | null>(null);
-
-  const factors = mfa.verifiedFactors;
+  const factors = mfa.verifiedFactors.filter((f) => f.factorType === "totp");
   const factor = factors.find((f) => f.id === factorId) ?? factors[0];
-  // Phone factors only deliver a code once the provider issues a challenge.
-  const needsSend = factor?.factorType === "phone" && !challengeId;
-
-  async function handleSend() {
-    if (!factor || busy) return;
-    setBusy(true);
-    setError(null);
-    const { challengeId: id, error: sendError } = await sendMfaChallenge(factor.id);
-    setBusy(false);
-    if (sendError || !id) {
-      setError(sendError ?? "Couldn't send a code.");
-      return;
-    }
-    setChallengeId(id);
+  async function run(operation: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true); setError(null);
+    try { await operation(); } catch { setError("Couldn't reach account security. Please try again."); }
+    finally { setBusy(false); }
   }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!factor || busy) return;
-    setBusy(true);
-    setError(null);
-    const result = challengeId
-      ? await verifyMfaChallengeCode(factor.id, challengeId, code.trim())
-      : await verifyMfaChallenge(factor.id, code.trim());
-    setBusy(false);
-    if (result.error) {
-      setError(
-        factor.factorType === "phone"
-          ? "That code wasn't accepted. Request a new code and try again."
-          : "That code wasn't accepted. Try the current code from your authenticator app.",
-      );
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!factor) return;
+    await run(async () => {
+      const result = await verifyMfaChallenge(factor.id, code.trim());
       setCode("");
-      return;
-    }
-    await refreshMfa();
+      if (result.error) { setError(result.error); return; }
+      await refreshMfa();
+    });
   }
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-background px-4 font-sans text-foreground">
-      <div className="glass w-full max-w-sm rounded-3xl p-8">
-        <span className="grid size-10 place-items-center rounded-xl bg-primary/12 text-primary">
-          <ShieldCheck className="size-5" />
-        </span>
-        <h1 className="mt-5 font-display text-xl font-semibold tracking-tight">
-          Two-factor verification
-        </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {factor?.factorType === "phone"
-            ? "Enter the 6-digit code we text you to finish signing in."
-            : "Enter the 6-digit code from your authenticator app to finish signing in."}
-        </p>
-        {factors.length > 1 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {factors.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => {
-                  setFactorId(f.id);
-                  setChallengeId(null);
-                  setCode("");
-                  setError(null);
-                }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  f.id === factor?.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-white/[0.06] text-muted-foreground hover:bg-white/[0.1]"
-                }`}
-              >
-                {f.factorType === "phone" ? "Text message" : "Authenticator app"}
-              </button>
-            ))}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          {needsSend && (
-            <button
-              type="button"
-              onClick={() => void handleSend()}
-              disabled={busy}
-              className="w-full rounded-full bg-white/[0.06] px-4 py-3 text-sm font-medium disabled:opacity-60"
-            >
-              {busy ? "Sending…" : "Send code"}
-            </button>
-          )}
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="123456"
-            className="w-full rounded-2xl bg-white/[0.04] px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
-          />
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <button
-            type="submit"
-            disabled={busy || code.trim().length < 6 || !factor || needsSend}
-            className="w-full rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:opacity-60"
-          >
-            {busy ? "Verifying…" : "Verify"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="w-full rounded-full bg-white/[0.06] px-4 py-3 text-sm font-medium"
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
+  return <div className="grid min-h-screen place-items-center bg-background px-4 font-sans text-foreground">
+    <div className="glass w-full max-w-sm rounded-3xl p-8">
+      <ShieldCheck className="size-6 text-primary" />
+      <h1 className="mt-5 font-display text-xl font-semibold">Two-factor verification</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{!mfa.known ? "Couldn't check account security. Retry to continue safely." : factor ? "Enter the 6-digit code from your authenticator app to finish signing in." : "No supported authenticator is available. Contact support for account recovery."}</p>
+      {factors.length > 1 && <div className="mt-4 flex flex-wrap gap-2">{factors.map((f) => <Button key={f.id} size="sm" variant={f.id === factor?.id ? "default" : "secondary"} disabled={busy} onClick={() => { setFactorId(f.id); setCode(""); setError(null); }}>{f.friendlyName ?? "Authenticator app"}</Button>)}</div>}
+      <form onSubmit={submit} className="mt-6 space-y-3">
+        {factor && <><label htmlFor="login-mfa-code" className="block text-sm">Authenticator code</label><input id="login-mfa-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm" /><Button type="submit" className="w-full" disabled={busy || !/^\d{6}$/.test(code)}>{busy ? "Verifying…" : "Verify"}</Button></>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void run(refreshMfa)}>Retry security check</Button>
+        <Button type="button" variant="ghost" className="w-full" disabled={busy} onClick={() => void run(signOut)}>Sign out</Button>
+        <a href={BOTDIFF_CONTACT_HREF} className="block text-center text-xs text-primary underline">Lost access to your authenticator?</a>
+      </form>
     </div>
-  );
+  </div>;
 }

@@ -29,6 +29,13 @@
       "when": 1792694810528,
       "tag": "0003_enforce_mfa_assurance_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792697507537,
+      "tag": "0004_enforce_avatar_mfa",
+      "breakpoints": true
     }
   ]
 }
