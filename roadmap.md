@@ -1,8 +1,9 @@
 # Legal foundation
 # Native TOTP MFA completion
-- [ ] Repair native enrollment/challenge/removal and session restoration without adding SMS or recovery codes.
-- [ ] Audit backend and database enforcement, close scoped gaps and document recovery safeguards.
-- [ ] Run security checks and signed-in desktop/mobile verification; record publication blockers without publishing.
+- [x] Repair native enrollment/challenge/removal and session restoration without adding SMS or recovery codes.
+- [x] Audit backend and database enforcement, close scoped gaps and document recovery safeguards.
+- [x] Run security checks and signed-in desktop/mobile verification; record publication blockers without publishing.
+- [ ] Complete real-sign-in native enrollment/challenge/removal and OAuth/recovery checks: blocked by minted verification session lacking native session_id; requires ordinary sign-in in editor.
 
 - [x] Audit actual processing, tracking, billing, deletion and protections.
 - [x] Add seven factual, readable public draft legal pages and review markers.

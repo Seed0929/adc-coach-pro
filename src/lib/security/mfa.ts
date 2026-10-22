@@ -104,7 +104,7 @@ export async function startTotpEnrollment(
       if (error) return { enrollment: null, error: "Couldn't clear unfinished setup. Try again." };
     }
     const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName });
-    if (error || !data) return { enrollment: null, error: "Couldn't start authenticator setup. Try again." };
+    if (error || !data) return { enrollment: null, error: "Couldn't start authenticator setup. Sign out, sign in again with email or Google, then retry." };
     const qr = data.totp.qr_code;
     // The SDK prefixes raw SVG with a data URI but leaves '#' etc. unescaped.
     const prefix = "data:image/svg+xml;utf-8,";

@@ -1,27 +1,18 @@
 // Optional native TOTP only. Secrets are transient enrollment state, never persisted.
-import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cancelMfaEnrollment, disableTotpFactor, startTotpEnrollment, verifyTotpEnrollment, type MfaEnrollment } from "@/lib/security/mfa";
-import { getAccountSecurityStatus, type AccountSecurityStatus } from "@/lib/security/account-security.functions";
 
 export function MfaSettings() {
   const { isAuthenticated, refreshMfa, mfa } = useAuth();
-  const getStatus = useServerFn(getAccountSecurityStatus);
-  const [status, setStatus] = useState<AccountSecurityStatus | null>(null);
   const [setup, setSetup] = useState<MfaEnrollment | null>(null);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    if (isAuthenticated) void getStatus().then((value) => { if (active) setStatus(value); }).catch(() => { if (active) setStatus(null); });
-    return () => { active = false; };
-  }, [getStatus, isAuthenticated, mfa]);
   if (!isAuthenticated) return null;
 
   async function act(operation: () => Promise<void>) {
