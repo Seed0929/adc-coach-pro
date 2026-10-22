@@ -445,6 +445,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      session_meets_mfa: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "owner"
