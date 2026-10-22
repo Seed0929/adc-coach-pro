@@ -30,34 +30,6 @@ export async function readServerMfaState(userId: string): Promise<ServerMfaState
 }
 
 /**
- * Reads the provider's own auth configuration (server-side only) so the UI can
- * show the REAL state of SMS support instead of guessing. Failure is reported
- * as "not configured" — never as available.
- */
-export async function readProviderAuthCapabilities(): Promise<{
-  phoneAuthEnabled: boolean;
-  smsProvider: string | null;
-}> {
-  try {
-    const url = process.env["SUPABASE_URL"];
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"];
-    if (!url || !key) return { phoneAuthEnabled: false, smsProvider: null };
-    const response = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
-    if (!response.ok) return { phoneAuthEnabled: false, smsProvider: null };
-    const settings = (await response.json()) as {
-      external?: { phone?: boolean };
-      sms_provider?: string | null;
-    };
-    return {
-      phoneAuthEnabled: settings.external?.phone === true,
-      smsProvider: settings.sms_provider ? String(settings.sms_provider) : null,
-    };
-  } catch {
-    return { phoneAuthEnabled: false, smsProvider: null };
-  }
-}
-
-/**
  * Decides whether a request may act as the user.
  *
  * Rule: if the user has any verified factor, the access token MUST carry

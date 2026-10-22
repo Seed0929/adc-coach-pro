@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -65,106 +66,82 @@ async function ensureProfile(user: User): Promise<Profile | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [mfa, setMfa] = useState<MfaStatus>(MFA_STATUS_UNKNOWN);
   const userIdRef = useRef<string | null>(null);
-  const profileRef = useRef<Profile | null>(null);
-
-  const refreshMfa = useCallback(async () => {
-    try {
-      setMfa(await readMfaStatus());
-    } catch {
-      setMfa(MFA_STATUS_UNKNOWN);
-    }
-  }, []);
+  const revision = useRef(0);
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
-    if (!nextUser) {
-      setProfile(null);
-      profileRef.current = null;
-      return null;
-    }
+    if (!nextUser) { setProfile(null); return null; }
     const p = await ensureProfile(nextUser);
-    setProfile(p);
-    profileRef.current = p;
+    if (userIdRef.current === nextUser.id) setProfile(p);
     return p;
   }, []);
 
+  const refreshMfa = useCallback(async () => {
+    const id = userIdRef.current;
+    const version = revision.current;
+    if (!id) return;
+    let next = MFA_STATUS_UNKNOWN;
+    try { next = await readMfaStatus(); } catch { /* Unknown stays blocked, with a retry. */ }
+    if (id !== userIdRef.current || version !== revision.current) return;
+    setMfa(next);
+    if (next.known && !next.challengeRequired) {
+      const { data } = await supabase.auth.getUser();
+      if (data.user && data.user.id === id) await loadProfile(data.user);
+      if (id === userIdRef.current) await queryClient.invalidateQueries();
+    }
+  }, [loadProfile, queryClient]);
+
   useEffect(() => {
     let active = true;
-
-    async function applySession(nextSession: Session | null) {
-      if (!active) return;
-      const nextUser = nextSession?.user ?? null;
-      setSession(nextSession);
-      setUser(nextUser);
-
-      if (!nextUser) {
-        userIdRef.current = null;
-        setProfile(null);
+    async function applySession(nextSession: Session | null, version: number) {
+      if (!active || version !== revision.current) return;
+      if (!nextSession) { setLoading(false); return; }
+      // Revalidate identity, then resolve native MFA BEFORE reading protected profile rows.
+      const { data, error } = await supabase.auth.getUser();
+      if (!active || version !== revision.current) return;
+      if (error || !data.user) {
         setMfa(MFA_STATUS_UNKNOWN);
         setLoading(false);
         return;
       }
-
-      userIdRef.current = nextUser.id;
-      try {
-        await loadProfile(nextUser);
-      } catch (error) {
-        console.error("Failed to load profile", error);
-        if (active) setProfile(null);
-        profileRef.current = null;
-      }
-      // MFA state is re-read from the provider on every session change, so it
-      // survives refresh/new tabs and can't be spoofed from client state.
-      if (active) await refreshMfa();
-      if (active) setLoading(false);
+      await refreshMfa();
+      if (active && version === revision.current) setLoading(false);
     }
-
-    // Register the listener first, then hydrate the existing session. Profile
-    // reads are intentionally deferred outside the auth callback to avoid
-    // blocking auth events while still keeping routing gated until ready.
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      const nextUser = nextSession?.user ?? null;
+    function receiveSession(nextSession: Session | null) {
+      if (!active) return;
+      const previousId = userIdRef.current;
+      const id = nextSession?.user.id ?? null;
+      const version = ++revision.current;
+      userIdRef.current = id;
       setSession(nextSession);
-      setUser(nextUser);
-
-      if (!nextUser) {
-        userIdRef.current = null;
-        setProfile(null);
-        setMfa(MFA_STATUS_UNKNOWN);
-        setLoading(false);
-        return;
+      setUser(nextSession?.user ?? null);
+      setMfa(MFA_STATUS_UNKNOWN);
+      setLoading(Boolean(nextSession));
+      setProfile(null);
+      if (previousId !== id || !id) queryClient.clear();
+      // Never call provider methods inside onAuthStateChange (SDK lock/deadlock).
+      setTimeout(() => { void applySession(nextSession, version).catch(() => {
+        if (active && version === revision.current) { setMfa(MFA_STATUS_UNKNOWN); setLoading(false); }
+      }); }, 0);
+    }
+    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (["INITIAL_SESSION", "SIGNED_IN", "SIGNED_OUT", "USER_UPDATED", "TOKEN_REFRESHED", "MFA_CHALLENGE_VERIFIED", "PASSWORD_RECOVERY"].includes(event)) {
+        receiveSession(nextSession);
       }
-
-      if (userIdRef.current === nextUser.id && profileRef.current) {
-        void refreshMfa();
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setTimeout(() => {
-        void applySession(nextSession);
-      }, 0);
     });
-
+    // Listener is installed first; do not overwrite a newer sign-in/out event.
+    const initialRevision = revision.current;
     supabase.auth.getSession().then(({ data }) => {
-      if (active) {
-        void applySession(data.session);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [loadProfile, refreshMfa]);
+      if (active && revision.current === initialRevision) receiveSession(data.session);
+    }).catch(() => { if (active) setLoading(false); });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, [refreshMfa, queryClient]);
 
   const signUp = useCallback<AuthContextValue["signUp"]>(async ({ email, password, username }) => {
     const { error } = await supabase.auth.signUp({
@@ -192,14 +169,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("Couldn’t sign out. Please try again.");
+    ++revision.current;
+    userIdRef.current = null;
     setSession(null);
     setUser(null);
     setProfile(null);
-    profileRef.current = null;
+
     setMfa(MFA_STATUS_UNKNOWN);
     setLoading(false);
-  }, []);
+  }, [queryClient]);
 
   const resetPassword = useCallback<AuthContextValue["resetPassword"]>(async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -220,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isAuthenticated: !!session,
       mfa,
-      mfaChallengeRequired: !!session && mfa.challengeRequired,
+      mfaChallengeRequired: !!session && (!mfa.known || mfa.challengeRequired),
       refreshMfa,
       signUp,
       signIn,

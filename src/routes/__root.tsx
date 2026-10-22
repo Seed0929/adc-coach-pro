@@ -6,13 +6,15 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useRouterState,
 } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { MfaChallenge } from "@/components/mfa-challenge";
 import { DataProvider } from "@/lib/player-data";
 import { SyncProvider } from "@/hooks/use-sync";
 import { EntitlementProvider } from "@/hooks/use-entitlements";
@@ -147,7 +149,7 @@ function RootComponent() {
           <SyncProvider>
             <DataProvider>
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            <MfaRouteBoundary><Outlet /></MfaRouteBoundary>
             <Toaster
               theme="dark"
               position="top-center"
@@ -164,4 +166,13 @@ function RootComponent() {
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+/** Public notices and recovery remain reachable; no authenticated app surface bypasses MFA. */
+function MfaRouteBoundary({ children }: { children: ReactNode }) {
+  const { loading, isAuthenticated, mfaChallengeRequired } = useAuth();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const publicPath = ["/auth", "/reset-password", "/privacy", "/terms", "/cookies", "/refunds", "/disclaimer", "/data-deletion", "/affiliate-terms"].includes(pathname);
+  if (!publicPath && isAuthenticated && (loading || mfaChallengeRequired)) return <MfaChallenge />;
+  return children;
 }

@@ -141,6 +141,8 @@ function AuthPage() {
     if (error) toast.error(error);
   }
 
+  if (!loading && isAuthenticated && mfaChallengeRequired) return <MfaChallenge />;
+
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden bg-background px-4 font-sans text-foreground">
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">

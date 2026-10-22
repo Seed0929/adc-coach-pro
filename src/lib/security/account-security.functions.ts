@@ -17,28 +17,22 @@ export interface AccountSecurityStatus {
   challengeRequired: boolean;
   // Provider-verified factor kinds only — never any enrollment material.
   verifiedFactorTypes: string[];
-  /** Real provider configuration, so the UI never fakes SMS availability. */
-  phoneAuthEnabled: boolean;
-  smsProviderConfigured: boolean;
 }
 
 export const getAccountSecurityStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AccountSecurityStatus> => {
     const assuranceLevel = assuranceFromClaims(context.claims);
-    const { readServerMfaState, readProviderAuthCapabilities } =
+    const { readServerMfaState } =
       await import("./account-security.server");
     const { enrolled, verifiedFactorCount, verifiedFactorTypes } = await readServerMfaState(
       context.userId,
     );
-    const caps = await readProviderAuthCapabilities();
     return {
       mfaEnabled: enrolled,
       verifiedFactorCount,
       assuranceLevel,
       challengeRequired: enrolled && assuranceLevel !== "aal2",
       verifiedFactorTypes: verifiedFactorTypes ?? [],
-      phoneAuthEnabled: caps.phoneAuthEnabled,
-      smsProviderConfigured: !!caps.smsProvider,
     };
   });
