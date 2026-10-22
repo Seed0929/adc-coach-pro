@@ -10,19 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AffiliateTermsRouteImport } from './routes/affiliate-terms'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as CoachRouteImport } from './routes/coach'
 import { Route as CoachingRouteImport } from './routes/coaching'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DataDeletionRouteImport } from './routes/data-deletion'
+import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AnalysisBuildReviewRouteImport } from './routes/analysis.build-review'
@@ -48,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateTermsRoute = AffiliateTermsRouteImport.update({
+  id: '/affiliate-terms',
+  path: '/affiliate-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -68,9 +80,24 @@ const CoachingRoute = CoachingRouteImport.update({
   path: '/coaching',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataDeletionRoute = DataDeletionRouteImport.update({
+  id: '/data-deletion',
+  path: '/data-deletion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisclaimerRoute = DisclaimerRouteImport.update({
+  id: '/disclaimer',
+  path: '/disclaimer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -88,6 +115,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -96,6 +128,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -111,6 +148,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -215,19 +257,26 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/affiliate-terms': typeof AffiliateTermsRoute
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
   '/coaching': typeof CoachingRouteWithChildren
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/data-deletion': typeof DataDeletionRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/matches': typeof MatchesRouteWithChildren
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
@@ -250,16 +299,23 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/affiliate-terms': typeof AffiliateTermsRoute
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
   '/coaching': typeof CoachingRouteWithChildren
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/data-deletion': typeof DataDeletionRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/progress': typeof ProgressRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
@@ -283,19 +339,26 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/affiliate-terms': typeof AffiliateTermsRoute
   '/auth': typeof AuthRoute
   '/champions': typeof ChampionsRoute
   '/coach': typeof CoachRoute
   '/coaching': typeof CoachingRouteWithChildren
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/data-deletion': typeof DataDeletionRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/matches': typeof MatchesRouteWithChildren
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/progress': typeof ProgressRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/welcome': typeof WelcomeRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analysis/build-review': typeof AnalysisBuildReviewRoute
@@ -320,19 +383,26 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/affiliate-terms'
     | '/auth'
     | '/champions'
     | '/coach'
     | '/coaching'
+    | '/cookies'
     | '/dashboard'
+    | '/data-deletion'
+    | '/disclaimer'
     | '/matches'
     | '/mcp'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/progress'
+    | '/refunds'
     | '/reset-password'
     | '/settings'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
@@ -355,16 +425,23 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/affiliate-terms'
     | '/auth'
     | '/champions'
     | '/coach'
     | '/coaching'
+    | '/cookies'
     | '/dashboard'
+    | '/data-deletion'
+    | '/disclaimer'
     | '/mcp'
     | '/pricing'
+    | '/privacy'
     | '/progress'
+    | '/refunds'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
@@ -387,19 +464,26 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/affiliate-terms'
     | '/auth'
     | '/champions'
     | '/coach'
     | '/coaching'
+    | '/cookies'
     | '/dashboard'
+    | '/data-deletion'
+    | '/disclaimer'
     | '/matches'
     | '/mcp'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/progress'
+    | '/refunds'
     | '/reset-password'
     | '/settings'
     | '/sitemap.xml'
+    | '/terms'
     | '/welcome'
     | '/.well-known/oauth-protected-resource'
     | '/analysis/build-review'
@@ -423,19 +507,26 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AffiliateTermsRoute: typeof AffiliateTermsRoute
   AuthRoute: typeof AuthRoute
   ChampionsRoute: typeof ChampionsRoute
   CoachRoute: typeof CoachRoute
   CoachingRoute: typeof CoachingRouteWithChildren
+  CookiesRoute: typeof CookiesRoute
   DashboardRoute: typeof DashboardRoute
+  DataDeletionRoute: typeof DataDeletionRoute
+  DisclaimerRoute: typeof DisclaimerRoute
   MatchesRoute: typeof MatchesRouteWithChildren
   McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   ProgressRoute: typeof ProgressRoute
+  RefundsRoute: typeof RefundsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   WelcomeRoute: typeof WelcomeRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AnalysisBuildReviewRoute: typeof AnalysisBuildReviewRoute
@@ -457,6 +548,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate-terms': {
+      id: '/affiliate-terms'
+      path: '/affiliate-terms'
+      fullPath: '/affiliate-terms'
+      preLoaderRoute: typeof AffiliateTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -487,11 +585,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoachingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-deletion': {
+      id: '/data-deletion'
+      path: '/data-deletion'
+      fullPath: '/data-deletion'
+      preLoaderRoute: typeof DataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/disclaimer': {
+      id: '/disclaimer'
+      path: '/disclaimer'
+      fullPath: '/disclaimer'
+      preLoaderRoute: typeof DisclaimerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -515,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -527,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -548,6 +681,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/welcome': {
@@ -740,19 +880,26 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AffiliateTermsRoute: AffiliateTermsRoute,
   AuthRoute: AuthRoute,
   ChampionsRoute: ChampionsRoute,
   CoachRoute: CoachRoute,
   CoachingRoute: CoachingRouteWithChildren,
+  CookiesRoute: CookiesRoute,
   DashboardRoute: DashboardRoute,
+  DataDeletionRoute: DataDeletionRoute,
+  DisclaimerRoute: DisclaimerRoute,
   MatchesRoute: MatchesRouteWithChildren,
   McpRoute: McpRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
   ProgressRoute: ProgressRoute,
+  RefundsRoute: RefundsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   WelcomeRoute: WelcomeRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
