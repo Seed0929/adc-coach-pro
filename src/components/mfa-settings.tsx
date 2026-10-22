@@ -17,6 +17,7 @@ import {
   startTotpEnrollment,
   verifyPhoneEnrollment,
   verifyTotpEnrollment,
+  verifyMfaChallenge,
   type MfaEnrollment,
 } from "@/lib/security/mfa";
 import {
@@ -37,7 +38,7 @@ const ICONS: Record<MfaFactorKind, LucideIcon> = {
 };
 
 type Setup =
-  | { kind: "totp"; step: "code"; factorId: string; secret: string | null }
+  | { kind: "totp"; step: "code"; factorId: string; secret: string | null; qrCode: string | null }
   | { kind: "sms"; step: "phone" }
   | { kind: "sms"; step: "code"; factorId: string };
 
@@ -50,6 +51,9 @@ export function MfaSettings() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Turning off TOTP requires a fresh code (re-authentication), not just a click.
+  const [disabling, setDisabling] = useState(false);
+  const [disableCode, setDisableCode] = useState("");
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) {
@@ -105,7 +109,7 @@ export function MfaSettings() {
       return;
     }
     const next: MfaEnrollment = enrollment;
-    setSetup({ kind: "totp", step: "code", factorId: next.factorId, secret: next.secret });
+    setSetup({ kind: "totp", step: "code", factorId: next.factorId, secret: next.secret, qrCode: next.qrCode });
   }
 
   async function sendSmsCode(event: React.FormEvent) {
@@ -150,7 +154,38 @@ export function MfaSettings() {
     await refresh();
   }
 
-  async function turnOff(kind: MfaFactorKind) {
+  async function confirmTurnOffTotp(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const { verifiedFactors } = await readMfaStatus();
+    const totp = verifiedFactors.filter((f) => f.factorType === "totp");
+    if (!totp[0]) {
+      setBusy(false);
+      setDisabling(false);
+      await refresh();
+      return;
+    }
+    const { error: verifyError } = await verifyMfaChallenge(totp[0].id, disableCode.trim());
+    if (verifyError) {
+      setBusy(false);
+      setDisableCode("");
+      setError("That code wasn't accepted or has expired. Two-factor authentication is still on.");
+      return;
+    }
+    setBusy(false);
+    setDisabling(false);
+    setDisableCode("");
+    await turnOff("totp", true);
+  }
+
+  async function turnOff(kind: MfaFactorKind, reauthenticated = false) {
+    if (kind === "totp" && !reauthenticated) {
+      setError(null);
+      setDisabling(true);
+      return;
+    }
     const providerType = kind === "sms" ? "phone" : kind;
     setBusy(true);
     setError(null);
@@ -235,7 +270,7 @@ export function MfaSettings() {
                   {canSetUp && !setupOpen && (
                     <button
                       type="button"
-                      disabled={busy || Boolean(setup)}
+                      disabled={busy || Boolean(setup) || disabling}
                       onClick={() => (enabled ? turnOff(option.kind) : beginSetup(option))}
                       className="shrink-0 rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium transition-colors hover:bg-white/[0.1] disabled:opacity-50"
                     >
@@ -249,6 +284,44 @@ export function MfaSettings() {
                     </button>
                   )}
                 </div>
+
+                {enabled && option.kind === "totp" && disabling && (
+                  <form onSubmit={confirmTurnOffTotp} className="mt-4 space-y-3">
+                    <label htmlFor="mfa-disable-code" className="block text-xs text-muted-foreground">
+                      Confirm it's you — enter the current 6-digit code from your authenticator app.
+                    </label>
+                    <input
+                      id="mfa-disable-code"
+                      value={disableCode}
+                      onChange={(ev) => setDisableCode(ev.target.value)}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="123456"
+                      className="w-full rounded-xl bg-white/[0.04] px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={busy || disableCode.trim().length < 6}
+                        className="rounded-full bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50"
+                      >
+                        {busy ? "Checking…" : "Turn off two-factor"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDisabling(false);
+                          setDisableCode("");
+                          setError(null);
+                        }}
+                        className="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {!enabled && option.requirement && (
                   <p className="mt-3 rounded-lg bg-white/[0.03] p-3 text-xs text-muted-foreground">
@@ -294,9 +367,16 @@ export function MfaSettings() {
                   <form onSubmit={verifyCode} className="mt-4 space-y-3">
                     <p className="text-xs text-muted-foreground">
                       {setup.kind === "totp"
-                        ? "Step 1 of 2 — add this setup key to your authenticator app."
+                        ? "Step 1 of 2 — scan the QR code or type this setup key into your authenticator app."
                         : "Step 2 of 2 — enter the code we just texted you."}
                     </p>
+                    {setup.kind === "totp" && setup.qrCode && (
+                      <img
+                        src={setup.qrCode}
+                        alt="QR code to add BotDiff to your authenticator app"
+                        className="size-44 rounded-xl bg-foreground p-2"
+                      />
+                    )}
                     {setup.kind === "totp" && setup.secret && (
                       <code className="block break-all rounded-lg bg-white/[0.04] px-3 py-2 text-xs">
                         {setup.secret}
