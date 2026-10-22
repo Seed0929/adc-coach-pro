@@ -3,6 +3,7 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicFooter } from "@/components/public-footer";
 import { LEGAL_DOCUMENTS, type LegalDocumentId } from "@/lib/legal/documents";
+import { BOTDIFF_CONTACT_EMAIL, BOTDIFF_CONTACT_HREF } from "@/lib/legal/contact";
 
 export function LegalDocumentPage({ documentId }: { documentId: LegalDocumentId }) {
   const document = LEGAL_DOCUMENTS[documentId];
@@ -31,6 +32,12 @@ export function LegalDocumentPage({ documentId }: { documentId: LegalDocumentId 
             </section>
           ))}
         </article>
+        <section aria-labelledby="legal-contact-heading" className="mt-10 border-t border-border pt-7">
+          <h2 id="legal-contact-heading" className="font-display text-xl font-semibold">Contact BotDiff</h2>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">For legal notices, privacy requests, account deletion requests, billing questions or support:</p>
+          <a href={BOTDIFF_CONTACT_HREF} className="mt-2 inline-block break-all text-sm text-primary underline underline-offset-4">{BOTDIFF_CONTACT_EMAIL}</a>
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">Opening this link starts an email in your mail app; it does not submit a request or confirm deletion. Do not send passwords, verification codes or payment-card details.</p>
+        </section>
         <section aria-labelledby="owner-review-heading" className="mt-10 border-t border-border pt-7">
           <h2 id="owner-review-heading" className="font-display text-xl font-semibold">NEEDS OWNER REVIEW — before publication</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
