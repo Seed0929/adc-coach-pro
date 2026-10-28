@@ -1,3 +1,7 @@
+# Visual-only theme pass
+- [ ] Review existing screens and apply shared smoked-glass styling with original fantasy background; preserve all layout/content/behavior.
+- [ ] Verify desktop/mobile appearance, unchanged panels and controls, accessibility fallbacks and preview checks; do not publish.
+
 # Legal foundation
 # Native TOTP MFA completion
 - [x] Repair native enrollment/challenge/removal and session restoration without adding SMS or recovery codes.
