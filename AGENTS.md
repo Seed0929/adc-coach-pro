@@ -7,4 +7,4 @@
 - Optional TOTP MFA is enforced in three layers (UI challenge, requireVerifiedSession on server functions, restrictive RLS via session_meets_mfa); new user-data tables need the restrictive policy too.
 - Resolve native MFA before profile hydration; defer provider calls outside auth event callbacks and reject unknown status with retry/sign-out so SDK locks and failed reads cannot bypass protection.
 - Authenticator enrollment secrets stay transient; cancellation only targets unverified factors and disabling targets one verified factor after fresh native verification, preventing accidental removal of other protection.
-- Visual panel treatment uses shared glass tokens/utilities and a bundled decorative shell image; preserve layout and content so theme changes cannot alter product behavior.
+- Visual panel treatment uses shared glass tokens/utilities and shell-scoped inset styling over a bundled decorative image; use non-layout-changing edges and parent blur for inset panes so theme refinements preserve geometry, content and behavior.
