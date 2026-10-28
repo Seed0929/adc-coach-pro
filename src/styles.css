@@ -278,6 +278,7 @@
 /* Decorative scenery is isolated behind the existing shell; it never takes
  * layout space or intercepts controls. Only one static image is rendered. */
 .botdiff-shell { isolation: isolate; }
+.dashboard-champion-wash { opacity: 0.12; }
 .dashboard-atmosphere::after {
   content: "";
   position: absolute;
