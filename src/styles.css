@@ -44,10 +44,11 @@
 }
 
 @utility glass-hover {
-  transition: border-color 0.3s var(--ease-out-expo), background-color 0.3s var(--ease-out-expo);
+  transition: border-color 0.3s var(--ease-out-expo), background-color 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo);
   &:hover {
     border-color: var(--glass-border-strong);
     background-color: var(--glass-bg-strong);
+    box-shadow: var(--glass-shadow-hover);
   }
 }
 
@@ -142,19 +143,22 @@
   --surface: oklch(0.205 0.006 260);
   --surface-bright: oklch(0.27 0.008 260);
   --gold: oklch(0.8 0.09 85);
-  --glass-bg: color-mix(in oklab, var(--card) 88%, transparent);
-  --glass-bg-strong: color-mix(in oklab, var(--card) 96%, transparent);
-  --glass-border: oklch(0.78 0.015 85 / 0.2);
-  --glass-border-strong: oklch(0.8 0.09 85 / 0.45);
-  --glass-sheen: linear-gradient(135deg, oklch(0.92 0.015 85 / 0.035), transparent 48%);
+  --glass-bg: color-mix(in oklab, var(--card) 48%, transparent);
+  --glass-bg-strong: color-mix(in oklab, var(--card) 54%, transparent);
+  --glass-border: oklch(0.73 0.085 82 / 0.42);
+  --glass-border-strong: oklch(0.8 0.095 82 / 0.66);
+  --glass-sheen: linear-gradient(145deg, oklch(0.85 0.045 82 / 0.035), oklch(0.12 0.005 260 / 0.12) 72%);
+  --glass-inset-bg: oklch(0.15 0.006 260 / 0.24);
+  --glass-inset-border: oklch(0.73 0.085 82 / 0.32);
   --glass-shadow: 0 1px 0 var(--glass-highlight) inset, 0 16px 38px -24px oklch(0.05 0 0 / 0.75);
-  --atmosphere-veil: linear-gradient(90deg, oklch(0.12 0.005 260 / 0.82), oklch(0.12 0.005 260 / 0.38)), linear-gradient(0deg, var(--background), transparent 65%);
+  --glass-shadow-hover: 0 1px 0 var(--glass-highlight) inset, 0 0 12px -5px oklch(0.78 0.085 82 / 0.2), 0 16px 38px -24px oklch(0.05 0 0 / 0.75);
+  --atmosphere-veil: linear-gradient(90deg, oklch(0.12 0.005 260 / 0.62), oklch(0.12 0.005 260 / 0.28)), linear-gradient(0deg, oklch(0.14 0.005 260 / 0.55), transparent 65%);
   --chart-1: oklch(0.55 0.21 263);
   --chart-2: oklch(0.5 0.24 293);
   --chart-3: oklch(0.79 0.14 195);
   --chart-4: oklch(0.72 0.11 78);
   --chart-5: oklch(0.7 0.1 250);
-  --glass-highlight: oklch(0.88 0.025 85 / 0.12);
+  --glass-highlight: oklch(0.86 0.06 82 / 0.16);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -278,6 +282,31 @@
 /* Decorative scenery is isolated behind the existing shell; it never takes
  * layout space or intercepts controls. Only one static image is rendered. */
 .botdiff-shell { isolation: isolate; }
+/* Keep pane geometry and contents untouched. Specificity ensures existing
+ * per-pane background/border utilities cannot make the shell glass opaque. */
+.botdiff-shell .glass {
+  background: var(--glass-sheen), var(--glass-bg);
+  border-color: var(--glass-border);
+  transition: border-color 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo);
+}
+.botdiff-shell .glass:focus-within {
+  border-color: var(--glass-border-strong);
+}
+/* These existing inset tiles are divs, not buttons, fields or navigation.
+ * Inset outlines add a fine edge without changing widths or heights. No
+ * extra backdrop layer is needed: they share the parent pane's blur. */
+.botdiff-shell div:is(.rounded-xl, .rounded-2xl):where([class~="bg-white/[0.03]"]):not(.glass) {
+  background: var(--glass-sheen), var(--glass-inset-bg);
+  border-color: var(--glass-inset-border);
+  outline: 1px solid var(--glass-inset-border);
+  outline-offset: -1px;
+}
+@media (hover: hover) {
+  .botdiff-shell .glass:hover {
+    border-color: var(--glass-border-strong);
+    box-shadow: var(--glass-shadow-hover);
+  }
+}
 .dashboard-champion-wash { opacity: 0.12; }
 .dashboard-atmosphere::after {
   content: "";
@@ -292,12 +321,12 @@
 }
 
 @supports not (backdrop-filter: blur(1px)) {
-  .glass { background: var(--card); }
+  .glass, .botdiff-shell .glass { background: color-mix(in oklab, var(--card) 88%, transparent); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; }
-  .glass-hover { transition: none; }
+  .glass-hover, .botdiff-shell .glass { transition: none; }
   .botdiff-shell [class*="transition-"] { transition-duration: 0s; }
   .botdiff-shell [class*="float-glow"] { animation: none; }
 }
