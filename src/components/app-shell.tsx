@@ -20,6 +20,7 @@ import { MfaChallenge } from "@/components/mfa-challenge";
 import { useBotDiffData } from "@/lib/player-data";
 import logoLockup from "@/assets/botdiff-logo.png";
 import logoMark from "@/assets/botdiff-mark.png";
+import fantasyBackdrop from "@/assets/fantasy-dashboard.jpg";
 import { useSync, formatLastSynced } from "@/hooks/use-sync";
 
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
@@ -47,10 +48,8 @@ export function isActiveNav(to: string, pathname: string): boolean {
 function Ambient() {
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute -left-40 -top-40 size-[42rem] rounded-full bg-primary/20 blur-[140px] [animation:float-glow_16s_ease-in-out_infinite]" />
-      <div className="absolute -right-52 top-1/3 size-[38rem] rounded-full bg-success/10 blur-[150px] [animation:float-glow_22s_ease-in-out_infinite]" />
-      <div className="absolute bottom-[-16rem] left-1/3 size-[40rem] rounded-full bg-primary/10 blur-[160px] [animation:float-glow_19s_ease-in-out_infinite]" />
+    <div aria-hidden className="dashboard-atmosphere pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <img src={fantasyBackdrop} alt="" width={1920} height={1088} decoding="async" className="absolute inset-0 size-full object-cover object-center" />
     </div>
   );
 }
@@ -99,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     : "Browsing as guest";
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
+    <div className="botdiff-shell min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
       <Ambient />
 
       {/* Sidebar */}

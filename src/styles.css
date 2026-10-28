@@ -1,6 +1,6 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -37,20 +37,17 @@
 
 /* Liquid-glass floating panel */
 @utility glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(160%);
+  background: var(--glass-sheen), var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(110%);
   border: 1px solid var(--glass-border);
-  box-shadow:
-    0 1px 0 0 var(--glass-highlight) inset,
-    0 24px 60px -32px rgb(0 0 0 / 0.7);
+  box-shadow: var(--glass-shadow);
 }
 
 @utility glass-hover {
-  transition: transform 0.4s var(--ease-out-expo), border-color 0.4s var(--ease-out-expo), background 0.4s var(--ease-out-expo);
+  transition: border-color 0.3s var(--ease-out-expo), background-color 0.3s var(--ease-out-expo);
   &:hover {
-    transform: translateY(-3px);
     border-color: var(--glass-border-strong);
-    background: var(--glass-bg-strong);
+    background-color: var(--glass-bg-strong);
   }
 }
 
@@ -115,23 +112,23 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root {
+:root, .dark {
   --radius: 1.1rem;
   /* Brand: #0B0F17 bg, #2563EB primary, #7C3AED violet, #22D3EE cyan, #C89B3C gold */
-  --background: oklch(0.15 0.014 265);
+  --background: oklch(0.14 0.005 260);
   --foreground: oklch(0.97 0.004 250);
-  --card: oklch(0.185 0.016 265);
+  --card: oklch(0.205 0.006 260);
   --card-foreground: oklch(0.97 0.004 250);
-  --popover: oklch(0.2 0.018 265);
+  --popover: oklch(0.23 0.007 260);
   --popover-foreground: oklch(0.97 0.004 250);
-  --primary: oklch(0.55 0.21 263);
+  --primary: oklch(0.61 0.16 259);
   --primary-foreground: oklch(0.98 0.004 260);
-  --primary-dim: oklch(0.46 0.19 263);
-  --secondary: oklch(0.24 0.02 265);
+  --primary-dim: oklch(0.49 0.14 259);
+  --secondary: oklch(0.27 0.008 260);
   --secondary-foreground: oklch(0.97 0.004 250);
-  --muted: oklch(0.24 0.02 265);
-  --muted-foreground: oklch(0.7 0.015 258);
-  --accent: oklch(0.5 0.24 293);
+  --muted: oklch(0.27 0.008 260);
+  --muted-foreground: oklch(0.76 0.009 258);
+  --accent: oklch(0.54 0.13 293);
   --accent-foreground: oklch(0.98 0.004 260);
   --destructive: oklch(0.63 0.2 25);
   --destructive-foreground: oklch(0.98 0.004 260);
@@ -139,65 +136,33 @@
   --success-foreground: oklch(0.16 0.02 162);
   --warning: oklch(0.72 0.11 78);
   --warning-foreground: oklch(0.2 0.03 78);
-  --border: oklch(0.3 0.018 265);
-  --input: oklch(0.3 0.018 265);
-  --ring: oklch(0.55 0.21 263);
-  --surface: oklch(0.185 0.016 265);
-  --surface-bright: oklch(0.23 0.02 265);
-  --gold: oklch(0.72 0.11 78);
-  --glass-bg: oklch(0.99 0.01 260 / 0.05);
-  --glass-bg-strong: oklch(0.99 0.01 260 / 0.09);
-  --glass-border: oklch(1 0 0 / 0.1);
-  --glass-border-strong: oklch(0.55 0.21 263 / 0.45);
+  --border: oklch(0.7 0.01 260 / 0.22);
+  --input: oklch(0.7 0.01 260 / 0.3);
+  --ring: oklch(0.74 0.12 250);
+  --surface: oklch(0.205 0.006 260);
+  --surface-bright: oklch(0.27 0.008 260);
+  --gold: oklch(0.8 0.09 85);
+  --glass-bg: color-mix(in oklab, var(--card) 88%, transparent);
+  --glass-bg-strong: color-mix(in oklab, var(--card) 96%, transparent);
+  --glass-border: oklch(0.78 0.015 85 / 0.2);
+  --glass-border-strong: oklch(0.8 0.09 85 / 0.45);
+  --glass-sheen: linear-gradient(135deg, oklch(0.92 0.015 85 / 0.035), transparent 48%);
+  --glass-shadow: 0 1px 0 var(--glass-highlight) inset, 0 16px 38px -24px oklch(0.05 0 0 / 0.75);
+  --atmosphere-veil: linear-gradient(90deg, oklch(0.12 0.005 260 / 0.82), oklch(0.12 0.005 260 / 0.38)), linear-gradient(0deg, var(--background), transparent 65%);
   --chart-1: oklch(0.55 0.21 263);
   --chart-2: oklch(0.5 0.24 293);
   --chart-3: oklch(0.79 0.14 195);
   --chart-4: oklch(0.72 0.11 78);
   --chart-5: oklch(0.7 0.1 250);
-  --glass-highlight: oklch(1 0 0 / 0.06);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
-
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --glass-highlight: oklch(0.88 0.025 85 / 0.12);
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--glass-border);
+  --sidebar-ring: var(--ring);
 }
 
 @layer base {
@@ -308,4 +273,30 @@
   --glass-border: oklch(0.82 0.16 210 / 0.28);
   --glass-border-strong: oklch(0.82 0.16 210 / 0.65);
   --glass-highlight: oklch(0.82 0.16 210 / 0.15);
+}
+
+/* Decorative scenery is isolated behind the existing shell; it never takes
+ * layout space or intercepts controls. Only one static image is rendered. */
+.botdiff-shell { isolation: isolate; }
+.dashboard-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--atmosphere-veil);
+}
+
+@media (max-width: 767px) {
+  .glass { backdrop-filter: blur(8px) saturate(110%); }
+  .dashboard-atmosphere img { opacity: 0.6; }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass { background: var(--card); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; }
+  .glass-hover { transition: none; }
+  .botdiff-shell [class*="transition-"] { transition-duration: 0s; }
+  .botdiff-shell [class*="float-glow"] { animation: none; }
 }
