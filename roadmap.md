@@ -1,6 +1,6 @@
 # Visual-only theme pass
-- [ ] Apply second refinement: visibly transparent smoked glass and fine gold pane edges; preserve exact content/layout/behavior and existing artwork.
-- [ ] Verify signed-in desktop/mobile readability and reduced-motion; preview only.
+- [x] Apply second refinement: visibly transparent smoked glass and fine gold pane edges; preserve exact content/layout/behavior and existing artwork.
+- [x] Verify signed-in desktop/mobile readability and reduced-motion; preview only. All 47 dashboard content panes retained identical content and sizes; 21 safety checks passed.
 - [x] Review existing screens and apply shared smoked-glass styling with original fantasy background; preserve all layout/content/behavior.
 - [x] Verify desktop/mobile appearance, unchanged panels and controls, accessibility fallbacks and preview checks; do not publish.
 
