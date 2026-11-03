@@ -48,6 +48,9 @@ export async function isOwner(supabase: Client, userId: string): Promise<boolean
 export async function loadPlan(supabase: Client, userId: string): Promise<BillingPlan> {
   if (await isOwner(supabase, userId)) return "owner";
   if (await hasPaidPro(supabase, userId)) return "pro";
+  // Internal testing grants (user_entitlements) count only for admins/owners,
+  // so a stray row can never give a normal player Pro without paying.
+  if (!(await devToggleAllowed(supabase, userId))) return "free";
   const { data } = await supabase
     .from("user_entitlements")
     .select("plan")
@@ -98,10 +101,8 @@ export async function hasReportGrant(
   return Boolean(data);
 }
 
-/** Development / admin / owner plan switching — never for normal production users. */
+/** Internal plan switching: authenticated admin/owner role only, in every environment. No env bypass. */
 export async function devToggleAllowed(supabase: Client, userId: string): Promise<boolean> {
-  if (process.env["NODE_ENV"] !== "production") return true;
-  if (process.env["BOTDIFF_ALLOW_PLAN_TOGGLE"] === "true") return true;
   try {
     const [admin, owner] = await Promise.all([
       supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),

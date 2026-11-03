@@ -29,3 +29,20 @@ describe("price ids", () => {
     expect(isProPriceId("owner")).toBe(false);
   });
 });
+
+describe("subscriptionGrantsPro fails closed", () => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  it("denies missing period end for paid statuses", () => {
+    expect(subscriptionGrantsPro({ status: "active", current_period_end: null }, now)).toBe(false);
+    expect(subscriptionGrantsPro({ status: "trialing", current_period_end: null }, now)).toBe(false);
+  });
+  it("denies an unparseable period end", () => {
+    expect(subscriptionGrantsPro({ status: "active", current_period_end: "not-a-date" }, now)).toBe(false);
+  });
+  it("denies unknown or non-string statuses", () => {
+    const end = "2026-02-01T00:00:00Z";
+    expect(subscriptionGrantsPro({ status: "paused", current_period_end: end }, now)).toBe(false);
+    expect(subscriptionGrantsPro({ status: "ACTIVE", current_period_end: end }, now)).toBe(false);
+    expect(subscriptionGrantsPro({ status: null, current_period_end: end }, now)).toBe(false);
+  });
+});

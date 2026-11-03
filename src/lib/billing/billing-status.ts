@@ -1,22 +1,23 @@
 // Pure, client-safe subscription rules shared by server checks and tests.
 
-const ACCESS_STATUSES = new Set(["active", "trialing", "past_due"]);
+const PAID_STATUSES = new Set(["active", "trialing", "past_due", "canceled"]);
 
 /**
- * True when a subscription row grants Pro right now.
- * - active / trialing / past_due (Stripe still retrying) → Pro until period end
- * - canceled → Pro only until the paid period ends
- * - anything else (incomplete, unpaid, expired, paused) → no Pro
+ * True when a subscription row grants Pro right now. Fails closed:
+ * - active / trialing / past_due (Stripe still retrying) / canceled → Pro only
+ *   while a valid current_period_end is in the future
+ * - missing or unparseable period end → no Pro
+ * - any other status (incomplete, unpaid, expired, paused, unknown) → no Pro
  */
 export function subscriptionGrantsPro(
-  row: { status: string; current_period_end: string | null },
+  row: { status: unknown; current_period_end: unknown },
   now: Date = new Date(),
 ): boolean {
-  const end = row.current_period_end ? new Date(row.current_period_end) : null;
-  const inPeriod = !end || end.getTime() > now.getTime();
-  if (ACCESS_STATUSES.has(row.status)) return inPeriod;
-  if (row.status === "canceled") return Boolean(end) && inPeriod;
-  return false;
+  if (typeof row.status !== "string" || !PAID_STATUSES.has(row.status)) return false;
+  if (typeof row.current_period_end !== "string" || !row.current_period_end) return false;
+  const end = Date.parse(row.current_period_end);
+  if (!Number.isFinite(end)) return false;
+  return end > now.getTime();
 }
 
 export const PRO_PRICE_IDS = { monthly: "pro_monthly", annual: "pro_yearly" } as const;
