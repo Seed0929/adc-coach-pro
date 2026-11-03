@@ -1,0 +1,10 @@
+REVOKE ALL ON public.subscriptions FROM anon;
+REVOKE ALL ON public.subscriptions FROM authenticated;
+GRANT SELECT ON public.subscriptions TO authenticated;
+GRANT ALL ON public.subscriptions TO service_role;
+DROP POLICY IF EXISTS "Require MFA when enrolled" ON public.subscriptions;
+CREATE POLICY "Require MFA when enrolled" ON public.subscriptions AS RESTRICTIVE FOR SELECT TO authenticated USING (public.session_meets_mfa());
+REVOKE ALL ON public.user_entitlements FROM anon;
+REVOKE ALL ON public.user_entitlements FROM authenticated;
+GRANT SELECT ON public.user_entitlements TO authenticated;
+GRANT ALL ON public.user_entitlements TO service_role;
