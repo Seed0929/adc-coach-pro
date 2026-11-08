@@ -44,6 +44,68 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_customers: {
+        Row: {
+          checkout_cycle: string | null
+          checkout_expires_at: string | null
+          checkout_key: string
+          checkout_session_id: string | null
+          environment: string
+          stripe_customer_id: string | null
+          user_id: string
+        }
+        Insert: {
+          checkout_cycle?: string | null
+          checkout_expires_at?: string | null
+          checkout_key?: string
+          checkout_session_id?: string | null
+          environment: string
+          stripe_customer_id?: string | null
+          user_id: string
+        }
+        Update: {
+          checkout_cycle?: string | null
+          checkout_expires_at?: string | null
+          checkout_key?: string
+          checkout_session_id?: string | null
+          environment?: string
+          stripe_customer_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_webhook_receipts: {
+        Row: {
+          environment: string
+          event_created: number
+          event_id: string
+          processed_at: string
+          subscription_id: string
+        }
+        Insert: {
+          environment: string
+          event_created: number
+          event_id: string
+          processed_at?: string
+          subscription_id: string
+        }
+        Update: {
+          environment?: string
+          event_created?: number
+          event_id?: string
+          processed_at?: string
+          subscription_id?: string
+        }
+        Relationships: []
+      }
       coaching_analyses: {
         Row: {
           analysis: Json
@@ -348,6 +410,7 @@ export type Database = {
           current_period_start: string | null
           environment: string
           id: string
+          last_event_created: number
           price_id: string
           product_id: string
           status: string
@@ -363,6 +426,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          last_event_created?: number
           price_id: string
           product_id: string
           status?: string
@@ -378,6 +442,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          last_event_created?: number
           price_id?: string
           product_id?: string
           status?: string
@@ -438,12 +503,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_billing_subscription: {
+        Args: {
+          p_created: number
+          p_env: string
+          p_event_id: string
+          p_row: Json
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      reserve_billing_checkout: {
+        Args: { p_cycle: string; p_env: string; p_user: string }
+        Returns: {
+          checkout_cycle: string | null
+          checkout_expires_at: string | null
+          checkout_key: string
+          checkout_session_id: string | null
+          environment: string
+          stripe_customer_id: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "billing_customers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       session_meets_mfa: { Args: never; Returns: boolean }
     }
