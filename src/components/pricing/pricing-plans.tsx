@@ -3,8 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useEntitlements } from "@/hooks/use-entitlements";
 import { ProCheckoutDialog } from "@/components/pro/pro-checkout-dialog";
-import { PRO_PRICE_IDS, type ProPriceId } from "@/lib/billing/billing-status";
 import { checkoutAvailable } from "@/lib/stripe";
+import { Button } from "@/components/ui/button";
 import { Check, Sparkles, ArrowRight, Lock } from "lucide-react";
 import {
   Dialog,
@@ -120,7 +120,7 @@ function ProCard() {
   // Monthly is the default for every first visit: no stored/remembered cycle.
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [comingSoon, setComingSoon] = useState(false);
-  const [checkoutPrice, setCheckoutPrice] = useState<ProPriceId | null>(null);
+  const [checkoutCycle, setCheckoutCycle] = useState<BillingCycle | null>(null);
   const [canCheckout, setCanCheckout] = useState(false);
   useEffect(() => setCanCheckout(checkoutAvailable()), []);
   const { isAuthenticated } = useAuth();
@@ -148,7 +148,7 @@ function ProCard() {
           className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1"
         >
           {(["monthly", "annual"] as const).map((c) => (
-            <button
+            <Button
               key={c}
               type="button"
               aria-pressed={cycle === c}
@@ -163,7 +163,7 @@ function ProCard() {
                   Save {annualSavingsPercent()}%
                 </span>
               )}
-            </button>
+            </Button>
           ))}
 
         </div>
@@ -185,7 +185,7 @@ function ProCard() {
         <PlanPoints points={PRO_PLAN_POINTS} accent />
 
         <div className="mt-6">
-          <button
+          <Button
             type="button"
             disabled={canCheckout && isPro}
             onClick={() => {
@@ -195,13 +195,13 @@ function ProCard() {
                 void navigate({ to: "/auth", search: { mode: "signup" } });
                 return;
               }
-              setCheckoutPrice(annual ? PRO_PRICE_IDS.annual : PRO_PRICE_IDS.monthly);
+              setCheckoutCycle(cycle);
             }}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-60"
           >
             {canCheckout && isPro ? "You have BotDiff Pro" : "Get BotDiff Pro"}{" "}
             <ArrowRight className="size-4" />
-          </button>
+          </Button>
           <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
             <Lock className="size-3" />
             {canCheckout
@@ -212,7 +212,7 @@ function ProCard() {
       </div>
       <ProComingSoonDialog open={comingSoon} onOpenChange={setComingSoon} />
       {canCheckout && (
-        <ProCheckoutDialog priceId={checkoutPrice} onOpenChange={(o) => !o && setCheckoutPrice(null)} />
+        <ProCheckoutDialog cycle={checkoutCycle} onOpenChange={(o) => !o && setCheckoutCycle(null)} />
       )}
     </section>
   );

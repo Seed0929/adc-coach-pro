@@ -43,6 +43,13 @@
       "when": 1793729779809,
       "tag": "0005_lock_subscription_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794102778448,
+      "tag": "0006_secure_billing_lifecycle",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,6 @@
 import Stripe from 'stripe';
+import { PLAN_CONFIG } from './entitlements/plan';
+import { constantTimeSignature, validWebhookTimestamp } from './billing/billing-policy';
 const getEnv = (key: string): string => {
   const value = process.env[key];
   if (!value) throw new Error(`${key} is not configured`);
@@ -75,7 +77,7 @@ export function getStripeErrorMessage(error: unknown): string {
   return 'Stripe request failed';
 }
 
-export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ type: string; data: { object: any } }> {
+export async function verifyWebhook(req: Request, env: StripeEnv): Promise<Stripe.Event> {
   const signature = req.headers.get("stripe-signature");
   const body = await req.text();
   const secret = env === 'sandbox'
@@ -98,8 +100,7 @@ export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ typ
     throw new Error("Invalid signature format");
   }
 
-  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (age > 300) {
+  if (!validWebhookTimestamp(timestamp)) {
     throw new Error("Webhook timestamp too old");
   }
 
@@ -117,11 +118,16 @@ export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ typ
   );
   const expected = Buffer.from(new Uint8Array(signed)).toString('hex');
 
-  if (!v1Signatures.includes(expected)) {
+  if (!constantTimeSignature(expected, v1Signatures)) {
     throw new Error("Invalid webhook signature");
   }
 
-  return JSON.parse(body);
+  const event = JSON.parse(body);
+  if (typeof event.id !== 'string' || !event.id.startsWith('evt_') ||
+      !Number.isSafeInteger(event.created) || typeof event.type !== 'string' ||
+      typeof event.livemode !== 'boolean' || !event.data?.object ||
+      event.livemode !== (env === 'live')) throw new Error('Invalid webhook event');
+  return event;
 }
 
 /**
@@ -129,10 +135,10 @@ export async function verifyWebhook(req: Request, env: StripeEnv): Promise<{ typ
  * approves the production key). Flip by setting BOTDIFF_LIVE_CHECKOUT=true.
  */
 export function liveCheckoutAllowed(): boolean {
-  return process.env['BOTDIFF_LIVE_CHECKOUT'] === 'true';
+  return PLAN_CONFIG.paymentsEnabled && process.env['BOTDIFF_LIVE_CHECKOUT'] === 'true';
 }
 
 /** Which subscription rows count for access on this server. */
 export function serverBillingEnv(): StripeEnv {
-  return process.env['NODE_ENV'] === 'production' ? 'live' : 'sandbox';
+  return import.meta.env.DEV ? 'sandbox' : 'live';
 }

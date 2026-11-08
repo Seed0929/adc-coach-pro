@@ -8,6 +8,7 @@ import { planLabel, resetLabel } from "@/lib/entitlements/plan";
 import { UpgradeDialog } from "@/components/pro/upgrade-dialog";
 import { createBillingPortal, getMySubscription } from "@/lib/billing/billing.functions";
 import { paymentsEnvironment } from "@/lib/stripe";
+import { Button } from "@/components/ui/button";
 
 /** Shown only when the player actually has a subscription on record. */
 function ManageBillingButton() {
@@ -19,39 +20,47 @@ function ManageBillingButton() {
     cancel_at_period_end: boolean;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const env = typeof window === "undefined" ? null : paymentsEnvironment();
 
   useEffect(() => {
     if (!env) return;
-    getSub({ data: { environment: env } })
-      .then((r) => setSub(r.subscription))
-      .catch(() => setSub(null));
+    const fetch = () => getSub({ data: { environment: env } })
+      .then((r) => { setSub(r.subscription); setError(null); })
+      .catch(() => setError("Subscription status unavailable. Try again shortly."));
+    void fetch();
+    window.addEventListener("focus", fetch);
+    return () => window.removeEventListener("focus", fetch);
   }, [env, getSub]);
 
-  if (!env || !sub) return null;
+  if (!env) return null;
+  if (error) return <p role="alert" className="text-xs text-destructive">{error}</p>;
+  if (!sub) return null;
   const ends = sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-muted-foreground">{env === "sandbox" ? "Test" : "Live"} subscription · {sub.status}</span>
+      {sub.status === "past_due" && <span role="alert" className="text-xs text-warning">Payment failed; update your payment method.</span>}
       {sub.cancel_at_period_end && ends && (
         <span className="text-xs text-muted-foreground">Pro ends {ends}</span>
       )}
-      <button
+      {env === "sandbox" && <Button
         type="button"
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          const r = await openPortal({ data: { environment: env, returnUrl: window.location.href } }).catch(
+          const r = await openPortal({ data: { environment: "sandbox", returnUrl: `${window.location.origin}/settings` } }).catch(
             () => ({ ok: false as const, error: "Couldn't open billing right now." }),
           );
           setBusy(false);
           if (!r.ok) toast.error(r.error);
-          else window.open(r.url, "_blank");
+          else window.open(r.url, "_blank", "noopener,noreferrer");
         }}
         className="rounded-full border border-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/[0.06] disabled:opacity-60"
       >
         Manage billing
-      </button>
+      </Button>}
     </div>
   );
 }
