@@ -62,10 +62,11 @@ export const createProCheckout = createServerFn({ method: "POST" })
         managed_payments: { enabled: true }, metadata: { userId: context.userId, managed_payments: "true" },
         subscription_data: { metadata: { userId: context.userId } },
       } as Parameters<typeof stripe.checkout.sessions.create>[0], { idempotencyKey: `botdiff-checkout-${reservation.checkout_key}` });
-      const { error: sessionError } = await supabaseAdmin.from("billing_customers").update({
+      const { data: savedSession, error: sessionError } = await supabaseAdmin.from("billing_customers").update({
         checkout_session_id: session.id, checkout_expires_at: new Date(session.expires_at * 1000).toISOString(),
-      }).eq("user_id", context.userId).eq("environment", "sandbox").eq("checkout_key", reservation.checkout_key);
-      if (sessionError || !session.client_secret) throw new Error("Couldn't persist checkout.");
+      }).eq("user_id", context.userId).eq("environment", "sandbox").eq("checkout_key", reservation.checkout_key)
+        .select("checkout_session_id").maybeSingle();
+      if (sessionError || !savedSession || !session.client_secret) throw new Error("Couldn't persist checkout.");
       return { ok: true, clientSecret: session.client_secret };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
   });
