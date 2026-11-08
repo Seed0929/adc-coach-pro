@@ -1,84 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
-
-// Public route: security is the Stripe signature check on every request.
-// Writes go through the privileged server client only.
-
-function iso(sec: number | null | undefined) {
-  return sec ? new Date(sec * 1000).toISOString() : null;
-}
-
-async function upsertSubscription(sub: any, env: StripeEnv) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const item = sub.items?.data?.[0];
-  const priceId = item?.price?.lookup_key || item?.price?.metadata?.lovable_external_id || item?.price?.id;
-  const productId = typeof item?.price?.product === "string" ? item.price.product : item?.price?.product?.id;
-  const row = {
-    stripe_subscription_id: sub.id,
-    stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer?.id,
-    product_id: productId ?? "unknown",
-    price_id: priceId ?? "unknown",
-    status: sub.status,
-    current_period_start: iso(item?.current_period_start ?? sub.current_period_start),
-    current_period_end: iso(item?.current_period_end ?? sub.current_period_end),
-    cancel_at_period_end: Boolean(sub.cancel_at_period_end),
-    environment: env,
-  };
-  const userId = sub.metadata?.userId;
-  if (userId) {
-    await supabaseAdmin
-      .from("subscriptions")
-      .upsert({ ...row, user_id: userId }, { onConflict: "stripe_subscription_id" });
-  } else {
-    await supabaseAdmin
-      .from("subscriptions")
-      .update(row)
-      .eq("stripe_subscription_id", sub.id)
-      .eq("environment", env);
-  }
-}
-
-async function markCanceled(sub: any, env: StripeEnv) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const item = sub.items?.data?.[0];
-  await supabaseAdmin
-    .from("subscriptions")
-    .update({
-      status: "canceled",
-      current_period_end: iso(item?.current_period_end ?? sub.current_period_end),
-    })
-    .eq("stripe_subscription_id", sub.id)
-    .eq("environment", env);
-}
+import type Stripe from "stripe";
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
-  server: {
-    handlers: {
-      POST: async ({ request }) => {
-        const rawEnv = new URL(request.url).searchParams.get("env");
-        if (rawEnv !== "sandbox" && rawEnv !== "live") {
-          return Response.json({ received: true, ignored: "invalid env" });
-        }
-        const env: StripeEnv = rawEnv;
-        try {
-          const event = await verifyWebhook(request, env);
-          switch (event.type) {
-            case "customer.subscription.created":
-            case "customer.subscription.updated":
-              await upsertSubscription(event.data.object, env);
-              break;
-            case "customer.subscription.deleted":
-              await markCanceled(event.data.object, env);
-              break;
-            default:
-              console.log("[billing] unhandled event", event.type);
-          }
-          return Response.json({ received: true });
-        } catch (e) {
-          console.error("[billing] webhook error", e instanceof Error ? e.message : "unknown");
-          return new Response("Webhook error", { status: 400 });
-        }
-      },
-    },
-  },
+  server: { handlers: { POST: async ({ request }) => {
+    const env = new URL(request.url).searchParams.get("env");
+    if (env !== "sandbox" && env !== "live") return new Response("Invalid environment", { status: 400 });
+    const { verifyWebhook } = await import("@/lib/stripe.server");
+    let event: Stripe.Event;
+    try { event = await verifyWebhook(request, env); }
+    catch { return new Response("Invalid signature or event", { status: 400 }); }
+    try {
+      let subscriptionId: string | undefined;
+      if (event.type.startsWith("customer.subscription.")) {
+        subscriptionId = (event.data.object as Stripe.Subscription).id;
+      } else if (["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed"].includes(event.type)) {
+        const session = event.data.object as Stripe.Checkout.Session;
+        subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+      } else if (["invoice.paid", "invoice.payment_failed", "invoice.payment_action_required"].includes(event.type)) {
+        const invoice = event.data.object as Stripe.Invoice;
+        const sub = invoice.parent?.subscription_details?.subscription;
+        subscriptionId = typeof sub === "string" ? sub : sub?.id;
+      }
+      if (subscriptionId) {
+        const { syncVerifiedSubscription } = await import("@/lib/billing/subscription-sync.server");
+        await syncVerifiedSubscription(event, subscriptionId, env);
+      }
+      return Response.json({ received: true });
+    } catch (error) {
+      console.error("[billing] webhook persistence failed", event.id, error instanceof Error ? error.message : "unknown");
+      return new Response("Billing processing failed; retry delivery", { status: 500 });
+    }
+  } } },
 });
