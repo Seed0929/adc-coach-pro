@@ -150,6 +150,7 @@ function ProCard() {
           {(["monthly", "annual"] as const).map((c) => (
             <Button
               key={c}
+              variant="ghost"
               type="button"
               aria-pressed={cycle === c}
               onClick={() => setCycle(c)}

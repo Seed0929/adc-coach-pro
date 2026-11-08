@@ -1,5 +1,4 @@
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
-import { PLAN_CONFIG } from "@/lib/entitlements/plan";
 
 type StripeEnv = "sandbox" | "live";
 

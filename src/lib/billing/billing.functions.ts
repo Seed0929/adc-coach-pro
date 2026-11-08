@@ -85,7 +85,12 @@ export const createBillingPortal = createServerFn({ method: "POST" })
       const customer = await stripe.customers.retrieve(mapping.stripe_customer_id);
       if (customer.deleted) throw new Error("Billing customer unavailable.");
       assertCustomerOwner(customer.metadata, context.userId);
-      const portal = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: returnUrl });
+      const configs = await stripe.billingPortal.configurations.list({ active: true, limit: 100 });
+      const configuration = configs.data.find(c => c.metadata?.botdiff === "test_billing");
+      if (!configuration || configuration.features.subscription_cancel.mode !== "at_period_end") {
+        throw new Error("Test billing portal is not configured safely.");
+      }
+      const portal = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: returnUrl, configuration: configuration.id });
       return { ok: true, url: portal.url };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
   });
