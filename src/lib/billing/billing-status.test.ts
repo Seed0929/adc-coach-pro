@@ -46,3 +46,18 @@ describe("subscriptionGrantsPro fails closed", () => {
     expect(subscriptionGrantsPro({ status: null, current_period_end: end }, now)).toBe(false);
   });
 });
+
+describe("renewal and failed-payment lifecycle", () => {
+  it("renewal extends access only through the new verified period", () => {
+    const now = new Date("2026-12-01T00:00:00Z");
+    expect(subscriptionGrantsPro({ status: "active", current_period_end: "2026-11-30T00:00:00Z" }, now)).toBe(false);
+    expect(subscriptionGrantsPro({ status: "active", current_period_end: "2026-12-30T00:00:00Z" }, now)).toBe(true);
+  });
+  it("final payment failure revokes access even with a future period", () => {
+    expect(subscriptionGrantsPro({ status: "unpaid", current_period_end: future }, now)).toBe(false);
+    expect(subscriptionGrantsPro({ status: "incomplete_expired", current_period_end: future }, now)).toBe(false);
+  });
+  it("cancellation expires exactly at period end", () => {
+    expect(subscriptionGrantsPro({ status: "canceled", current_period_end: now.toISOString() }, now)).toBe(false);
+  });
+});
