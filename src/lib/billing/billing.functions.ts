@@ -21,7 +21,7 @@ export const createProCheckout = createServerFn({ method: "POST" })
       const { data: subs, error: subError } = await context.supabase.from("subscriptions")
         .select("status,current_period_end").eq("user_id", context.userId).eq("environment", "sandbox");
       if (subError) throw new Error("Couldn't check your current subscription.");
-      if ((subs ?? []).some(subscriptionGrantsPro)) throw new Error("You already have BotDiff Pro.");
+      if ((subs ?? []).some(s => subscriptionGrantsPro(s))) throw new Error("You already have BotDiff Pro.");
       const stripe = createStripeClient("sandbox");
       const prices = await stripe.prices.list({ lookup_keys: [PRO_PRICE_IDS[data.cycle]], active: true });
       const price = prices.data[0];
@@ -55,9 +55,10 @@ export const createProCheckout = createServerFn({ method: "POST" })
         if (existing.status !== "open" || !existing.client_secret) throw new Error("Checkout completed or expired. Refresh your plan.");
         return { ok: true, clientSecret: existing.client_secret };
       }
+      const expiresAt = Math.floor(new Date(reservation.checkout_expires_at ?? "").getTime() / 1000);
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: price.id, quantity: 1 }], mode: "subscription", ui_mode: "embedded_page",
-        return_url: returnUrl, customer: customerId, expires_at: Math.floor(Date.now() / 1000) + 1800,
+        return_url: returnUrl, customer: customerId, expires_at: expiresAt,
         managed_payments: { enabled: true }, metadata: { userId: context.userId, managed_payments: "true" },
         subscription_data: { metadata: { userId: context.userId } },
       } as Parameters<typeof stripe.checkout.sessions.create>[0], { idempotencyKey: `botdiff-checkout-${reservation.checkout_key}` });
@@ -97,7 +98,7 @@ export const getMySubscription = createServerFn({ method: "POST" })
       .select("status,price_id,current_period_end,cancel_at_period_end")
       .eq("user_id", context.userId).eq("environment", data.environment).order("created_at", { ascending: false });
     if (error) throw new Error("Couldn't read subscription status.");
-    return { subscription: rows?.find(subscriptionGrantsPro) ?? rows?.[0] ?? null };
+    return { subscription: rows?.find(s => subscriptionGrantsPro(s)) ?? rows?.[0] ?? null };
   });
 
 export const getCheckoutStatus = createServerFn({ method: "POST" })

@@ -5,6 +5,7 @@ import { PricingSection } from "@/components/pricing/pricing-plans";
 import { trackBetaEvent, BETA_EVENTS } from "@/lib/analytics/beta-analytics";
 import logoLockup from "@/assets/botdiff-logo.png";
 import { PublicFooter } from "@/components/public-footer";
+import { PaymentTestModeBanner } from "@/components/pro/payment-test-mode-banner";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -35,6 +36,7 @@ function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary/30">
+      <PaymentTestModeBanner />
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-40 -top-40 size-[40rem] rounded-full bg-primary/15 blur-[140px]" />
         <div className="absolute -right-52 top-1/3 size-[34rem] rounded-full bg-primary/10 blur-[150px]" />

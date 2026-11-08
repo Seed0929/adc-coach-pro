@@ -17,7 +17,7 @@ export function paymentsEnvironment(): StripeEnv | null {
  */
 export function checkoutAvailable(): boolean {
   const env = paymentsEnvironment();
-  return env === "sandbox" || (env === "live" && PLAN_CONFIG.paymentsEnabled);
+  return import.meta.env.DEV && env === "sandbox";
 }
 
 let stripePromise: Promise<Stripe | null> | null = null;
