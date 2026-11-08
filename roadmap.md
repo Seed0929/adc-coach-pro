@@ -1,3 +1,7 @@
+# Secure test-mode Pro purchasing
+- [ ] Complete checkout, verified lifecycle processing, customer mapping and billing UX while preserving P0 permissions.
+- [ ] Run security/lifecycle tests and signed-in payment verification; record external blockers without publishing or enabling live payments.
+
 # Visual-only theme pass
 - [x] Apply second refinement: visibly transparent smoked glass and fine gold pane edges; preserve exact content/layout/behavior and existing artwork.
 - [x] Verify signed-in desktop/mobile readability and reduced-motion; preview only. All 47 dashboard content panes retained identical content and sizes; 21 safety checks passed.
