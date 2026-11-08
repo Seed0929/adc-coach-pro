@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { subscriptionGrantsPro } from "@/lib/billing/billing-status";
+import { serverBillingEnv } from "@/lib/stripe.server";
 import {
   freeAllowance,
   isProOrAbove,
@@ -62,14 +63,14 @@ export async function loadPlan(supabase: Client, userId: string): Promise<Billin
 /** Pro from a payment-confirmed subscription (written only by the signed webhook). */
 async function hasPaidPro(supabase: Client, userId: string): Promise<boolean> {
   try {
-    const env = process.env["NODE_ENV"] === "production" ? "live" : "sandbox";
+    const env = serverBillingEnv();
     const { data } = await supabase
       .from("subscriptions")
-      .select("status, current_period_end")
+      .select("status, current_period_end, price_id")
       .eq("user_id", userId)
       .eq("environment", env);
-    return (data ?? []).some((row: { status: string; current_period_end: string | null }) =>
-      subscriptionGrantsPro(row),
+    return (data ?? []).some((row: { status: string; current_period_end: string | null; price_id: string }) =>
+      (row.price_id === "pro_monthly" || row.price_id === "pro_yearly") && subscriptionGrantsPro(row),
     );
   } catch {
     return false;
