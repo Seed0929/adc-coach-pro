@@ -1,6 +1,7 @@
 # Secure test-mode Pro purchasing
-- [ ] Complete checkout, verified lifecycle processing, customer mapping and billing UX while preserving P0 permissions.
-- [ ] Run security/lifecycle tests and signed-in payment verification; record external blockers without publishing or enabling live payments.
+- [x] Implement test checkout, verified lifecycle processing, customer mapping and billing UX while preserving P0 permissions.
+- [x] Run automated security/lifecycle tests, permission attacks and public browser verification; record evidence without publishing.
+- [ ] Verify an ordinary Free user's complete test purchase, webhook activation and portal cancellation: blocked by current account's native MFA challenge and Owner privileges; requires a signed-in non-Owner test account with MFA completed.
 
 # Visual-only theme pass
 - [x] Apply second refinement: visibly transparent smoked glass and fine gold pane edges; preserve exact content/layout/behavior and existing artwork.

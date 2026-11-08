@@ -62,10 +62,11 @@ export const createProCheckout = createServerFn({ method: "POST" })
         managed_payments: { enabled: true }, metadata: { userId: context.userId, managed_payments: "true" },
         subscription_data: { metadata: { userId: context.userId } },
       } as Parameters<typeof stripe.checkout.sessions.create>[0], { idempotencyKey: `botdiff-checkout-${reservation.checkout_key}` });
-      const { error: sessionError } = await supabaseAdmin.from("billing_customers").update({
+      const { data: savedSession, error: sessionError } = await supabaseAdmin.from("billing_customers").update({
         checkout_session_id: session.id, checkout_expires_at: new Date(session.expires_at * 1000).toISOString(),
-      }).eq("user_id", context.userId).eq("environment", "sandbox").eq("checkout_key", reservation.checkout_key);
-      if (sessionError || !session.client_secret) throw new Error("Couldn't persist checkout.");
+      }).eq("user_id", context.userId).eq("environment", "sandbox").eq("checkout_key", reservation.checkout_key)
+        .select("checkout_session_id").maybeSingle();
+      if (sessionError || !savedSession || !session.client_secret) throw new Error("Couldn't persist checkout.");
       return { ok: true, clientSecret: session.client_secret };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
   });
@@ -85,7 +86,12 @@ export const createBillingPortal = createServerFn({ method: "POST" })
       const customer = await stripe.customers.retrieve(mapping.stripe_customer_id);
       if (customer.deleted) throw new Error("Billing customer unavailable.");
       assertCustomerOwner(customer.metadata, context.userId);
-      const portal = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: returnUrl });
+      const configs = await stripe.billingPortal.configurations.list({ active: true, limit: 100 });
+      const configuration = configs.data.find(c => c.metadata?.botdiff === "test_billing");
+      if (!configuration || configuration.features.subscription_cancel.mode !== "at_period_end") {
+        throw new Error("Test billing portal is not configured safely.");
+      }
+      const portal = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: returnUrl, configuration: configuration.id });
       return { ok: true, url: portal.url };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
   });
