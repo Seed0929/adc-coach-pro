@@ -1,3 +1,5 @@
+import { getRequest } from '@tanstack/react-start/server';
+import { isTestCheckoutOrigin } from '@/lib/billing/test-checkout-hosts';
 import Stripe from 'stripe';
 import { PLAN_CONFIG } from './entitlements/plan';
 import { constantTimeSignature, validWebhookTimestamp } from './billing/billing-policy';
@@ -140,5 +142,16 @@ export function liveCheckoutAllowed(): boolean {
 
 /** Which subscription rows count for access on this server. */
 export function serverBillingEnv(): StripeEnv {
-  return import.meta.env.DEV ? 'sandbox' : 'live';
+  return import.meta.env.DEV || requestIsTestCheckoutHost() ? 'sandbox' : 'live';
+}
+
+/** Origin of the actual incoming request (never a forwarded header), or null. */
+export function requestOrigin(): string | null {
+  try { return new URL(getRequest().url).origin; } catch { return null; }
+}
+
+/** Server-verified: is this request served from an approved test preview host? */
+export function requestIsTestCheckoutHost(): boolean {
+  const origin = requestOrigin();
+  return origin !== null && isTestCheckoutOrigin(origin);
 }

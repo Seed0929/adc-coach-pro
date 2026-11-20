@@ -77,3 +77,9 @@ No Riot API key, Riot functionality, chatbot or public pricing amount was change
 - Root cause of "Processing": Stripe's invisible hCaptcha fraud check (frames hcaptcha-invisible / HCaptchaInvisible) blocks submission in the headless automated browser. Stripe's event log showed only `customer.created`; the sessions stayed `open/unpaid`, with no payment attempt reaching Stripe. This is not an app defect: the session is valid (USD 9.99/month, test mode), the form renders, and there is no site security policy blocking Stripe frames.
 - First scripted runs also left Address and City empty. The EUR display is Stripe's automatic currency conversion based on location; USD is selectable.
 - No code change made. PASS: 32/32 billing tests. NOT RUN: real payment to Pro (needs a human browser).
+
+## Hosted preview gating fix — 2026-11-20
+- Cause: `checkoutAvailable()` required `import.meta.env.DEV`, false on hosted preview builds, so preview--botdiffgg.lovable.app showed "coming soon". Hosted preview also read live subscription rows, so a test purchase there would not unlock Pro.
+- Fix: exact host allowlist; client gate (test key + host) plus a server-verified availability check from the request URL; checkout/portal/status refuse non-allowlisted hosts and return URLs that differ from the request origin; sandbox rows used only on allowlisted hosts.
+- PASS: 36/36 billing tests (incl. new host tests), build OK, local signed-in Free user opens the embedded test form.
+- NOT VERIFIED: the hosted preview itself (requires Lovable sign-in; returns 401 to the sandbox).

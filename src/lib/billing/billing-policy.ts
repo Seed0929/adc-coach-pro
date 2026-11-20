@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PRO_PRICE_IDS } from "./billing-status";
+import { isTestCheckoutOrigin } from "./test-checkout-hosts";
 import { PRICING, type BillingCycle } from "@/lib/entitlements/plan";
 
 export const checkoutInput = z.object({
@@ -9,17 +10,12 @@ export const checkoutInput = z.object({
 }).strict();
 export const portalInput = checkoutInput.omit({ cycle: true });
 
-const TEST_HOSTS = new Set([
-  "localhost:8080",
-  "id-preview--78e292a8-9045-4850-a622-8e79115188ed.lovable.app",
-  "project--78e292a8-9045-4850-a622-8e79115188ed-dev.lovable.app",
-]);
 
 /** Test checkout cannot be enabled from a production origin or client flag. */
-export function trustedReturnUrl(value: string, path: "/checkout/return" | "/settings"): string {
+export function trustedReturnUrl(value: string, path: "/checkout/return" | "/settings", requestOrigin?: string): string {
   const url = new URL(value);
-  if (!TEST_HOSTS.has(url.host) || url.username || url.password || url.hash ||
-      (url.protocol !== "https:" && url.origin !== "http://localhost:8080") || url.pathname !== path) {
+  if (!isTestCheckoutOrigin(url) || url.username || url.password || url.hash || url.pathname !== path ||
+      (requestOrigin !== undefined && url.origin !== requestOrigin)) {
     throw new Error("Checkout is available only in the BotDiff test preview.");
   }
   if (path === "/checkout/return") {

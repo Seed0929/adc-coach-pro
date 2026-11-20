@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEntitlements } from "@/hooks/use-entitlements";
 import { ProCheckoutDialog } from "@/components/pro/pro-checkout-dialog";
 import { checkoutAvailable } from "@/lib/stripe";
+import { getTestCheckoutAvailability } from "@/lib/billing/billing.functions";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, ArrowRight, Lock } from "lucide-react";
 import {
@@ -122,7 +123,15 @@ function ProCard() {
   const [comingSoon, setComingSoon] = useState(false);
   const [checkoutCycle, setCheckoutCycle] = useState<BillingCycle | null>(null);
   const [canCheckout, setCanCheckout] = useState(false);
-  useEffect(() => setCanCheckout(checkoutAvailable()), []);
+  useEffect(() => {
+    // Client check (test key + approved host) AND the server's own check of the real request host.
+    if (!checkoutAvailable()) return;
+    let active = true;
+    getTestCheckoutAvailability()
+      .then((r) => { if (active) setCanCheckout(r.testCheckout); })
+      .catch(() => { if (active) setCanCheckout(false); });
+    return () => { active = false; };
+  }, []);
   const { isAuthenticated } = useAuth();
   const { isPro } = useEntitlements();
   const navigate = useNavigate();

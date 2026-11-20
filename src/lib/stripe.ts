@@ -1,3 +1,4 @@
+import { isTestCheckoutOrigin } from "@/lib/billing/test-checkout-hosts";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 
 type StripeEnv = "sandbox" | "live";
@@ -14,9 +15,9 @@ export function paymentsEnvironment(): StripeEnv | null {
  * Checkout is offered only in test mode, or in live mode once launch is
  * explicitly approved (PLAN_CONFIG.paymentsEnabled). The server re-checks.
  */
-export function checkoutAvailable(): boolean {
-  const env = paymentsEnvironment();
-  return import.meta.env.DEV && env === "sandbox";
+export function checkoutAvailable(hostname?: string): boolean {
+  const host = hostname ?? (typeof window === "undefined" ? "" : window.location.origin);
+  return paymentsEnvironment() === "sandbox" && isTestCheckoutOrigin(host);
 }
 
 let stripePromise: Promise<Stripe | null> | null = null;

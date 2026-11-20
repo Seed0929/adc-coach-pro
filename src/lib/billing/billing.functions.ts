@@ -11,9 +11,10 @@ export const createProCheckout = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: z.input<typeof checkoutInput>) => checkoutInput.parse(input))
   .handler(async ({ data, context }): Promise<Result<{ clientSecret: string }>> => {
-    const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost, requestOrigin } = await import("@/lib/stripe.server");
     try {
-      const returnUrl = trustedReturnUrl(data.returnUrl, "/checkout/return");
+      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
+      const returnUrl = trustedReturnUrl(data.returnUrl, "/checkout/return", requestOrigin() ?? "");
       const { loadPlan } = await import("@/lib/entitlements/entitlements.server");
       if ((await loadPlan(context.supabase, context.userId)) !== "free") {
         return { ok: false, error: "Your account already has Pro access." };
@@ -75,9 +76,10 @@ export const createBillingPortal = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: z.input<typeof portalInput>) => portalInput.parse(input))
   .handler(async ({ data, context }): Promise<Result<{ url: string }>> => {
-    const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost, requestOrigin } = await import("@/lib/stripe.server");
     try {
-      const returnUrl = trustedReturnUrl(data.returnUrl, "/settings");
+      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
+      const returnUrl = trustedReturnUrl(data.returnUrl, "/settings", requestOrigin() ?? "");
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: mapping, error } = await supabaseAdmin.from("billing_customers").select("stripe_customer_id")
         .eq("user_id", context.userId).eq("environment", "sandbox").maybeSingle();
@@ -111,8 +113,9 @@ export const getCheckoutStatus = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: { sessionId: string }) => z.object({ sessionId: z.string().regex(/^cs_test_[a-zA-Z0-9]+$/).max(256) }).strict().parse(input))
   .handler(async ({ data, context }): Promise<Result<{ status: string; paymentStatus: string; activated: boolean }>> => {
-    const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost } = await import("@/lib/stripe.server");
     try {
+      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
       const stripe = createStripeClient("sandbox");
       const session = await stripe.checkout.sessions.retrieve(data.sessionId);
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -129,4 +132,11 @@ export const getCheckoutStatus = createServerFn({ method: "POST" })
       return { ok: true, status: session.status ?? "unknown", paymentStatus: session.payment_status,
         activated: Boolean(sub && ["pro_monthly", "pro_yearly"].includes(sub.price_id) && subscriptionGrantsPro(sub)) };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
+  });
+
+/** Public, server-verified: may this host offer TEST checkout? Reads the real request URL only. */
+export const getTestCheckoutAvailability = createServerFn({ method: "GET" })
+  .handler(async (): Promise<{ testCheckout: boolean }> => {
+    const { requestIsTestCheckoutHost } = await import("@/lib/stripe.server");
+    return { testCheckout: requestIsTestCheckoutHost() };
   });
