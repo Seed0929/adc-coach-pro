@@ -67,3 +67,8 @@ Database SQL is recorded exactly in `drizzle/migrations/0006_secure_billing_life
 5. Verify Riot production approval, owner live launch approval, legal checklist and Stripe live readiness before designing/enabling live checkout. This implementation deliberately has no working live purchase path.
 
 No Riot API key, Riot functionality, chatbot or public pricing amount was changed. Existing Free report metering has a separately identified count-then-insert concurrency risk; it was not changed in this subscription-focused task.
+## Re-verification — 2026-11-20 (read-only + one test-card attempt)
+- PASS: 32/32 billing unit tests (5 files).
+- PASS: checkout gating (preview + test key only); `paymentsEnabled=false`; no live key; Stripe go-live form still in progress.
+- PASS: an ordinary Free test user (no Owner, no MFA) opened the embedded test checkout and the server created a private customer mapping (1 row).
+- NOT VERIFIED: two scripted submissions with card 4242 stayed on "Processing" (form showed EUR currency switcher and a manual billing-address step). No subscription, no webhook receipt, plan unchanged (0/0). Manual test in the preview is still required.
