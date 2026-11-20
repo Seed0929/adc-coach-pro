@@ -72,3 +72,8 @@ No Riot API key, Riot functionality, chatbot or public pricing amount was change
 - PASS: checkout gating (preview + test key only); `paymentsEnabled=false`; no live key; Stripe go-live form still in progress.
 - PASS: an ordinary Free test user (no Owner, no MFA) opened the embedded test checkout and the server created a private customer mapping (1 row).
 - NOT VERIFIED: two scripted submissions with card 4242 stayed on "Processing" (form showed EUR currency switcher and a manual billing-address step). No subscription, no webhook receipt, plan unchanged (0/0). Manual test in the preview is still required.
+
+## Test checkout diagnosis — 2026-11-20
+- Root cause of "Processing": Stripe's invisible hCaptcha fraud check (frames hcaptcha-invisible / HCaptchaInvisible) blocks submission in the headless automated browser. Stripe's event log showed only `customer.created`; the sessions stayed `open/unpaid`, with no payment attempt reaching Stripe. This is not an app defect: the session is valid (USD 9.99/month, test mode), the form renders, and there is no site security policy blocking Stripe frames.
+- First scripted runs also left Address and City empty. The EUR display is Stripe's automatic currency conversion based on location; USD is selectable.
+- No code change made. PASS: 32/32 billing tests. NOT RUN: real payment to Pro (needs a human browser).
