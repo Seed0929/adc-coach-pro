@@ -1,5 +1,7 @@
 # BotDiff test billing verification — 2026-11-08
 
+> Historical report. Current 2026-11-20 readiness, successful monthly/cancellation evidence and 62-test isolated verification supersede the early zero-row/unfinished-payment statements below: see `BILLING_PRODUCTION_READINESS.md`. Annual form verified; annual payment and real provider renewal/failure/recovery still unverified. Live activation remains prohibited.
+
 ## Status
 Implemented and security-checked, **not end-to-end payment verified**. No publish/deploy action was performed. Live checkout and portal mutations are rejected by validators. Checkout UI is development/test-only. `PLAN_CONFIG.paymentsEnabled` remains false. Riot production approval is not verified; live Stripe onboarding is incomplete.
 

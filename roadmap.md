@@ -1,7 +1,14 @@
+# Real-payment readiness (live activation prohibited)
+- [x] Audit Stripe test/live configuration, permissions, checkout authorization and legal/Riot launch gates.
+- [x] Run safe annual form and isolated lifecycle/replay/concurrency verification; no confirmed scoped P0 blocker reproduced.
+- [x] Record exact results, deferred cancellation-date notice and external go-live steps; no publishing or charge activation.
+- [ ] Complete actual annual payment and provider failure/renewal/recovery plus fresh Pro/portal readback: needs real browser/test fixture approval; see BILLING_PRODUCTION_READINESS.md.
+- [ ] Final live readiness: blocked by Riot approval evidence, legal adoption, Stripe onboarding/provisioning and separately approved live implementation/activation.
+
 # Secure test-mode Pro purchasing
 - [x] Implement test checkout, verified lifecycle processing, customer mapping and billing UX while preserving P0 permissions.
 - [x] Run automated security/lifecycle tests, permission attacks and public browser verification; record evidence without publishing.
-- [ ] Verify an ordinary Free user's complete test purchase, webhook activation and portal cancellation: blocked by current account's native MFA challenge and Owner privileges; requires a signed-in non-Owner test account with MFA completed.
+- [x] Verify ordinary Free monthly test purchase, webhook activation and scheduled portal cancellation via actual Stripe/Cloud evidence; fresh signed-in readback remains external verification.
 
 # Visual-only theme pass
 - [x] Apply second refinement: visibly transparent smoked glass and fine gold pane edges; preserve exact content/layout/behavior and existing artwork.
