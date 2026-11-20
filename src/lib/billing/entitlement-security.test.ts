@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+const settled = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/billing/settlement.server", () => ({ initialInvoiceSettled: settled }));
+vi.mock("@/lib/stripe.server", () => ({ serverBillingEnv: () => "sandbox", createStripeClient: () => ({}) }));
+beforeEach(() => settled.mockResolvedValue(true));
 import { loadPlan, devToggleAllowed } from "@/lib/entitlements/entitlements.server";
 
 function client(roles: string[], subscription: unknown[] = [], internalPlan = "pro") {
@@ -13,6 +17,10 @@ function client(roles: string[], subscription: unknown[] = [], internalPlan = "p
   } as unknown as Parameters<typeof loadPlan>[0];
 }
 describe("server entitlement escalation protection", () => {
+  it("old active database rows do not bypass unsettled initial invoices", async () => {
+    settled.mockResolvedValue(false);
+    expect(await loadPlan(client([], [{ status: "active", current_period_end: "2099-01-01", price_id: "pro_monthly" }]), "player")).toBe("free");
+  });
   it("ordinary players cannot use internal Pro grants", async () => {
     const player = client([]);
     expect(await devToggleAllowed(player, "player")).toBe(false);

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { assertCustomerOwner, checkoutInput, constantTimeSignature, trustedReturnUrl, validWebhookTimestamp, verifyProPrice } from "./billing-policy";
+import { assertCustomerOwner, checkoutInput, constantTimeSignature, trustedReturnUrl, validWebhookTimestamp, verifyProPrice, billingRequestAllowed } from "./billing-policy";
 import { PLAN_CONFIG, CAPABILITIES } from "@/lib/entitlements/plan";
 
 describe("security boundaries", () => {
   it("refuses live checkout and client price/user overrides", () => {
-    expect(checkoutInput.safeParse({ cycle: "monthly", environment: "live", returnUrl: "https://botdiff.online" }).success).toBe(false);
+    expect(billingRequestAllowed("live", "https://botdiff.online", true)).toBe(false);
     expect(checkoutInput.safeParse({ cycle: "monthly", environment: "sandbox", returnUrl: "http://localhost:8080", priceId: "owner", userId: "other" }).success).toBe(false);
   });
   it("rejects external and production return destinations", () => {
@@ -22,6 +22,18 @@ describe("security boundaries", () => {
     expect(PLAN_CONFIG.freeFullReportsPerPeriod).toBe(3);
     expect(PLAN_CONFIG.paymentsEnabled).toBe(false);
     expect(CAPABILITIES.owner).toEqual(CAPABILITIES.pro);
+  });
+});
+describe("disabled production authorization", () => {
+  it("test and live origins cannot be interchanged", () => {
+    expect(billingRequestAllowed("sandbox", "https://botdiff.online", false)).toBe(false);
+    expect(billingRequestAllowed("sandbox", "http://localhost:8080", false)).toBe(true);
+    expect(billingRequestAllowed("live", "http://localhost:8080", true)).toBe(false);
+  });
+  it("future live return validation requires exact production origin and path", () => {
+    expect(trustedReturnUrl("https://botdiff.online/settings", "/settings", "https://botdiff.online", "live")).toBe("https://botdiff.online/settings");
+    expect(() => trustedReturnUrl("https://evil.test/settings", "/settings", "https://evil.test", "live")).toThrow();
+    expect(() => trustedReturnUrl("https://botdiff.online/settings", "/settings", "https://www.botdiff.online", "live")).toThrow();
   });
 });
 

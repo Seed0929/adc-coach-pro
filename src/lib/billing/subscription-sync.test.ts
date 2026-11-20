@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type Stripe from "stripe";
 
-const mocks = vi.hoisted(() => ({ retrieveSub: vi.fn(), retrieveCustomer: vi.fn(), retrievePrice: vi.fn(), rpc: vi.fn(), mapping: vi.fn() }));
+const mocks = vi.hoisted(() => ({ retrieveSub: vi.fn(), retrieveCustomer: vi.fn(), retrievePrice: vi.fn(), invoices: vi.fn(), rpc: vi.fn(), mapping: vi.fn() }));
 vi.mock("@/lib/stripe.server", () => ({ createStripeClient: () => ({
   subscriptions: { retrieve: mocks.retrieveSub }, customers: { retrieve: mocks.retrieveCustomer }, prices: { retrieve: mocks.retrievePrice },
+  invoices: { list: mocks.invoices },
 }) }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {
   rpc: mocks.rpc,
@@ -14,6 +15,7 @@ import { syncVerifiedSubscription } from "./subscription-sync.server";
 const event = { id: "evt_verified", created: 1800000000 } as Stripe.Event;
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.invoices.mockResolvedValue({ data: [{ id: "in_initial", billing_reason: "subscription_create", status: "paid", amount_remaining: 0, customer: "cus_real", livemode: false, parent: { subscription_details: { subscription: "sub_real" } } }], has_more: false });
   mocks.retrieveSub.mockResolvedValue({ id: "sub_real", livemode: false, customer: "cus_real", metadata: { userId: "player" }, status: "active", cancel_at_period_end: false,
     items: { data: [{ quantity: 1, price: { id: "price_real" }, current_period_start: 1800000000, current_period_end: 1802592000 }] } });
   mocks.retrieveCustomer.mockResolvedValue({ id: "cus_real", metadata: { userId: "player" } });
@@ -22,6 +24,11 @@ beforeEach(() => {
   mocks.rpc.mockResolvedValue({ data: "applied", error: null });
 });
 describe("authoritative webhook processing", () => {
+  it("unsettled first invoice cannot persist active paid access", async () => {
+    mocks.invoices.mockResolvedValue({ data: [], has_more: false });
+    await syncVerifiedSubscription(event, "sub_real", "sandbox");
+    expect(mocks.rpc).toHaveBeenCalledWith("apply_billing_subscription", expect.objectContaining({ p_row: expect.objectContaining({ status: "incomplete" }) }));
+  });
   it("ignores event snapshot status and retrieves authoritative Stripe state", async () => {
     await syncVerifiedSubscription(event, "sub_real", "sandbox");
     expect(mocks.retrieveSub).toHaveBeenCalledWith("sub_real");

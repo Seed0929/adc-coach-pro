@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireVerifiedSession } from "@/lib/security/require-verified-session";
 import { PRO_PRICE_IDS, subscriptionGrantsPro } from "./billing-status";
-import { checkoutInput, portalInput, trustedReturnUrl, verifyProPrice, assertCustomerOwner } from "./billing-policy";
+import { checkoutInput, portalInput, trustedReturnUrl, verifyProPrice, assertCustomerOwner, billingRequestAllowed } from "./billing-policy";
 import { z } from "zod";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -11,37 +11,38 @@ export const createProCheckout = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: z.input<typeof checkoutInput>) => checkoutInput.parse(input))
   .handler(async ({ data, context }): Promise<Result<{ clientSecret: string }>> => {
-    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost, requestOrigin } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, liveCheckoutAllowed, requestOrigin } = await import("@/lib/stripe.server");
     try {
-      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
-      const returnUrl = trustedReturnUrl(data.returnUrl, "/checkout/return", requestOrigin() ?? "");
+      if (!billingRequestAllowed(data.environment, requestOrigin() ?? "", liveCheckoutAllowed())) throw new Error("Live billing is disabled; test checkout requires an approved preview.");
+      const returnUrl = trustedReturnUrl(data.returnUrl, "/checkout/return", requestOrigin() ?? "", data.environment);
       const { loadPlan } = await import("@/lib/entitlements/entitlements.server");
       if ((await loadPlan(context.supabase, context.userId)) !== "free") {
         return { ok: false, error: "Your account already has Pro access." };
       }
       const { data: subs, error: subError } = await context.supabase.from("subscriptions")
-        .select("status,current_period_end").eq("user_id", context.userId).eq("environment", "sandbox");
+        .select("status,current_period_end").eq("user_id", context.userId).eq("environment", data.environment);
       if (subError) throw new Error("Couldn't check your current subscription.");
       if ((subs ?? []).some(s => subscriptionGrantsPro(s))) throw new Error("You already have BotDiff Pro.");
-      const stripe = createStripeClient("sandbox");
+      const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [PRO_PRICE_IDS[data.cycle]], active: true });
       const price = prices.data[0];
       if (!price || prices.data.length !== 1) throw new Error("That plan isn't available.");
+      if (price.livemode !== (data.environment === "live")) throw new Error("Price environment mismatch.");
       verifyProPrice(price, data.cycle);
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: reservation, error } = await supabaseAdmin.rpc("reserve_billing_checkout", {
-        p_user: context.userId, p_env: "sandbox", p_cycle: data.cycle,
+        p_user: context.userId, p_env: data.environment, p_cycle: data.cycle,
       });
       if (error || !reservation) throw new Error(error?.message ?? "Couldn't reserve checkout.");
       let customerId = reservation.stripe_customer_id;
       if (!customerId) {
         // Stable per-account idempotency; email never reassigns someone else's customer.
         const customer = await stripe.customers.create({ metadata: { userId: context.userId } }, {
-          idempotencyKey: `botdiff-customer-sandbox-${context.userId}`,
+          idempotencyKey: `botdiff-customer-${data.environment}-${context.userId}`,
         });
         customerId = customer.id;
         const { error: saveError } = await supabaseAdmin.from("billing_customers")
-          .update({ stripe_customer_id: customerId }).eq("user_id", context.userId).eq("environment", "sandbox");
+          .update({ stripe_customer_id: customerId }).eq("user_id", context.userId).eq("environment", data.environment);
         if (saveError) throw new Error("Couldn't save customer mapping.");
       }
       const customer = await stripe.customers.retrieve(customerId);
@@ -53,7 +54,8 @@ export const createProCheckout = createServerFn({ method: "POST" })
       }
       if (reservation.checkout_session_id) {
         const existing = await stripe.checkout.sessions.retrieve(reservation.checkout_session_id);
-        if (existing.status !== "open" || !existing.client_secret) throw new Error("Checkout completed or expired. Refresh your plan.");
+        if (existing.customer !== customerId || existing.livemode !== (data.environment === "live") || existing.metadata?.userId !== context.userId ||
+          existing.return_url !== returnUrl || existing.status !== "open" || !existing.client_secret) throw new Error("Checkout completed, expired or mismatched. Refresh your plan.");
         return { ok: true, clientSecret: existing.client_secret };
       }
       const expiresAt = Math.floor(new Date(reservation.checkout_expires_at ?? "").getTime() / 1000);
@@ -65,7 +67,7 @@ export const createProCheckout = createServerFn({ method: "POST" })
       } as Parameters<typeof stripe.checkout.sessions.create>[0], { idempotencyKey: `botdiff-checkout-${reservation.checkout_key}` });
       const { data: savedSession, error: sessionError } = await supabaseAdmin.from("billing_customers").update({
         checkout_session_id: session.id, checkout_expires_at: new Date(session.expires_at * 1000).toISOString(),
-      }).eq("user_id", context.userId).eq("environment", "sandbox").eq("checkout_key", reservation.checkout_key)
+      }).eq("user_id", context.userId).eq("environment", data.environment).eq("checkout_key", reservation.checkout_key)
         .select("checkout_session_id").maybeSingle();
       if (sessionError || !savedSession || !session.client_secret) throw new Error("Couldn't persist checkout.");
       return { ok: true, clientSecret: session.client_secret };
@@ -76,22 +78,23 @@ export const createBillingPortal = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: z.input<typeof portalInput>) => portalInput.parse(input))
   .handler(async ({ data, context }): Promise<Result<{ url: string }>> => {
-    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost, requestOrigin } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, liveCheckoutAllowed, requestOrigin } = await import("@/lib/stripe.server");
     try {
-      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
-      const returnUrl = trustedReturnUrl(data.returnUrl, "/settings", requestOrigin() ?? "");
+      if (!billingRequestAllowed(data.environment, requestOrigin() ?? "", liveCheckoutAllowed())) throw new Error("Live billing is disabled; test billing requires an approved preview.");
+      const returnUrl = trustedReturnUrl(data.returnUrl, "/settings", requestOrigin() ?? "", data.environment);
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: mapping, error } = await supabaseAdmin.from("billing_customers").select("stripe_customer_id")
-        .eq("user_id", context.userId).eq("environment", "sandbox").maybeSingle();
+        .eq("user_id", context.userId).eq("environment", data.environment).maybeSingle();
       if (error || !mapping?.stripe_customer_id) throw new Error("No billing customer found.");
-      const stripe = createStripeClient("sandbox");
+      const stripe = createStripeClient(data.environment);
       const customer = await stripe.customers.retrieve(mapping.stripe_customer_id);
       if (customer.deleted) throw new Error("Billing customer unavailable.");
       assertCustomerOwner(customer.metadata, context.userId);
       const configs = await stripe.billingPortal.configurations.list({ active: true, limit: 100 });
-      const configuration = configs.data.find(c => c.metadata?.botdiff === "test_billing");
-      if (!configuration || configuration.features.subscription_cancel.mode !== "at_period_end") {
-        throw new Error("Test billing portal is not configured safely.");
+      const configuration = configs.data.find(c => c.metadata?.botdiff === (data.environment === "sandbox" ? "test_billing" : "live_billing") && c.livemode === (data.environment === "live"));
+      if (!configuration || !configuration.features.subscription_cancel.enabled || configuration.features.subscription_cancel.mode !== "at_period_end" ||
+        (data.environment === "live" && (!configuration.business_profile.privacy_policy_url || !configuration.business_profile.terms_of_service_url))) {
+        throw new Error("Billing portal is not configured safely.");
       }
       const portal = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: returnUrl, configuration: configuration.id });
       return { ok: true, url: portal.url };
@@ -114,26 +117,29 @@ export const getMySubscription = createServerFn({ method: "POST" })
 
 export const getCheckoutStatus = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
-  .inputValidator((input: { sessionId: string }) => z.object({ sessionId: z.string().regex(/^cs_test_[a-zA-Z0-9]+$/).max(256) }).strict().parse(input))
+  .inputValidator((input: { sessionId: string }) => z.object({ sessionId: z.string().regex(/^cs_(test|live)_[a-zA-Z0-9]+$/).max(256) }).strict().parse(input))
   .handler(async ({ data, context }): Promise<Result<{ status: string; paymentStatus: string; activated: boolean }>> => {
-    const { createStripeClient, getStripeErrorMessage, requestIsTestCheckoutHost } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage, liveCheckoutAllowed, requestOrigin, serverBillingEnv } = await import("@/lib/stripe.server");
     try {
-      if (!requestIsTestCheckoutHost()) throw new Error("Checkout is available only in the BotDiff test preview.");
-      const stripe = createStripeClient("sandbox");
+      const env = serverBillingEnv();
+      if (!billingRequestAllowed(env, requestOrigin() ?? "", liveCheckoutAllowed()) || !data.sessionId.startsWith(`cs_${env === "sandbox" ? "test" : "live"}_`)) throw new Error("Purchase verification unavailable for this environment.");
+      const stripe = createStripeClient(env);
       const session = await stripe.checkout.sessions.retrieve(data.sessionId);
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: mapping, error } = await supabaseAdmin.from("billing_customers").select("stripe_customer_id")
-        .eq("user_id", context.userId).eq("environment", "sandbox").maybeSingle();
-      if (error || !mapping || session.customer !== mapping.stripe_customer_id || session.livemode || session.metadata?.userId !== context.userId) {
+        .eq("user_id", context.userId).eq("environment", env).maybeSingle();
+      if (error || !mapping || session.customer !== mapping.stripe_customer_id || session.livemode !== (env === "live") || session.metadata?.userId !== context.userId) {
         throw new Error("Checkout does not belong to this account.");
       }
       const subId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
       const { data: sub, error: subError } = await context.supabase.from("subscriptions")
         .select("status,current_period_end,price_id").eq("stripe_subscription_id", subId ?? "")
-        .eq("user_id", context.userId).eq("environment", "sandbox").maybeSingle();
+        .eq("user_id", context.userId).eq("environment", env).maybeSingle();
       if (subError) throw new Error("Couldn't verify activation.");
+      const { initialInvoiceSettled } = await import("./settlement.server");
+      const settled = subId && mapping.stripe_customer_id ? await initialInvoiceSettled(stripe, subId, mapping.stripe_customer_id, env) : false;
       return { ok: true, status: session.status ?? "unknown", paymentStatus: session.payment_status,
-        activated: Boolean(sub && ["pro_monthly", "pro_yearly"].includes(sub.price_id) && subscriptionGrantsPro(sub)) };
+        activated: Boolean(session.status === "complete" && session.payment_status !== "unpaid" && settled && sub && ["pro_monthly", "pro_yearly"].includes(sub.price_id) && subscriptionGrantsPro(sub)) };
     } catch (error) { return { ok: false, error: getStripeErrorMessage(error) }; }
   });
 

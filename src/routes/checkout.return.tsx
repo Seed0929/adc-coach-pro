@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/checkout/return")({
   validateSearch: (s: Record<string, unknown>): { session_id?: string } => ({
-    session_id: typeof s.session_id === "string" && /^cs_test_[a-zA-Z0-9]{1,240}$/.test(s.session_id) ? s.session_id : undefined,
+    session_id: typeof s.session_id === "string" && /^cs_(test|live)_[a-zA-Z0-9]{1,240}$/.test(s.session_id) ? s.session_id : undefined,
   }),
   head: () => ({
     meta: [

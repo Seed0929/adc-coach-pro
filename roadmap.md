@@ -1,4 +1,6 @@
 # Real-payment readiness (live activation prohibited)
+- [x] Implement code-only settlement checks, disabled live checkout/verification and safe portal selection; preserve existing protections.
+- [x] Run focused regressions and document remaining setup/approval blockers without changing Stripe or database settings.
 - [x] Audit Stripe test/live configuration, permissions, checkout authorization and legal/Riot launch gates.
 - [x] Run safe annual form and isolated lifecycle/replay/concurrency verification; no confirmed scoped P0 blocker reproduced.
 - [x] Record exact results, deferred cancellation-date notice and external go-live steps; no publishing or charge activation.

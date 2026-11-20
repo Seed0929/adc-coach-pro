@@ -5,16 +5,17 @@ import { PRICING, type BillingCycle } from "@/lib/entitlements/plan";
 
 export const checkoutInput = z.object({
   cycle: z.enum(["monthly", "annual"]),
-  environment: z.literal("sandbox"),
+  environment: z.enum(["sandbox", "live"]),
   returnUrl: z.string().max(2048),
 }).strict();
 export const portalInput = checkoutInput.omit({ cycle: true });
 
 
 /** Test checkout cannot be enabled from a production origin or client flag. */
-export function trustedReturnUrl(value: string, path: "/checkout/return" | "/settings", requestOrigin?: string): string {
+export function trustedReturnUrl(value: string, path: "/checkout/return" | "/settings", requestOrigin?: string, env: "sandbox" | "live" = "sandbox"): string {
   const url = new URL(value);
-  if (!isTestCheckoutOrigin(url) || url.username || url.password || url.hash || url.pathname !== path ||
+  const allowed = env === "sandbox" ? isTestCheckoutOrigin(url) : isProductionBillingOrigin(url.origin);
+  if (!allowed || url.username || url.password || url.hash || url.pathname !== path ||
       (requestOrigin !== undefined && url.origin !== requestOrigin)) {
     throw new Error("Checkout is available only in the BotDiff test preview.");
   }
@@ -24,6 +25,17 @@ export function trustedReturnUrl(value: string, path: "/checkout/return" | "/set
     }
   } else if (url.search) throw new Error("Invalid billing return URL");
   return url.toString();
+}
+
+export function isProductionBillingOrigin(origin: string): boolean {
+  return ["https://botdiff.online", "https://www.botdiff.online", "https://botdiffgg.lovable.app"].includes(origin);
+}
+
+/** Separate server code approval gate; intentionally disabled, regardless of environment variables. */
+export const LIVE_BILLING_IMPLEMENTATION_ENABLED = false;
+export function billingRequestAllowed(env: "sandbox" | "live", origin: string, liveFlag: boolean): boolean {
+  return env === "sandbox" ? isTestCheckoutOrigin(origin) :
+    LIVE_BILLING_IMPLEMENTATION_ENABLED && liveFlag && isProductionBillingOrigin(origin);
 }
 
 export function verifyProPrice(price: {

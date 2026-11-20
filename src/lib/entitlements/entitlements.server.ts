@@ -66,12 +66,16 @@ async function hasPaidPro(supabase: Client, userId: string): Promise<boolean> {
     const env = serverBillingEnv();
     const { data } = await supabase
       .from("subscriptions")
-      .select("status, current_period_end, price_id")
+      .select("status, current_period_end, price_id, stripe_subscription_id, stripe_customer_id")
       .eq("user_id", userId)
       .eq("environment", env);
-    return (data ?? []).some((row: { status: string; current_period_end: string | null; price_id: string }) =>
-      (row.price_id === "pro_monthly" || row.price_id === "pro_yearly") && subscriptionGrantsPro(row),
-    );
+    const { initialInvoiceSettled } = await import("@/lib/billing/settlement.server");
+    const { createStripeClient } = await import("@/lib/stripe.server");
+    for (const row of data ?? []) {
+      if (!["pro_monthly", "pro_yearly"].includes(row.price_id) || !subscriptionGrantsPro(row)) continue;
+      if (await initialInvoiceSettled(createStripeClient(env), row.stripe_subscription_id, row.stripe_customer_id, env)) return true;
+    }
+    return false;
   } catch {
     return false;
   }

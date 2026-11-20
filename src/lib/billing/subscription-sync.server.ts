@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
 import { assertCustomerOwner, verifyProPrice } from "./billing-policy";
+import { initialInvoiceSettled } from "./settlement.server";
 
 /** Re-fetch Stripe rather than trust an old event snapshot or browser metadata. */
 export async function syncVerifiedSubscription(event: Stripe.Event, subscriptionId: string, env: StripeEnv) {
@@ -22,13 +23,16 @@ export async function syncVerifiedSubscription(event: Stripe.Event, subscription
   const price = await stripe.prices.retrieve(item.price.id);
   const cycle = price.lookup_key === "pro_monthly" ? "monthly" : "annual";
   verifyProPrice(price, cycle);
+  const settled = await initialInvoiceSettled(stripe, sub.id, customerId, env);
   const productId = typeof price.product === "string" ? price.product : price.product.id;
   const iso = (sec: number) => Number.isFinite(sec) && sec > 0 ? new Date(sec * 1000).toISOString() : null;
   const { data: result, error } = await supabaseAdmin.rpc("apply_billing_subscription", {
     p_env: env, p_event_id: event.id, p_created: event.created,
     p_row: {
       user_id: mapping.user_id, stripe_subscription_id: sub.id, stripe_customer_id: customerId,
-      product_id: productId, price_id: price.lookup_key, status: sub.status,
+      product_id: productId, price_id: price.lookup_key,
+      // Preserve canceled terminal state; otherwise never persist paid access before settlement.
+      status: !settled && ["active", "trialing", "past_due"].includes(sub.status) ? "incomplete" : sub.status,
       current_period_start: iso(item.current_period_start), current_period_end: iso(item.current_period_end),
       cancel_at_period_end: sub.cancel_at_period_end,
     },
