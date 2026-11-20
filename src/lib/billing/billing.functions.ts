@@ -101,12 +101,15 @@ export const createBillingPortal = createServerFn({ method: "POST" })
 export const getMySubscription = createServerFn({ method: "POST" })
   .middleware([requireVerifiedSession])
   .inputValidator((input: z.input<typeof environmentInput>) => environmentInput.parse(input))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
+    // The server picks test vs live from the real request host; the client value is ignored.
+    const { serverBillingEnv } = await import("@/lib/stripe.server");
+    const environment = serverBillingEnv();
     const { data: rows, error } = await context.supabase.from("subscriptions")
       .select("status,price_id,current_period_end,cancel_at_period_end")
-      .eq("user_id", context.userId).eq("environment", data.environment).order("created_at", { ascending: false });
+      .eq("user_id", context.userId).eq("environment", environment).order("created_at", { ascending: false });
     if (error) throw new Error("Couldn't read subscription status.");
-    return { subscription: rows?.find(s => subscriptionGrantsPro(s)) ?? rows?.[0] ?? null };
+    return { environment, subscription: rows?.find(s => subscriptionGrantsPro(s)) ?? rows?.[0] ?? null };
   });
 
 export const getCheckoutStatus = createServerFn({ method: "POST" })

@@ -21,21 +21,22 @@ function ManageBillingButton() {
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const env = typeof window === "undefined" ? null : paymentsEnvironment();
+  const tokenEnv = typeof window === "undefined" ? null : paymentsEnvironment();
+  const [env, setEnv] = useState<"sandbox" | "live" | null>(null);
 
   useEffect(() => {
-    if (!env) return;
-    const fetch = () => getSub({ data: { environment: env } })
-      .then((r) => { setSub(r.subscription); setError(null); })
+    if (!tokenEnv) return;
+    const fetch = () => getSub({ data: { environment: tokenEnv } })
+      .then((r) => { setEnv(r.environment); setSub(r.subscription); setError(null); })
       .catch(() => setError("Subscription status unavailable. Try again shortly."));
     void fetch();
     window.addEventListener("focus", fetch);
     return () => window.removeEventListener("focus", fetch);
-  }, [env, getSub]);
+  }, [tokenEnv, getSub]);
 
-  if (!env) return null;
+  if (!tokenEnv) return null;
   if (error) return <p role="alert" className="text-xs text-destructive">{error}</p>;
-  if (!sub) return null;
+  if (!sub || !env) return null;
   const ends = sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : null;
 
   return (
